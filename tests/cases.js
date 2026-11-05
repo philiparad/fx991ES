@@ -349,6 +349,46 @@ test('M22 Norm 2 below threshold',()=>eq(K.format(K.rat(1,10000000000),{format:'
 test('M22 S-D does not mutate original exact Ans',()=>{let s=K.createState();for(let k of ['1','DIV','3','='])s=K.dispatchKey(s,k);let ans=K.serialValue(s.ans);s=K.dispatchKey(s,'S-D');s=K.dispatchKey(s,'S-D');eq(JSON.stringify(K.serialValue(s.ans)),JSON.stringify(ans))});
 
 
+// Phase 3 — LCD viewport, cursor visibility and compact mathematical glyphs.
+test('LCD filled 24-character row still keeps trailing caret visible',()=>{
+ let s=K.semanticScreen(K.createState());s.document=E.fromSource('123456789012345678901234');s.view='edit';
+ let r=L.composeScreen(s);eq(r.overflow,true);eq(r.caretVisible,true);
+ if(r.scrollX<=0)throw Error('end cursor was not scrolled into view');
+ eq(r.viewport.left,4);eq(r.viewport.right,92);
+});
+test('LCD content fits with no unnecessary side gutters',()=>{
+ let s=K.semanticScreen(K.createState());s.document=E.fromSource('123');s.view='edit';
+ let r=L.composeScreen(s);eq(r.overflow,false);eq(r.scrollX,0);
+ eq(r.viewport.left,0);eq(r.viewport.right,96);eq(r.caretVisible,true);
+});
+test('LCD horizontal left/right scrolling follows caret in reserved viewport',()=>{
+ let d=E.fromSource('123456789012345678901234567890');
+ let s=K.semanticScreen(K.createState());s.document=d;s.view='edit';
+ let end=L.composeScreen(s);eq(end.caretVisible,true);
+ if(end.scrollX<=0)throw Error('no horizontal scroll at end');
+ for(let i=0;i<30;i++)d=E.move(d,'LEFT');
+ s.document=d;let start=L.composeScreen(s);
+ eq(start.scrollX,0);eq(start.caretVisible,true);
+});
+test('LCD overflow arrows do not alter clipped expression content',()=>{
+ let s=K.semanticScreen(K.createState());s.document=E.fromSource('123456789012345678901234567890');s.view='edit';
+ let r=L.composeScreen(s);eq(r.viewport.left,4);eq(r.viewport.right,92);
+ if(!r.pixels.some(Boolean))throw Error('empty LCD');
+});
+test('LCD nested-fraction caret remains in visible vertical viewport',()=>{
+ let d=E.create();for(let i=0;i<4;i++){d=E.template(d,'Fraction');d=E.insertToken(d,'1');d=E.move(d,'DOWN')}
+ d=E.insertToken(d,'2');let s=K.semanticScreen(K.createState());s.document=d;s.view='edit';
+ let r=L.composeScreen(s);eq(r.overflow,true);eq(r.caretVisible,true);
+ if(r.scrollY<=0)throw Error('vertical scroll not applied');
+});
+test('LCD mathematical glyphs include common non-ASCII results',()=>{
+ for(const c of '−×÷∞σθΣ∫°²³→⇔')if(!L.FONT[c])throw Error('missing mathematical glyph '+c);
+});
+test('LCD glyph box sizes count Unicode code points',()=>{
+ let d=E.fromSource('π');let r=L.layoutExpression(d);
+ if(r.width<4)throw Error('collapsed glyph width');
+});
+
 // Milestone 23 — baseline-aware 96x31 LCD and deep structural navigation.
 test('M23 framebuffer remains exactly 96x31',()=>eq(L.rasterizeScreen(K.semanticScreen(K.createState())).length,2976));
 test('M23 plain token baseline is stable',()=>{let b=L.layoutExpression(E.fromSource('ABC'));eq(b.baseline,4);eq(b.height,5)});
