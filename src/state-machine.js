@@ -194,7 +194,7 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
   if(key==='AC'){s.view='edit';s.ui.setupSection=null;s.ui.setupPage=0;return end()}
   if(s.ui.setupSection){
    if(s.ui.setupSection==='Fix'||s.ui.setupSection==='Sci'){
-    if(/^\\d$/.test(key)){s.setup.format=s.ui.setupSection;s.setup.digits=Number(key);s.ui.setupSection=null;s.view='edit'}return end()
+    if(/^[0-9]$/.test(key)){s.setup.format=s.ui.setupSection;s.setup.digits=Number(key);s.ui.setupSection=null;s.view='edit'}return end()
    }
    if(s.ui.setupSection==='Norm'&&['1','2'].includes(key)){
     s.setup.format=key==='1'?'Norm1':'Norm2';s.ui.setupSection=null;s.view='edit';return end()
