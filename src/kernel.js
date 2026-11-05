@@ -64,12 +64,22 @@ function calculateExpression(mode,source,context){if(mode!=='COMP'&&global.FX991
 function createState(model='standard'){const editor=global.FX991_EDITOR;const memory=Object.fromEntries(['A','B','C','D','E','F','M','X','Y'].map(k=>[k,rat(0n)]));return {model,mode:'COMP',view:'edit',menuPage:0,setup:{angle:'DEG',format:'Norm2',digits:3},shift:false,alpha:false,power:true,expression:'',cursor:0,document:editor?editor.create():null,ans:rat(0n),memory,lastValue:null,decimalView:false,result:'',error:null,errorPos:0,history:[],historyCursor:-1,trace:[]}}
 function modeList(state){return MODELS[state.model].modes}
 function serialValue(v){if(!v)return null;if(v.kind==='rational')return {kind:v.kind,n:v.n.toString(),d:v.d.toString()};if(v.kind==='pi')return {kind:v.kind,coefficient:serialValue(v.coefficient)};if(v.kind==='radical')return {kind:v.kind,coefficient:serialValue(v.coefficient),radicand:v.radicand.toString()};if(v.kind==='mode-result')return {kind:v.kind,text:v.text,ans:serialValue(v.ans),data:v.data};if(v.kind==='complex')return {kind:v.kind,re:serialValue(v.re),im:serialValue(v.im)};if(v.kind==='base')return {kind:'base',value:v.value.toString(),radix:v.radix,text:v.text};if(v.kind==='decimal'&&v.n!==undefined)return {kind:'decimal',value:v.value,n:v.n.toString(),d:v.d.toString()};return v}
-function semanticScreen(s){const modes=modeList(s);let message='';if(!s.power)message='OFF';else if(s.view==='mode')message=modes.slice(s.menuPage*4,s.menuPage*4+4).map((m,i)=>(s.menuPage*4+i+1)+':'+m).join(' ');else if(s.view==='setup')message='1:DEG 2:RAD 3:GRA';else if(s.view==='error')message=s.error;else message=s.result;return {mode:s.mode,view:s.view,expression:s.expression,result:message,indicators:[s.setup.angle[0],s.shift?'S':null,s.alpha?'A':null,s.setup.format==='Fix'?'F'+s.setup.digits:s.setup.format==='Sci'?'S'+s.setup.digits:null].filter(Boolean),cursor:s.cursor,document:s.mode==='COMP'?s.document:null}}
+function semanticScreen(s){const modes=modeList(s);let message='';if(!s.power)message='OFF';else if(s.view==='mode')message=(s.menuPage===0?modes.slice(0,8).map((m,i)=>(i+1)+':'+m):modes.slice(8).map((m,i)=>(i+1)+':'+m)).join(' ');else if(s.view==='setup')message='1:DEG 2:RAD 3:GRA';else if(s.view==='error')message=s.error;else message=s.result;return {mode:s.mode,view:s.view,expression:s.expression,result:message,indicators:[s.setup.angle[0],s.shift?'S':null,s.alpha?'A':null,s.setup.format==='Fix'?'F'+s.setup.digits:s.setup.format==='Sci'?'S'+s.setup.digits:null].filter(Boolean),cursor:s.cursor,document:s.mode==='COMP'?s.document:null}}
 function dispatchKey(state,key){let s={...state,setup:{...state.setup},memory:{...state.memory},history:state.history.slice(),trace:state.trace.slice()};const E=global.FX991_EDITOR;const sync=()=>{if(E&&s.mode==='COMP'&&s.document){s.expression=E.serialize(s.document);s.cursor=E.sourceCursor(s.document)}};const finish=()=>{sync();s.trace.push({key,mode:s.mode,view:s.view,expression:s.expression,result:s.result});if(s.trace.length>200)s.trace.shift();return s};
  if(key==='ON'){s.power=true;s.view='edit';return finish()}if(!s.power)return finish();if(key==='SHIFT'){s.shift=!s.shift;s.alpha=false;return finish()}if(key==='ALPHA'){s.alpha=!s.alpha;s.shift=false;return finish()}
  if(key==='AC'&&s.shift){s.power=false;s.shift=false;s.view='off';return finish()}
  if(key==='MODE'){s.view=s.shift?'setup':'mode';s.menuPage=0;s.shift=false;s.alpha=false;return finish()}
- if(s.view==='mode'){let modes=modeList(s);if(key==='UP'||key==='DOWN'){let last=Math.floor((modes.length-1)/4);s.menuPage=Math.max(0,Math.min(last,s.menuPage+(key==='DOWN'?1:-1)));return finish()}if(/^\d$/.test(key)){let idx=s.menuPage*4+Number(key)-1;if(Number(key)>=1&&Number(key)<=4&&idx>=0&&idx<modes.length){s.mode=modes[idx];s.expression='';s.cursor=0;if(E)s.document=E.create();s.result='';s.view='edit';s.history=[];s.historyCursor=-1}}if(key==='AC')s.view='edit';return finish()}
+ if(s.view==='mode'){let modes=modeList(s);
+  if(key==='UP'||key==='DOWN'){s.menuPage=key==='DOWN'&&modes.length>8?1:0;return finish()}
+  if(/^[1-8]$/.test(key)){
+   const n=Number(key),idx=s.menuPage===0?n-1:n+7;
+   if(idx>=0&&idx<modes.length){
+    s.mode=modes[idx];s.expression='';s.cursor=0;
+    if(E)s.document=E.create();s.result='';s.view='edit';s.history=[];s.historyCursor=-1
+   }
+  }
+  if(key==='AC')s.view='edit';return finish()
+ }
  if(s.view==='setup'){let selected={1:'DEG',2:'RAD',3:'GRAD'}[key];if(selected){s.setup.angle=selected;s.view='edit'}else if(key==='AC')s.view='edit';return finish()}
  if(s.view==='error'){if(['LEFT','RIGHT'].includes(key)){s.view='edit';s.cursor=Math.max(0,Math.min(s.expression.length,s.errorPos))}else if(key==='AC'){s.expression='';s.cursor=0;s.view='edit';s.result='';s.error=null}return finish()}
  if(key==='AC'){s.expression='';s.cursor=0;if(E)s.document=E.create();s.result='';s.view='edit';s.shift=false;s.alpha=false;return finish()}
