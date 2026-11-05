@@ -43,3 +43,26 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 #status[data-ready="true"]{color:#12603a;font-weight:700}#status[data-ready="false"]{color:#9a3c18;font-weight:700}
 @media(max-width:420px){main{padding:0 9px;grid-template-columns:minmax(0,1fr)}.calculator{padding:13px 10px 19px}.keys{gap:6px 4px}.key{min-height:42px;height:auto;padding:8px 1px}.side .panel{padding:12px}.grid2{grid-template-columns:minmax(0,1fr)}.evidence-table{font-size:12px}}
 @media(prefers-reduced-motion:reduce){.key:active{transform:none}}
+
+/* Milestone 54: separate physical zones, without Casio proprietary graphics. */
+.keys { display:flex; flex-direction:column; gap:10px; margin-top:16px; }
+.keypad-group { display:grid; min-width:0; gap:5px 4px; }
+.keypad-top {grid-template-columns:repeat(8,minmax(0,1fr));}
+.keypad-scientific {grid-template-columns:repeat(6,minmax(0,1fr));}
+.keypad-numeric {grid-template-columns:repeat(5,minmax(0,1fr)); gap:6px 5px;}
+.keypad-top .key {height:30px;font-size:9px;border-radius:50%;padding:0;}
+.keypad-scientific .key {height:30px;font-size:10px;}
+.keypad-numeric .key {height:37px;font-size:15px;border-radius:6px;}
+.keypad-group .key-cell {min-width:0;}
+.keypad-group .key-spacer {pointer-events:none;}
+.keypad-group .alt {height:12px;line-height:12px;font-size:9px;overflow:hidden;white-space:nowrap;color:#f3d56c;}
+.keypad-group .key.green {background:linear-gradient(#c6df8d,#7dab43);color:#183718;border-color:#6c9045;}
+.keypad-group .key.number {background:linear-gradient(#e7ebf0,#9eabbc);color:#192939;}
+.keypad-group .key:disabled {opacity:.4;cursor:not-allowed;border-style:dashed;box-shadow:none;}
+.keypad-group .key:not(:disabled):focus-visible {outline:3px solid #aee2ff;outline-offset:2px;}
+@media(max-width:420px) {
+ .keypad-group {gap:5px 3px;}
+ .keypad-top .key {font-size:8px;height:34px;}
+ .keypad-scientific .key {font-size:9px;height:34px;}
+ .keypad-numeric .key {font-size:14px;min-height:44px;}
+}
