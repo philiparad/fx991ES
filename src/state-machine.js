@@ -189,15 +189,34 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
 
  // SHIFT + MODE enters a hierarchical SETUP menu. Direct setting keys are
  // also accepted to keep the prior controller and reference traces stable.
- if(key==='MODE'&&s.shift){s.shift=false;s.alpha=false;s.view='setup';s.ui.setupSection=null;return end()}
+ if(key==='MODE'&&s.shift){s.shift=false;s.alpha=false;s.view='setup';s.ui.setupSection=null;s.ui.setupPage=0;return end()}
  if(s.view==='setup'){
-  if(key==='AC'){s.view='edit';s.ui.setupSection=null;return end()}
-  if(s.ui.setupSection==='Fix'||s.ui.setupSection==='Sci'){
-   if(/^\d$/.test(key)){s.setup.format=s.ui.setupSection;s.setup.digits=Number(key);s.ui.setupSection=null;s.view='edit'}return end()
+  if(key==='AC'){s.view='edit';s.ui.setupSection=null;s.ui.setupPage=0;return end()}
+  if(s.ui.setupSection){
+   if(s.ui.setupSection==='Fix'||s.ui.setupSection==='Sci'){
+    if(/^\\d$/.test(key)){s.setup.format=s.ui.setupSection;s.setup.digits=Number(key);s.ui.setupSection=null;s.view='edit'}return end()
+   }
+   if(s.ui.setupSection==='Norm'&&['1','2'].includes(key)){
+    s.setup.format=key==='1'?'Norm1':'Norm2';s.ui.setupSection=null;s.view='edit';return end()
+   }
+   if(s.ui.setupSection==='MthIO'&&['1','2'].includes(key)){
+    // Record the preferred output layout; exact firmware raster/output is unverified.
+    s.ui.displayStyle=key==='1'?'MathO':'LineO';s.ui.setupSection=null;s.view='edit';return end()
+   }
+   return end();
   }
-  if(key==='1'||key==='2'||key==='3'){s.setup.angle={1:'DEG',2:'RAD',3:'GRAD'}[key];s.view='edit';return end()}
-  if(key==='4'||key==='5'){s.ui.setupSection=key==='4'?'Fix':'Sci';return end()}
-  if(key==='6'||key==='7'){s.setup.format=key==='6'?'Norm1':'Norm2';s.view='edit';return end()}
+  if(key==='UP'||key==='DOWN'){s.ui.setupPage=key==='DOWN'?1:0;return end()}
+  if(s.ui.setupPage===1){
+   // Secondary firmware choices are visible for reference; do not claim a
+   // working capability when fraction, complex, STAT and contrast policies
+   // have not yet been independently verified against device observations.
+   return end();
+  }
+  if(key==='1'){s.ui.setupSection='MthIO';return end()}
+  if(key==='2'){s.ui.displayStyle='LineIO';s.view='edit';return end()}
+  if(['3','4','5'].includes(key)){s.setup.angle={3:'DEG',4:'RAD',5:'GRAD'}[key];s.view='edit';return end()}
+  if(key==='6'||key==='7'){s.ui.setupSection=key==='6'?'Fix':'Sci';return end()}
+  if(key==='8'){s.ui.setupSection='Norm';return end()}
   return end();
  }
  // Existing MODE menu dispatch remains the source of truth for descriptors.
@@ -272,7 +291,14 @@ function semanticScreen(s){if(!s.ui)return base.semanticScreen(s);let screen=bas
  if(s.view==='stat-grid'){let f=s.ui.statFlow,stat=s.ui.modeMemory.stat;screen.expression=stat.kind+' DATA '+(f.field+1);screen.result=f.buffer||'0';}
  if(s.view==='register-prompt'){screen.expression=s.ui.pending+' REG';screen.result='A-F M X Y'}
  if(s.ui.insertMode===false)screen.indicators=[...screen.indicators,'OVR'];
- if(s.view==='setup'){screen.expression=s.ui.setupSection?s.ui.setupSection+' DIGITS':'SETUP';screen.result=s.ui.setupSection?'0-9':'1:D 2:R 3:G 4:FIX 5:SCI 6:N1 7:N2'}return screen}
+ if(s.view==='setup'){
+  const section=s.ui.setupSection;
+  screen.expression='SETUP';
+  screen.result=section==='MthIO'?'1:MathO 2:LineO':section==='Norm'?'1:Norm1 2:Norm2':section==='Fix'||section==='Sci'?section+' 0-9':s.ui.setupPage===1?'SECONDARY OPTIONS (not active)':'1:MthIO 2:LineIO 3:Deg 4:Rad 5:Gra 6:Fix 7:Sci 8:Norm';
+  screen.menuItems=section?null:s.ui.setupPage===1?['1:ab/c','2:d/c','3:CMPLX','4:STAT','5:Disp','6:CONT']:['1:MthIO','2:LineIO','3:Deg','4:Rad','5:Gra','6:Fix','7:Sci','8:Norm'];
+  screen.menuPage=s.ui.setupPage||0;
+ }
+ return screen}
 function runTrace(test){let s=createState(test.model||'standard');for(let k of test.events)s=dispatchKey(s,k);let screen=semanticScreen(s),pixels=base.rasterizeScreen(screen);return {state:s,screen,pixels,hash:base.frameHash(pixels)}}
 function createState(model='standard'){return decorate(base.createState(model))}
 global.FX991=Object.freeze({...base,createState,dispatchKey,semanticScreen,runTrace});
