@@ -14,6 +14,27 @@ from datetime import datetime, timezone
 ROOT = Path(__file__).resolve().parents[1]
 BROWSERS = ('chromium', 'firefox', 'webkit')
 REQUIRED_CHECKS = 18
+# Canonical release checklist: reports may not silently replace or reorder assertions.
+EXPECTED_NAMES = (
+    'Calculator boots without JavaScript exceptions',
+    'Keypad controls are accessible and keyboard focusable',
+    'LCD canvas is 96 × 31 and has a description',
+    'Physical-key clicks calculate 2+3=5',
+    'Typing in the input field calculates implicit multiplication',
+    'Document keyboard shortcuts evaluate input',
+    'Both calculator editions switch without resetting into an invalid mode',
+    'Angle and format selectors update the screen',
+    'Natural display editor preserves structural templates',
+    'Session v2 serializes structured cursor and imports safely',
+    'Recovery remains opt-in on a fresh isolated session',
+    'Browser viewport has no horizontal page overflow at narrow width',
+    'Visible input and selectors have programmatic labels',
+    'Keyboard-only focus can reach the first calculator key',
+    'Session export/import retains a nontrivial matrix register',
+    'Focus indicator CSS is present for keyboard access',
+    'Long input remains a bounded accessible control',
+    'Calculator regression suite passes in browser context',
+)
 SCHEMA = 'fx991-browser-acceptance'
 
 
@@ -57,6 +78,8 @@ def check_capture(raw, browser):
         names.append(row['name'])
     if len(names) != len(set(names)):
         raise ValueError('Duplicate browser checks in evidence')
+    if tuple(names) != EXPECTED_NAMES:
+        raise ValueError('Browser acceptance check names or order do not match the release manifest')
     return names, sum(r['status'] == 'PASS' for r in rows)
 
 
@@ -65,7 +88,7 @@ def aggregate(results):
     valid = len(results) == len(BROWSERS) and {r['browser'] for r in results} == set(BROWSERS)
     valid = valid and all(r['status'] == 'PASS' for r in results)
     captures = [r.get('names') for r in results if r.get('names')]
-    names_match = len(captures) == len(BROWSERS) and all(x == captures[0] for x in captures)
+    names_match = len(captures) == len(BROWSERS) and all(tuple(x) == EXPECTED_NAMES for x in captures)
     return bool(valid and names_match)
 
 
@@ -74,6 +97,7 @@ def main(argv=None):
     parser.add_argument('--browsers', nargs='+', choices=BROWSERS, default=list(BROWSERS))
     parser.add_argument('--out', default='browser-evidence')
     parser.add_argument('--timeout', type=int, default=150)
+    parser.add_argument('--base-url', default=None, help='Optional test origin; default serves this checkout via localhost')
     parser.add_argument('--chromium-executable', default=None,
                         help='Optional local Chromium path when Playwright browsers are unavailable')
     args = parser.parse_args(argv)
@@ -83,7 +107,7 @@ def main(argv=None):
     with Server(('127.0.0.1', 0), Handler) as server:
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
-        url = f'http://127.0.0.1:{server.server_address[1]}/tests/browser-acceptance.html'
+        url = (args.base_url.rstrip('/') + '/tests/browser-acceptance.html') if args.base_url else f'http://127.0.0.1:{server.server_address[1]}/tests/browser-acceptance.html'
         try:
             from playwright.sync_api import sync_playwright, Error as PlaywrightError
             with sync_playwright() as p:
@@ -112,6 +136,8 @@ def main(argv=None):
                         info.value.save_as(destination)
                         capture = json.loads(destination.read_text(encoding='utf-8'))
                         names, passed = check_capture(capture, browser_name)
+                        if args.base_url and not capture.get('location', '').startswith(args.base_url.rstrip('/') + '/'):
+                            raise ValueError('Captured origin does not match the configured test origin')
                         evidence.update(capture=str(destination), names=names, passed=passed)
                         evidence['status'] = 'PASS' if passed == REQUIRED_CHECKS and not errors else 'FAIL'
                         evidence['detail'] = f'{passed}/{REQUIRED_CHECKS} passed; {len(errors)} script/console errors'
@@ -136,7 +162,7 @@ def main(argv=None):
             server.shutdown()
             thread.join(timeout=2)
     ready = aggregate(results)
-    summary = {'schema':'fx991-browser-matrix-run', 'milestone':34,
+    summary = {'schema':'fx991-browser-matrix-run', 'milestone':35,
                'generatedAt':datetime.now(timezone.utc).isoformat(), 'results':results,
                'ready':ready, 'note':'Browser checks do not certify physical Casio compatibility.'}
     (out / 'matrix-run.json').write_text(json.dumps(summary, indent=2), encoding='utf-8')
