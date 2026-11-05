@@ -178,7 +178,7 @@ test('DIST invalid probability rejected',()=>{try{cc('DIST','BPD:1,3,1.1');throw
 test('C extension forbidden on standard model',()=>{try{cc('INEQ','LT:1,2,-3','standard');throw Error('accepted')}catch(e){eq(e.code,K.ERROR.UNSUPPORTED)}});
 test('C mode result flows through Ans and history',()=>{let s=K.createState('c');s.mode='VERIF';s.expression='2+2=4';s=K.dispatchKey(s,'=');eq(s.result,'TRUE');eq(K.valueToString(s.ans),'1');eq(s.history.length,1)});
 test('C-mode selection through second menu page',()=>{let s=K.createState('c');s=K.dispatchKey(s,'MODE');s=K.dispatchKey(s,'DOWN');s=K.dispatchKey(s,'DOWN');s=K.dispatchKey(s,'1');eq(s.mode,'INEQ')});
-test('Standard model menu never exposes extensions',()=>{let s=K.createState('standard');s=K.dispatchKey(s,'MODE');s=K.dispatchKey(s,'DOWN');s=K.dispatchKey(s,'DOWN');s=K.dispatchKey(s,'1');eq(s.mode,'EQN')});
+test('Standard model menu never exposes extensions',()=>{let s=K.createState('standard');s=K.dispatchKey(s,'MODE');s=K.dispatchKey(s,'DOWN');s=K.dispatchKey(s,'DOWN');s=K.dispatchKey(s,'1');eq(s.mode,'COMP')});
 
 
 // Milestone 14 — controller transition tests (independent of HTML UI).
@@ -192,13 +192,13 @@ test('M14 OFF and ON',()=>{let s=keys14('standard',['SHIFT','AC']);eq(s.power,fa
 test('M14 STO register prompt stores typed result',()=>{let s=keys14('standard',['8','=','SHIFT','RCL']);eq(s.view,'register-prompt');s=K.dispatchKey(s,'B');eq(K.valueToString(s.memory.B),'8')});
 test('M14 RCL prompt inserts variable',()=>{let s=keys14('standard',['ALPHA','RCL','C']);eq(s.expression,'C');eq(s.view,'edit')});
 test('M14 STO prompt cancel',()=>{let s=keys14('standard',['SHIFT','RCL','AC']);eq(s.view,'edit');eq(s.ui.pending,null)});
-test('M14 equation coefficient workflow',()=>{let s=keys14('standard',['MODE','DOWN','1']);eq(s.mode,'EQN');eq(s.view,'workflow-menu');for(let k of ['1','1','=','NEG','3','=','2','='])s=K.dispatchKey(s,k);eq(s.view,'result');if(!s.result.includes('2')||!s.result.includes('1'))throw Error(s.result)});
-test('M14 matrix coefficient workflow',()=>{let s=keys14('standard',['MODE','DOWN','2','1']);for(let k of ['1','=','2','=','3','=','4','='])s=K.dispatchKey(s,k);eq(s.view,'result');if(!s.result.includes('-2'))throw Error(s.result)});
-test('M14 wizard rejects missing coefficient',()=>{let s=keys14('standard',['MODE','DOWN','1','1','=']);eq(s.view,'error');eq(s.error,K.ERROR.ARGUMENT)});
+test('M14 equation coefficient workflow',()=>{let s=keys14('standard',['MODE','5']);eq(s.mode,'EQN');eq(s.view,'workflow-menu');for(let k of ['1','1','=','NEG','3','=','2','='])s=K.dispatchKey(s,k);eq(s.view,'result');if(!s.result.includes('2')||!s.result.includes('1'))throw Error(s.result)});
+test('M14 matrix coefficient workflow',()=>{let s=keys14('standard',['MODE','6','1']);for(let k of ['1','=','2','=','3','=','4','='])s=K.dispatchKey(s,k);eq(s.view,'result');if(!s.result.includes('-2'))throw Error(s.result)});
+test('M14 wizard rejects missing coefficient',()=>{let s=keys14('standard',['MODE','5','1','=']);eq(s.view,'error');eq(s.error,K.ERROR.ARGUMENT)});
 test('M14 error recovers cursor',()=>{let s=keys14('standard',['1','DIV','0','=']);eq(s.view,'error');s=K.dispatchKey(s,'RIGHT');eq(s.view,'edit');eq(s.error,null)});
-test('M14 semantic screen indicates coefficient label',()=>{let s=keys14('standard',['MODE','DOWN','1','1']);let screen=K.semanticScreen(s);if(!screen.expression.includes('a ='))throw Error(screen.expression)});
+test('M14 semantic screen indicates coefficient label',()=>{let s=keys14('standard',['MODE','5','1']);let screen=K.semanticScreen(s);if(!screen.expression.includes('a ='))throw Error(screen.expression)});
 test('M14 MODE select COMP remains edit',()=>{let s=keys14('standard',['MODE','1']);eq(s.mode,'COMP');eq(s.view,'edit')});
-test('M14 trace reproducible after workflow',()=>{let events=['MODE','DOWN','1','1','1','=','NEG','3','=','2','='];let a=K.runTrace({events}),b=K.runTrace({events});eq(a.hash,b.hash)});
+test('M14 trace reproducible after workflow',()=>{let events=['MODE','5','1','1','=','NEG','3','=','2','='];let a=K.runTrace({events}),b=K.runTrace({events});eq(a.hash,b.hash)});
 
 // Milestone 15: structural LCD layout and raster acceptance tests.
 const L=global.FX991_DISPLAY;
@@ -410,7 +410,7 @@ test('M23 clipping preserves pixel bounds',()=>{let f=new L.Framebuffer();f.clip
 test('P4 MODE direct key 8 selects VECTOR',()=>{let s=K.createState();for(let k of ['MODE','8'])s=K.dispatchKey(s,k);eq(s.mode,'VECTOR');eq(s.view,'workflow-menu')});
 test('P4 MODE direct key 7 selects TABLE',()=>{let s=K.createState();for(let k of ['MODE','7'])s=K.dispatchKey(s,k);eq(s.mode,'TABLE')});
 test('P4 MODE direct key 5 selects EQN',()=>{let s=K.createState();for(let k of ['MODE','5'])s=K.dispatchKey(s,k);eq(s.mode,'EQN')});
-test('P4 MODE C extension page selects INEQ',()=>{let s=K.createState('c');for(let k of ['MODE','DOWN','1'])s=K.dispatchKey(s,k);eq(s.mode,'INEQ')});
+test('P4 MODE C extension page selects INEQ',()=>{let s=K.createState('c');for(let k of ['MODE','5'])s=K.dispatchKey(s,k);eq(s.mode,'INEQ')});
 test('P4 SETUP 3 selects degrees',()=>{let s=K.createState();for(let k of ['SHIFT','MODE','3'])s=K.dispatchKey(s,k);eq(s.setup.angle,'DEG');eq(s.view,'edit')});
 test('P4 SETUP 4 selects radians',()=>{let s=K.createState();for(let k of ['SHIFT','MODE','4'])s=K.dispatchKey(s,k);eq(s.setup.angle,'RAD')});
 test('P4 SETUP 5 selects grads',()=>{let s=K.createState();for(let k of ['SHIFT','MODE','5'])s=K.dispatchKey(s,k);eq(s.setup.angle,'GRAD')});
@@ -471,13 +471,13 @@ test('M25 C mode menu has second and third pages',()=>{let s=K.createState('c');
 test('M25 editing after power result appends correctly',()=>{let s=K.createState();for(let k of ['3','='])s=K.dispatchKey(s,k);s=K.dispatchKey(s,'SHIFT');s=K.dispatchKey(s,'LN');eq(s.expression,'exp()')});
 // Milestone 26 — end-to-end keypad mode-data workflow acceptance.
 function m26(model,events){let s=K.createState(model);for(const key of events)s=K.dispatchKey(s,key);return s}
-function m26Mode(model,page,digit,op){return m26(model,['MODE',...Array(page).fill('DOWN'),String(digit),String(op)])}
+function m26Mode(model,page,digit,op){const selected=Number(digit)+(page===1?4:0);return m26(model,['MODE',String(selected),String(op)])}
 function m26Fields(s,values){for(const value of values){for(const c of String(value)){s=K.dispatchKey(s,c==='-'?'NEG':c)}s=K.dispatchKey(s,'=')}return s}
 test('M26 MATRIX inverse 2x2 keypad workflow',()=>{let s=m26Mode('standard',1,2,3);s=m26Fields(s,[1,2,3,4]);eq(s.view,'result');if(!s.expression.startsWith('INV:')||!s.result.includes('-2'))throw Error(s.result)});
 test('M26 MATRIX transpose 2x2 keypad workflow',()=>{let s=m26Mode('standard',1,2,4);s=m26Fields(s,[1,2,3,4]);eq(s.view,'result');eq(s.expression,'TRANS:1,2;3,4')});
-test('M26 MATRIX multiplication 2x2 supports second menu page',()=>{let s=m26Mode('standard',1,2,1);s=K.dispatchKey(s,'AC');s=m26('standard',['MODE','DOWN','2','DOWN','1']);eq(s.view,'coefficient');eq(s.ui.wizard.kind,'MUL2');s=m26Fields(s,[1,2,3,4,5,6,7,8]);eq(s.view,'result');if(!s.result.includes('19'))throw Error(s.result)});
+test('M26 MATRIX multiplication 2x2 supports second menu page',()=>{let s=m26Mode('standard',1,2,1);s=K.dispatchKey(s,'AC');s=m26('standard',['MODE','6','DOWN','1']);eq(s.view,'coefficient');eq(s.ui.wizard.kind,'MUL2');s=m26Fields(s,[1,2,3,4,5,6,7,8]);eq(s.view,'result');if(!s.result.includes('19'))throw Error(s.result)});
 test('M26 VECTOR 2D addition via keypad',()=>{let s=m26Mode('standard',1,4,4);s=m26Fields(s,[1,2,3,4]);eq(s.view,'result');eq(s.expression,'ADD:1,2|3,4')});
-test('M26 VECTOR angle via keypad',()=>{let s=m26Mode('standard',1,4,1);s=m26('standard',['MODE','DOWN','4','DOWN','1']);s=m26Fields(s,[1,0,0,1]);eq(s.view,'result');if(!s.result.includes('90'))throw Error(s.result)});
+test('M26 VECTOR angle via keypad',()=>{let s=m26Mode('standard',1,4,1);s=m26('standard',['MODE','8','DOWN','1']);s=m26Fields(s,[1,0,0,1]);eq(s.view,'result');if(!s.result.includes('90'))throw Error(s.result)});
 test('M26 STAT five values via keypad',()=>{let s=m26Mode('standard',0,3,2);s=m26Fields(s,[1,2,3,4,5]);eq(s.view,'result');eq(s.expression,'1VAR:1,2,3,4,5');if(!s.result.includes('3'))throw Error(s.result)});
 test('M26 STAT regression pairs via keypad',()=>{let s=m26Mode('standard',0,3,3);s=m26Fields(s,[1,3,2,5,3,7]);eq(s.view,'result');eq(s.expression,'LINEAR:1,3;2,5;3,7')});
 test('M26 TABLE variable X through ALPHA+LP key sequence',()=>{let s=m26Mode('standard',1,3,2);for(const k of ['ALPHA','LP','POW','2','='])s=K.dispatchKey(s,k);eq(s.ui.wizard.values[0],'X^2');eq(s.ui.wizard.index,1);eq(s.alpha,false)});
@@ -487,17 +487,17 @@ test('M26 TABLE dual function forbidden on standard profile',()=>{let s=m26Mode(
 test('M26 TABLE dual function on C profile',()=>{let s=m26Mode('c',1,3,3);eq(s.view,'coefficient');for(const key of ['X','=','X','POW','2','='])s=K.dispatchKey(s,key);s=m26Fields(s,[1,3,1]);eq(s.view,'result');eq(s.lastValue.data.rows.length,3);eq(s.lastValue.data.rows[2][2],9)});
 test('M26 wizard editor rejects unsafe function characters',()=>{let s=m26Mode('standard',1,3,2);s=K.dispatchKey(s,'=');eq(s.view,'error')});
 test('M26 field navigation preserves entered values',()=>{let s=m26Mode('standard',1,1,1);s=K.dispatchKey(s,'2');s=K.dispatchKey(s,'RIGHT');s=K.dispatchKey(s,'3');s=K.dispatchKey(s,'LEFT');eq(s.ui.wizard.buffer,'2');s=K.dispatchKey(s,'RIGHT');eq(s.ui.wizard.buffer,'3')});
-test('M26 wizard result trace is deterministic',()=>{let sequence=['MODE','DOWN','3','1','1','=','2','=','1','='];let a=K.runTrace({events:sequence}),b=K.runTrace({events:sequence});eq(a.hash,b.hash)});
+test('M26 wizard result trace is deterministic',()=>{let sequence=['MODE','7','1','1','=','2','=','1','='];let a=K.runTrace({events:sequence}),b=K.runTrace({events:sequence});eq(a.hash,b.hash)});
 
 
 // Milestone 27 persistent typed data register and table workflow checks.
 function t27(model,keys){let s=K.createState(model);for(const k of keys)s=K.dispatchKey(s,k);return s}
 function t27keys(s,keys){for(const k of keys)s=K.dispatchKey(s,k);return s}
-function t27matrix(){return t27('standard',['MODE','DOWN','2','REGS','1'])}
-function t27vector(){return t27('standard',['MODE','DOWN','4','REGS','1'])}
+function t27matrix(){return t27('standard',['MODE','6','REGS','1'])}
+function t27vector(){return t27('standard',['MODE','8','REGS','1'])}
 test('M27 register menu stores matrices separately',()=>{let s=t27matrix();eq(s.view,'register-editor');eq(s.ui.registerFlow.name,'A');eq(s.ui.modeMemory.matrix.B,null)});
 test('M27 matrix entry persists four values',()=>{let s=t27matrix();s=t27keys(s,['1','=','2','=','3','=','4','=']);eq(s.view,'register-summary');eq(JSON.stringify(s.ui.modeMemory.matrix.A),'[[1,2],[3,4]]')});
-test('M27 matrix stored after mode transitions',()=>{let s=t27keys(t27matrix(),['1','=','2','=','3','=','4','=']);s=t27keys(s,['AC','MODE','1','MODE','DOWN','2']);eq(JSON.stringify(s.ui.modeMemory.matrix.A),'[[1,2],[3,4]]')});
+test('M27 matrix stored after mode transitions',()=>{let s=t27keys(t27matrix(),['1','=','2','=','3','=','4','=']);s=t27keys(s,['AC','MODE','1','MODE','6']);eq(JSON.stringify(s.ui.modeMemory.matrix.A),'[[1,2],[3,4]]')});
 test('M27 independent MatB register',()=>{let s=t27keys(t27matrix(),['1','=','0','=','0','=','1','=','REGS','2','2','=','0','=','0','=','2','=']);eq(JSON.stringify(s.ui.modeMemory.matrix.A),'[[1,0],[0,1]]');eq(JSON.stringify(s.ui.modeMemory.matrix.B),'[[2,0],[0,2]]')});
 test('M27 determinant by stored MatA',()=>{let s=t27keys(t27matrix(),['1','=','2','=','3','=','4','=','OP','1']);eq(s.view,'result');eq(s.expression,'DET:1,2;3,4');eq(s.result,'-2')});
 test('M27 inverse by stored MatA',()=>{let s=t27keys(t27matrix(),['1','=','2','=','3','=','4','=','OP','2']);eq(s.view,'result');if(!s.result.includes('-2'))throw Error(s.result)});
@@ -558,7 +558,7 @@ test('M29 rejects malicious node types',()=>{let p=SS.extract(m29document());p.d
 test('M29 rejects oversized source document tree',()=>{let p=SS.extract(m29document());p.document.root.children=Array.from({length:510},(_,i)=>({kind:'Token',id:'nd'+(10000+i),value:'1'}));p.expression='1'.repeat(510);p.cursor=510;fail28(()=>SS.importJSON(JSON.stringify(p)))});
 test('M29 imports older v1 sessions safely',()=>{let p=SS.extract(mem28());p.version=1;delete p.document;delete p.workflow;let s=SS.importJSON(JSON.stringify(p));eq(s.ui.modeMemory.matrix.A[0][0],1);eq(s.view,'edit')});
 test('M29 resumes valid register editor field and buffer',()=>{let s=t27matrix();s=t27keys(s,['1','=','2']);let t=SS.importJSON(SS.exportJSON(s));eq(t.view,'register-editor');eq(t.ui.registerFlow.field,1);eq(t.ui.registerFlow.buffer,'2');t=K.dispatchKey(t,'=');eq(t.ui.modeMemory.matrix.A[0][1],2)});
-test('M29 register menu survives reload',()=>{let s=t27('standard',['MODE','DOWN','2','REGS']);let t=SS.importJSON(SS.exportJSON(s));eq(t.view,'register-menu');eq(t.ui.registerFlow.name,null)});
+test('M29 register menu survives reload',()=>{let s=t27('standard',['MODE','6','REGS']);let t=SS.importJSON(SS.exportJSON(s));eq(t.view,'register-menu');eq(t.ui.registerFlow.name,null)});
 test('M29 resumes statistics pending cell',()=>{let s=t27('standard',['MODE','3','DATA','1','=','2']);let t=SS.importJSON(SS.exportJSON(s));eq(t.view,'stat-grid');eq(t.ui.statFlow.buffer,'2');t=K.dispatchKey(t,'=');eq(t.ui.modeMemory.stat.rows[1][0],2)});
 test('M29 rejects inconsistent workflow mode',()=>{let s=t27matrix();let p=SS.extract(s);p.mode='COMP';fail28(()=>SS.importJSON(JSON.stringify(p)))});
 test('M29 opt-in recovery retains structural document',()=>{let storage=fakeStorage();SS.enable(storage,true);let s=m29document();SS.store(storage,s);let r=SS.recover(storage);eq(r.document.anchor.sequenceId,s.document.anchor.sequenceId)});
