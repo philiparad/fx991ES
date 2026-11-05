@@ -1,4 +1,4 @@
-name: Cross-browser acceptance
+name: Cross-browser acceptance — M35
 on:
   workflow_dispatch:
   push:
