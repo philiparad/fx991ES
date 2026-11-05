@@ -100,7 +100,7 @@ function composeScreen(screen){let f=new Framebuffer(),status=screen.indicators.
    f.text(items[i],x,y,x+47);
   }
   if(screen.menuPage>0)f.glyph('↑',92,0);
-  else if(screen.view==='setup'||screen.mode==='COMP'&&items.length===8)f.glyph('↓',92,0);
+  else if(screen.view==='setup'||screen.hasMore===true)f.glyph('↓',92,0);
   return {pixels:f.pixels,overflow:false,scrollX:0,scrollY:0,layout:null};
  }
  if(screen.view==='mode'||screen.view==='setup'||screen.view==='workflow-menu'||screen.view==='workflow-edit'||screen.view==='register-prompt'){
