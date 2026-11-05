@@ -410,7 +410,7 @@ test('M23 clipping preserves pixel bounds',()=>{let f=new L.Framebuffer();f.clip
 test('P4 MODE direct key 8 selects VECTOR',()=>{let s=K.createState();for(let k of ['MODE','8'])s=K.dispatchKey(s,k);eq(s.mode,'VECTOR');eq(s.view,'workflow-menu')});
 test('P4 MODE direct key 7 selects TABLE',()=>{let s=K.createState();for(let k of ['MODE','7'])s=K.dispatchKey(s,k);eq(s.mode,'TABLE')});
 test('P4 MODE direct key 5 selects EQN',()=>{let s=K.createState();for(let k of ['MODE','5'])s=K.dispatchKey(s,k);eq(s.mode,'EQN')});
-test('P4 MODE C extension page selects INEQ',()=>{let s=K.createState('c');for(let k of ['MODE','5'])s=K.dispatchKey(s,k);eq(s.mode,'INEQ')});
+test('P4 MODE C extension page selects INEQ',()=>{let s=K.createState('c');for(let k of ['MODE','DOWN','1'])s=K.dispatchKey(s,k);eq(s.mode,'INEQ')});
 test('P4 SETUP 3 selects degrees',()=>{let s=K.createState();for(let k of ['SHIFT','MODE','3'])s=K.dispatchKey(s,k);eq(s.setup.angle,'DEG');eq(s.view,'edit')});
 test('P4 SETUP 4 selects radians',()=>{let s=K.createState();for(let k of ['SHIFT','MODE','4'])s=K.dispatchKey(s,k);eq(s.setup.angle,'RAD')});
 test('P4 SETUP 5 selects grads',()=>{let s=K.createState();for(let k of ['SHIFT','MODE','5'])s=K.dispatchKey(s,k);eq(s.setup.angle,'GRAD')});
