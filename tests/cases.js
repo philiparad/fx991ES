@@ -183,10 +183,10 @@ test('Standard model menu never exposes extensions',()=>{let s=K.createState('st
 
 // Milestone 14 — controller transition tests (independent of HTML UI).
 function keys14(model,events){let s=K.createState(model);for(let key of events)s=K.dispatchKey(s,key);return s}
-test('M14 setup Format Fix digits',()=>{let s=keys14('standard',['SHIFT','MODE','4','3']);eq(s.setup.format,'Fix');eq(s.setup.digits,3);eq(s.view,'edit')});
-test('M14 setup Norm1',()=>{let s=keys14('standard',['SHIFT','MODE','6']);eq(s.setup.format,'Norm1')});
-test('M14 setup Norm2',()=>{let s=keys14('standard',['SHIFT','MODE','7']);eq(s.setup.format,'Norm2')});
-test('M14 setup Sci 5',()=>{let s=keys14('standard',['SHIFT','MODE','5','5']);eq(s.setup.format,'Sci');eq(s.setup.digits,5)});
+test('M14 setup Format Fix digits',()=>{let s=keys14('standard',['SHIFT','MODE','6','3']);eq(s.setup.format,'Fix');eq(s.setup.digits,3);eq(s.view,'edit')});
+test('M14 setup Norm1',()=>{let s=keys14('standard',['SHIFT','MODE','8','1']);eq(s.setup.format,'Norm1')});
+test('M14 setup Norm2',()=>{let s=keys14('standard',['SHIFT','MODE','8','2']);eq(s.setup.format,'Norm2')});
+test('M14 setup Sci 5',()=>{let s=keys14('standard',['SHIFT','MODE','7','5']);eq(s.setup.format,'Sci');eq(s.setup.digits,5)});
 test('M14 setup cancel',()=>{let s=keys14('standard',['SHIFT','MODE','AC']);eq(s.view,'edit')});
 test('M14 OFF and ON',()=>{let s=keys14('standard',['SHIFT','AC']);eq(s.power,false);s=K.dispatchKey(s,'3');eq(s.expression,'');s=K.dispatchKey(s,'ON');eq(s.power,true)});
 test('M14 STO register prompt stores typed result',()=>{let s=keys14('standard',['8','=','SHIFT','RCL']);eq(s.view,'register-prompt');s=K.dispatchKey(s,'B');eq(K.valueToString(s.memory.B),'8')});
@@ -406,6 +406,24 @@ test('M23 nested vertical navigation does not change source',()=>{let d=E.templa
 test('M23 vertically scrolled frame deterministic',()=>{let d=E.create();for(let i=0;i<3;i++){d=E.template(d,'Fraction');d=E.move(d,'DOWN')}let s=K.semanticScreen(K.createState());s.document=d;let a=L.rasterizeScreen(s),b=L.rasterizeScreen(s);eq(K.frameHash(a),K.frameHash(b))});
 test('M23 clipping preserves pixel bounds',()=>{let f=new L.Framebuffer();f.clip={left:0,right:96,top:7,bottom:22};f.line(1,0,1,30);eq(f.pixels[96*0+1],0);eq(f.pixels[96*12+1],1);eq(f.pixels[96*30+1],0)});
 
+// Phase 4: verified manual MODE/SETUP numbering (not firmware pixel parity).
+test('P4 MODE direct key 8 selects VECTOR',()=>{let s=K.createState();for(let k of ['MODE','8'])s=K.dispatchKey(s,k);eq(s.mode,'VECTOR');eq(s.view,'workflow-menu')});
+test('P4 MODE direct key 7 selects TABLE',()=>{let s=K.createState();for(let k of ['MODE','7'])s=K.dispatchKey(s,k);eq(s.mode,'TABLE')});
+test('P4 MODE direct key 5 selects EQN',()=>{let s=K.createState();for(let k of ['MODE','5'])s=K.dispatchKey(s,k);eq(s.mode,'EQN')});
+test('P4 MODE C extension page selects INEQ',()=>{let s=K.createState('c');for(let k of ['MODE','DOWN','1'])s=K.dispatchKey(s,k);eq(s.mode,'INEQ')});
+test('P4 SETUP 3 selects degrees',()=>{let s=K.createState();for(let k of ['SHIFT','MODE','3'])s=K.dispatchKey(s,k);eq(s.setup.angle,'DEG');eq(s.view,'edit')});
+test('P4 SETUP 4 selects radians',()=>{let s=K.createState();for(let k of ['SHIFT','MODE','4'])s=K.dispatchKey(s,k);eq(s.setup.angle,'RAD')});
+test('P4 SETUP 5 selects grads',()=>{let s=K.createState();for(let k of ['SHIFT','MODE','5'])s=K.dispatchKey(s,k);eq(s.setup.angle,'GRAD')});
+test('P4 SETUP 6 then 2 selects Fix 2',()=>{let s=K.createState();for(let k of ['SHIFT','MODE','6','2'])s=K.dispatchKey(s,k);eq(s.setup.format,'Fix');eq(s.setup.digits,2)});
+test('P4 SETUP 7 then 4 selects Sci 4',()=>{let s=K.createState();for(let k of ['SHIFT','MODE','7','4'])s=K.dispatchKey(s,k);eq(s.setup.format,'Sci');eq(s.setup.digits,4)});
+test('P4 SETUP 8 then 1 selects Norm 1',()=>{let s=K.createState();for(let k of ['SHIFT','MODE','8','1'])s=K.dispatchKey(s,k);eq(s.setup.format,'Norm1')});
+test('P4 SETUP 8 then 2 selects Norm 2',()=>{let s=K.createState();for(let k of ['SHIFT','MODE','8','2'])s=K.dispatchKey(s,k);eq(s.setup.format,'Norm2')});
+test('P4 SETUP MthIO preference selector does not claim output parity',()=>{let s=K.createState();for(let k of ['SHIFT','MODE','1','2'])s=K.dispatchKey(s,k);eq(s.ui.displayStyle,'LineO');eq(s.view,'edit')});
+test('P4 SETUP secondary page has visible options and no fake settings',()=>{let s=K.createState();for(let k of ['SHIFT','MODE','DOWN'])s=K.dispatchKey(s,k);let menu=K.semanticScreen(s);eq(menu.menuItems.length,6);for(let k of ['1','2','3'])s=K.dispatchKey(s,k);eq(s.view,'setup')});
+test('P4 SETUP cancels secondary page with AC',()=>{let s=K.createState();for(let k of ['SHIFT','MODE','DOWN','AC'])s=K.dispatchKey(s,k);eq(s.view,'edit')});
+test('P4 LCD MODE grid renders all eight standard choices',()=>{let s=K.createState();s=K.dispatchKey(s,'MODE');let sc=K.semanticScreen(s);eq(sc.menuItems.length,8);let frame=L.composeScreen(sc);eq(frame.pixels.length,96*31)});
+test('P4 LCD SETUP grid renders documented first page',()=>{let s=K.createState();for(let k of ['SHIFT','MODE'])s=K.dispatchKey(s,k);let sc=K.semanticScreen(s);eq(sc.menuItems.length,8);eq(sc.menuItems[0],'1:MthIO');eq(sc.menuItems[7],'8:Norm')});
+
 // Milestone 24: physical-key resolution, insert/overwrite and structural deletion.
 const KM=global.FX991_KEYS;
 test('M24 key profiles explicit and immutable',()=>{eq(KM.profiles.standard.id,'fx991esplus-2');eq(Object.isFrozen(KM.profiles.c),true)});
@@ -448,7 +466,7 @@ test('M25 COMP SIN still creates structural template',()=>{let s=K.createState()
 test('M25 normal RCL enters register prompt',()=>{let s=K.createState();s=K.dispatchKey(s,'RCL_MENU');eq(s.view,'register-prompt');eq(s.ui.pending,'RCL')});
 test('M25 RCL prompt cancelled by AC',()=>{let s=K.createState();for(let k of ['RCL_MENU','AC'])s=K.dispatchKey(s,k);eq(s.view,'edit');eq(s.ui.pending,null)});
 test('M25 SHIFT RCL stores then RCL recalls',()=>{let s=K.createState();for(let k of ['7','=','SHIFT','RCL','A','AC','RCL_MENU','A'])s=K.dispatchKey(s,k);eq(s.expression,'A');eq(K.valueToString(s.memory.A),'7')});
-test('M25 DEG through SETUP and inverse SIN',()=>{let s=K.createState();for(let k of ['SHIFT','MODE','1','SHIFT','SIN','0','.','5','RP','='])s=K.dispatchKey(s,k);eq(s.result,'30')});
+test('M25 DEG through SETUP and inverse SIN',()=>{let s=K.createState();for(let k of ['SHIFT','MODE','3','SHIFT','SIN','0','.','5','RP','='])s=K.dispatchKey(s,k);eq(s.result,'30')});
 test('M25 C mode menu has second and third pages',()=>{let s=K.createState('c');for(let k of ['MODE','DOWN','DOWN','1'])s=K.dispatchKey(s,k);eq(s.mode,'INEQ')});
 test('M25 editing after power result appends correctly',()=>{let s=K.createState();for(let k of ['3','='])s=K.dispatchKey(s,k);s=K.dispatchKey(s,'SHIFT');s=K.dispatchKey(s,'LN');eq(s.expression,'exp()')});
 // Milestone 26 — end-to-end keypad mode-data workflow acceptance.
