@@ -9,6 +9,16 @@ const FONT={
 'A':['010','101','111','101','101'],'B':['110','101','110','101','110'],'C':['011','100','100','100','011'],'D':['110','101','101','101','110'],'E':['111','100','110','100','111'],'F':['111','100','110','100','100'],'G':['011','100','101','101','011'],'H':['101','101','111','101','101'],'I':['111','010','010','010','111'],'J':['001','001','001','101','010'],'K':['101','101','110','101','101'],'L':['100','100','100','100','111'],'M':['101','111','111','101','101'],'N':['101','111','111','111','101'],'O':['111','101','101','101','111'],'P':['110','101','110','100','100'],'Q':['111','101','101','111','001'],'R':['110','101','110','101','101'],'S':['011','100','010','001','110'],'T':['111','010','010','010','010'],'U':['101','101','101','101','111'],'V':['101','101','101','101','010'],'W':['101','101','111','111','101'],'X':['101','101','010','101','101'],'Y':['101','101','010','010','010'],'Z':['111','001','010','100','111'],
 '+':['000','010','111','010','000'],'-':['000','000','111','000','000'],'/':['001','001','010','100','100'],'*':['000','101','010','101','000'],'=':['000','111','000','111','000'],'.':['000','000','000','000','010'],':':['000','010','000','010','000'],',':['000','000','000','010','100'],'(':['001','010','010','010','001'],')':['100','010','010','010','100'],'^':['010','101','000','000','000'],'?':['110','001','010','000','010'],' ':['000','000','000','000','000'],'<':['001','010','100','010','001'],'>':['100','010','001','010','100'],'π':['000','111','101','101','101'],'√':['001','001','101','110','100'],'_':['000','000','000','000','111'],'!':['010','010','010','000','010'],'|':['010','010','010','010','010'],'□':['111','101','101','101','111'],'↑':['010','111','010','010','010'],'↓':['010','010','010','111','010']
 };
+// Independently drawn compact symbols for common mathematical result labels.
+// These are legibility aids, NOT copies of any manufacturer's LCD bitmaps.
+Object.assign(FONT,{
+ '−':FONT['-'],'×':['101','010','010','010','101'],'÷':['010','000','111','000','010'],
+ '∞':['000','101','111','101','000'],'σ':['000','111','101','101','010'],
+ 'θ':['010','101','111','101','010'],'Σ':['111','100','010','100','111'],
+ '∫':['011','010','010','010','110'],'°':['010','101','010','000','000'],
+ '²':['110','001','010','100','111'],'³':['110','001','010','001','110'],
+ '→':['000','001','111','001','000'],'⇔':['010','111','000','111','010']
+});
 class Framebuffer{
  constructor(){this.width=WIDTH;this.height=HEIGHT;this.pixels=new Uint8Array(WIDTH*HEIGHT);this.clip=null}
  pixel(x,y,on=1){x=Math.round(x);y=Math.round(y);if(x>=0&&x<WIDTH&&y>=0&&y<HEIGHT&&(!this.clip||(y>=this.clip.top&&y<this.clip.bottom&&x>=this.clip.left&&x<this.clip.right)))this.pixels[y*WIDTH+x]=on?1:0}
@@ -21,7 +31,7 @@ class Framebuffer{
 function make(width,height,commands,anchors=[],baseline=height-1){
  return {width:Math.max(0,Math.ceil(width)),height:Math.max(1,Math.ceil(height)),baseline:Math.max(0,Math.ceil(baseline)),commands,anchors};
 }
-function glyphBox(s){s=String(s);return make(s.length*4,5,[{type:'text',text:s,x:0,y:0}],[],4)}
+function glyphBox(s){s=String(s);return make(Array.from(s).length*4,5,[{type:'text',text:s,x:0,y:0}],[],4)}
 function placeholder(){return make(4,7,[{type:'text',text:'□',x:0,y:1}],[],5)}
 function embed(box,x,y,cmds,anchors){cmds.push({type:'child',box,x,y});for(const a of box.anchors)anchors.push({...a,x:a.x+x,y:a.y+y})}
 function sequence(seq,anchor){
@@ -94,25 +104,33 @@ function composeScreen(screen){let f=new Framebuffer(),status=screen.indicators.
  let caret=box.anchors.find(a=>a.kind==='cursor');
  let anchorX=caret?caret.x:Math.min(box.width,4*(screen.cursor||0));
  let anchorY=caret?caret.y:Math.min(box.height-1,box.baseline);
- let scrollX=Math.max(0,Math.min(Math.max(0,box.width-WIDTH),anchorX-87));
- let scrollY=box.height<=inputHeight?0:Math.max(0,Math.min(box.height-inputHeight,anchorY-Math.floor(inputHeight/2)));
- let y=inputTop+(box.height<=inputHeight?Math.floor((inputHeight-box.height)/2):0)-scrollY;
- f.clip={left:0,right:WIDTH,top:inputTop,bottom:inputBottom};
- drawBox(box,f,-scrollX,y);
- if(screen.view==='edit'){
-  let cx=anchorX-scrollX,cy=y+anchorY;
-  if(cx>=0&&cx<WIDTH&&cy>=inputTop&&cy<inputBottom)f.line(cx,cy,cx+Math.min(2,WIDTH-1-cx),cy);
- }
+ // Reserve fixed side gutters only when the content/caret cannot fit.
+ // Cursor room counts toward overflow: a 24-character row fills 96 columns
+ // but still needs pixels to show the cursor after its last glyph.
+ const isEditing=screen.view==='edit';
+ const cursorWidth=isEditing?3:0;
+ const guttered=box.width+cursorWidth>WIDTH||box.height>inputHeight;
+ const left=guttered?4:0,right=guttered?WIDTH-4:WIDTH,visibleWidth=right-left;
+ const maxScrollX=Math.max(0,box.width+cursorWidth-visibleWidth);
+ // Keep the active cursor inside the content viewport, including at the end.
+ const scrollX=Math.min(maxScrollX,Math.max(0,anchorX-(visibleWidth-cursorWidth-1)));
+ const scrollY=box.height<=inputHeight?0:Math.max(0,Math.min(box.height-inputHeight,anchorY-Math.floor(inputHeight/2)));
+ const y=inputTop+(box.height<=inputHeight?Math.floor((inputHeight-box.height)/2):0)-scrollY;
+ f.clip={left,right,top:inputTop,bottom:inputBottom};
+ drawBox(box,f,left-scrollX,y);
+ const cx=left+anchorX-scrollX,cy=y+anchorY;
+ const caretVisible=isEditing&&cx>=left&&cx+cursorWidth<=right&&cy>=inputTop&&cy<inputBottom;
+ if(caretVisible)f.line(cx,cy,cx+cursorWidth-1,cy);
  f.clip=null;
+ // Overflow icons live exclusively in gutters. Vertical and horizontal
+ // markers use separate rows and cannot overwrite expression pixels.
  if(scrollX>0)f.glyph('<',0,9);
- if(box.width-scrollX>WIDTH)f.glyph('>',92,9);
- // Vertical overflow markers are drawn in the left margin and are not
- // part of the mathematical expression's semantic tree.
- if(scrollY>0)f.glyph('↑',0,7);
- if(scrollY+inputHeight<box.height)f.glyph('↓',0,16);
+ if(box.width-scrollX>visibleWidth)f.glyph('>',92,9);
+ if(scrollY>0)f.glyph('↑',0,16);
+ if(scrollY+inputHeight<box.height)f.glyph('↓',92,16);
  f.line(0,22,95,22);
  let result=String(screen.result||'');if(result.length>24)result=result.slice(-24);f.text(result,Math.max(0,96-4*result.length),25);
- return {pixels:f.pixels,overflow:box.width>WIDTH||box.height>inputHeight,scrollX,scrollY,layout:box,viewport:{top:inputTop,bottom:inputBottom}};
+ return {pixels:f.pixels,overflow:guttered,scrollX,scrollY,caretVisible,layout:box,viewport:{left,right,top:inputTop,bottom:inputBottom}};
 }
 function rasterizeScreen(screen){return composeScreen(screen).pixels}
 const api=Object.freeze({WIDTH,HEIGHT,FONT,Framebuffer,layoutExpression,composeScreen,rasterizeScreen});global.FX991_DISPLAY=api;
