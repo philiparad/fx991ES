@@ -91,6 +91,18 @@ function layoutNode(node,anchor){
 function layoutExpression(document){if(!document||!document.root)return glyphBox('');return sequence(document.root,document.anchor)}
 function drawBox(box,fb,x,y){for(const c of box.commands){let xx=x+c.x,yy=y+c.y;if(c.type==='text')fb.text(c.text,xx,yy,2048);else if(c.type==='line')fb.line(x+c.x1,y+c.y1,x+c.x2,y+c.y2);else if(c.type==='child')drawBox(c.box,fb,xx,yy)}}
 function composeScreen(screen){let f=new Framebuffer(),status=screen.indicators.join(' ')+' '+screen.mode;f.text(status,0,0);f.line(0,6,95,6);
+ // MODE and main SETUP menu: four lines, two numbered options per line.
+ // This matches the documented selection layout, not proprietary glyph bitmaps.
+ if((screen.view==='mode'||screen.view==='setup')&&Array.isArray(screen.menuItems)){
+  const items=screen.menuItems;
+  for(let i=0;i<items.length&&i<8;i++){
+   const x=i%2===0?0:48,y=8+Math.floor(i/2)*6;
+   f.text(items[i],x,y,x+47);
+  }
+  if(screen.menuPage>0)f.glyph('↑',92,0);
+  else if(screen.view==='setup'||screen.mode==='COMP'&&items.length===8)f.glyph('↓',92,0);
+  return {pixels:f.pixels,overflow:false,scrollX:0,scrollY:0,layout:null};
+ }
  if(screen.view==='mode'||screen.view==='setup'||screen.view==='workflow-menu'||screen.view==='workflow-edit'||screen.view==='register-prompt'){
    f.text(screen.view==='mode'?'MODE':screen.view==='setup'?'SETUP':screen.view==='register-prompt'?'STO/RCL':'ENTRY',0,9);
    f.text((screen.expression||screen.result||'').slice(0,23),0,16);f.text((screen.result||'').slice(0,23),0,25);
