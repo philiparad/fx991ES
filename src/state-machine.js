@@ -283,6 +283,7 @@ function semanticScreen(s){if(!s.ui)return base.semanticScreen(s);let screen=bas
   let modes=base.modeList(s);
   screen.menuItems=s.menuPage===0?modes.slice(0,8).map((name,i)=>(i+1)+':'+name):modes.slice(8).map((name,i)=>(i+1)+':'+name);
   screen.menuPage=s.menuPage;
+  screen.hasMore=s.menuPage===0&&modes.length>8;
  }if(s.view==='workflow-menu'){let w=s.ui.wizard,choices=wizardConfigs[w.mode].menu;screen.result=choices.slice(s.menuPage*4,s.menuPage*4+4).map((c,i)=>(i+s.menuPage*4+1)+':'+c).join(' ');screen.expression='SELECT '+w.mode}
  if(s.view==='coefficient'){let w=s.ui.wizard;screen.expression=w.fields[w.index]+' = '+w.buffer;screen.result=(w.index+1)+'/'+w.fields.length}
  if(s.view==='result'&&s.ui.lastWizard){let w=s.ui.lastWizard,rows=s.lastValue?.data?.rows||s.lastValue?.data?.roots;if(Array.isArray(rows)&&rows.length){let index=w.resultPage||0;screen.expression=w.mode+' '+(index+1)+'/'+rows.length;screen.result=Array.isArray(rows[index])?rows[index].join(', '):String(rows[index])}}
