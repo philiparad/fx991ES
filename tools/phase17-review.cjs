@@ -4,6 +4,24 @@
 const fs=require('node:fs');
 const IDS=Array.from({length:12},(_,i)=>`F16-${String(i+1).padStart(2,'0')}`);
 const SCHEMA='fx991-phase17-independent-review-v1';
+const CHECKPOINTS=Object.freeze({
+ 'F16-01':[1,3,4,5],'F16-02':[1,3,4,5],'F16-03':[2,3,5,6,8,9],
+ 'F16-04':[2,3,5,7,9,11],'F16-05':[1,3,5,7,10],
+ 'F16-06':[1,3,4,5,6],'F16-07':[2,3,5,7,8,9],
+ 'F16-08':[1,3,4,5,6],'F16-09':[2,3,5,6],
+ 'F16-10':[2,3,5,7,9],'F16-11':[1,10,20,31,32,33,34,35],
+ 'F16-12':[1,3,4,5,6]
+});
+function hasCheckpoints(record,id){
+ if(!Array.isArray(record?.checkpoints))return false;
+ const found=new Map();
+ for(const item of record.checkpoints){
+  if(!object(item)||!Number.isInteger(item.step)||found.has(item.step))return false;
+  if(!object(item.observed)||!Object.values(item.observed).some(v=>typeof v==='string'&&v.trim().length>0))return false;
+  found.set(item.step,item);
+ }
+ return CHECKPOINTS[id].every(step=>found.has(step));
+}
 function assert(ok,message){if(!ok)throw new Error(message)}
 function object(x){return x!==null&&typeof x==='object'&&!Array.isArray(x)}
 function inspect(evidence,reviews){
@@ -33,12 +51,13 @@ function inspect(evidence,reviews){
   const captured=!!evidenceRecord&&['physical','official-emulator'].includes(evidenceRecord.kind)&&
     typeof evidenceRecord.observed?.result==='string'&&evidenceRecord.observed.result.trim().length>0&&
     typeof evidenceRecord.device==='string'&&evidenceRecord.device.trim().length>0;
-  const reviewed=captured&&!!review&&review.observationId===evidenceRecord.id&&
+  const checkpointComplete=captured&&hasCheckpoints(evidenceRecord,id);
+  const reviewed=checkpointComplete&&!!review&&review.observationId===evidenceRecord.id&&
     review.physicalKeyMappingConfirmed&&review.checkpointsVerified;
-  const status=!captured?'awaiting-device-observation':!review?'awaiting-independent-review':
+  const status=!captured?'awaiting-device-observation':!checkpointComplete?'checkpoint-observations-missing':!review?'awaiting-independent-review':
     !reviewed?'review-incomplete':review.disposition==='match'?'human-reviewed-match':
     review.disposition==='mismatch'?'human-reviewed-discrepancy':'inconclusive';
-  return {scenarioId:id,observationId:evidenceRecord?.id||null,status,
+  return {scenarioId:id,observationId:evidenceRecord?.id||null,checkpointComplete,status,
     disposition:reviewed?review.disposition:null};
  });
  return {schema:'fx991-phase17-readiness-report-v1',scenarioCount:12,
@@ -56,4 +75,4 @@ if(require.main===module){
   else{const report=inspect(JSON.parse(fs.readFileSync(argv[0],'utf8')),JSON.parse(fs.readFileSync(argv[1],'utf8')));console.log(JSON.stringify(report,null,2));if(!report.allReviewed)process.exitCode=1}
  }catch(error){console.error('Phase 17 review failed: '+error.message);process.exitCode=2}
 }
-module.exports={inspect,SCHEMA,IDS};
+module.exports={inspect,SCHEMA,IDS,CHECKPOINTS,hasCheckpoints};
