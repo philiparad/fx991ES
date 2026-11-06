@@ -4,14 +4,14 @@
 const raw=[
  ['F16-01','Simple MathO fraction',['FRAC','1','RIGHT','2','='],[1,3,4,5]],
  ['F16-02','Simple LineIO fraction',['FRAC','1','RIGHT','2','='],[1,3,4,5],'LineIO'],
- ['F16-03','Mixed fraction entry',['SHIFT','FRAC','2','RIGHT','3','RIGHT','4','='],[2,3,5,6,8,9]],
- ['F16-04','Mixed fraction result toggle',['SHIFT','FRAC','2','RIGHT','3','RIGHT','4','=','SHIFT','FRAC'],[2,3,5,7,9,11]],
- ['F16-05','Mixed fraction negative sign',['NEG','SHIFT','FRAC','2','RIGHT','3','RIGHT','4','='],[1,3,5,7,10]],
+ ['F16-03','Mixed fraction entry',['SHIFT','FRAC','2','RIGHT','3','RIGHT','4','='],[2,3,5,6,8]],
+ ['F16-04','Mixed fraction result toggle',['SHIFT','FRAC','2','RIGHT','3','RIGHT','4','=','SHIFT','FRAC'],[2,3,5,7,9]],
+ ['F16-05','Mixed fraction negative sign',['NEG','SHIFT','FRAC','2','RIGHT','3','RIGHT','4','='],[1,3,5,7]],
  ['F16-06','Fraction cursor return',['FRAC','1','RIGHT','2','LEFT','3'],[1,3,4,5,6]],
  ['F16-07','Mixed cursor return',['SHIFT','FRAC','2','RIGHT','3','RIGHT','4','LEFT','LEFT'],[2,3,5,7,8,9]],
  ['F16-08','Fraction denominator deletion',['FRAC','1','RIGHT','2','DEL','='],[1,3,4,5,6]],
  ['F16-09','Mixed missing denominator',['SHIFT','FRAC','2','RIGHT','3','='],[2,3,5,6]],
- ['F16-10','Mixed improper numerator',['SHIFT','FRAC','2','RIGHT','5','RIGHT','4','='],[2,3,5,7,9]],
+ ['F16-10','Mixed improper numerator',['SHIFT','FRAC','2','RIGHT','5','RIGHT','4','='],[2,3,5,7]],
  ['F16-11','Long fraction result scrolling',['FRAC',...'12345678901234567890123456789'.split(''),'RIGHT','3','1','=','RIGHT','RIGHT','LEFT'],[1,10,20,31,32,33,34,35]],
  ['F16-12','Fraction decimal toggle',['FRAC','1','RIGHT','5','=','S-D'],[1,3,4,5,6]]
 ];
