@@ -1,0 +1,16 @@
+'use strict';
+const assert=require('node:assert/strict');
+const {inspect,SCHEMA,IDS}=require('./phase17-review.cjs');
+const empty=()=>({schema:'fx991-device-evidence-v1',records:[]});
+const reviews=()=>({schema:SCHEMA,reviews:[]});
+let r=inspect(empty(),reviews());
+assert.equal(r.scenarioCount,12);assert.equal(r.recorded,0);assert.equal(r.allReviewed,false);assert.equal(r.hardwareParityCertified,false);
+const e=empty();e.records.push({id:'auth-01',scenarioId:IDS[0],kind:'physical',device:'fx-991ES PLUS',observed:{result:'1/2'}});
+r=inspect(e,reviews());assert.equal(r.recorded,1);assert.equal(r.independentlyReviewed,0);
+const v=reviews();v.reviews.push({scenarioId:IDS[0],observationId:'auth-01',reviewer:'Independent reviewer',reviewedAt:'2026-11-06',disposition:'mismatch',physicalKeyMappingConfirmed:true,checkpointsVerified:true,notes:'Hypothetical test fixture only'});
+r=inspect(e,v);assert.deepEqual(r.discrepancies,[IDS[0]]);assert.equal(r.independentlyReviewed,1);assert.equal(r.hardwareParityCertified,false);
+v.reviews[0].observationId='wrong';r=inspect(e,v);assert.equal(r.rows[0].status,'review-incomplete');
+v.reviews[0].observationId='auth-01';v.reviews[0].physicalKeyMappingConfirmed=false;r=inspect(e,v);assert.equal(r.rows[0].status,'review-incomplete');
+assert.throws(()=>inspect({schema:'wrong',records:[]},reviews()),/Invalid device evidence/);
+assert.throws(()=>inspect(e,{schema:SCHEMA,reviews:[v.reviews[0],v.reviews[0]]}),/Duplicate independent review/);
+console.log('Phase 17 readiness tests: passed (all inputs are synthetic test fixtures)');
