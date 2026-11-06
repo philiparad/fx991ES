@@ -1021,6 +1021,34 @@ test('INTEGRAL intentionally refuses improper but convergent 1/sqrt(X)',()=>{
  catch(e){eq(e.code,K.ERROR.MATH)}
 });
 
+test('Numerical integration returns domain_sample diagnostic',()=>{
+ try{N.run(numState(),'INTEGRAL','1/X',{lower:-1,upper:1});throw Error('expected error')}
+ catch(e){eq(e.code,K.ERROR.MATH);eq(e.numericalReason,'domain_sample');eq(e.numericalDetails.context,'integration_sample')}
+});
+test('Numerical derivative of abs at cusp reports reason',()=>{
+ try{N.run(numState(),'DIFF','abs(X)',{at:0});throw Error('expected error')}
+ catch(e){eq(e.code,K.ERROR.MATH);eq(e.numericalReason,'non_differentiable')}
+});
+test('Numerical solver with zero slope reports reason',()=>{
+ try{N.run(numState(),'SOLVE','X^2-2',{guess:0});throw Error('expected error')}
+ catch(e){eq(e.code,K.ERROR.CANT_SOLVE);eq(e.numericalReason,'near_zero_slope')}
+});
+test('Numerical integration retains convergence metrics for smooth functions',()=>{
+ const r=N.run(numState(),'INTEGRAL','X^2',{lower:0,upper:2});
+ close(K.numeric(r.value),8/3,1e-6);
+ eq(Number.isFinite(r.metadata.errorEstimate),true);
+ eq(r.metadata.evaluations>=65,true);
+});
+test('Numerical execute retains domain diagnostic without updating Ans',()=>{
+ const s=N.execute(numState(),'INTEGRAL','1/X',{lower:-1,upper:1});
+ eq(s.view,'error');eq(s.error,K.ERROR.MATH);eq(s.numericalDetails.reason,'domain_sample');close(K.numeric(s.ans),0);
+});
+test('DIFF keypad exposes reason for non-differentiable cusp',()=>{
+ let s=K.createState('standard');s.expression='abs(X)';s.document=global.FX991_EDITOR.fromSource(s.expression);
+ for(const key of ['DIFF','0','='])s=K.dispatchKey(s,key);
+ eq(s.view,'error');eq(s.numericalDetails.reason,'non_differentiable');
+});
+
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
