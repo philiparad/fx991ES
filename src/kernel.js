@@ -151,7 +151,17 @@ function dispatchKey(state,key){let s={...state,setup:{...state.setup},memory:{.
  if(key==='S-D'){if(s.lastValue){s.decimalView=!s.decimalView;s.result=valueDisplay(s.lastValue,s.setup,s.decimalView,s.mode)}return finish()}
  if(key==='STO'){let reg=s.selectedRegister||'A';s.memory[reg]=s.lastValue||s.ans;return finish()}
  if(key==='RCL'){key=s.selectedRegister||'A'}
- if(key==='='){try{sync();if(E&&s.mode==='COMP'&&s.document&&E.invalidSlots(s.document).length){let missing=E.firstMissingAnchor(s.document);throw new CalcError(ERROR.SYNTAX,missing?E.sourceCursor(missing):s.cursor)}let value=calculateExpression(s.mode,s.expression,s);s.lastValue=value;s.ans=value.kind==='mode-result'?value.ans:value.kind==='base'?rat(value.value):value.kind==='complex'?value.re:value;s.result=valueDisplay(value,s.setup,s.decimalView,s.mode);s.view='result';s.error=null;s.history.unshift({expression:s.expression,display:s.result});s.history=s.history.slice(0,50);s.historyCursor=-1}catch(e){s.error=e.code||ERROR.MATH;s.errorPos=Number.isInteger(e.position)?e.position:s.cursor;s.view='error';s.result=s.error}return finish()}
+ if(key==='='){try{sync();if(E&&s.mode==='COMP'&&s.document&&E.invalidSlots(s.document).length){let missing=E.firstMissingAnchor(s.document);throw new CalcError(ERROR.SYNTAX,missing?E.sourceCursor(missing):s.cursor)}let value=calculateExpression(s.mode,s.expression,s);
+  // CASIO distinguishes a dedicated fraction template from a ÷ operation.
+  // Under LineIO, a fraction-entry template initially displays an exact
+  // fraction; S⇔D then toggles to decimal. Ordinary DIV remains decimal-first.
+  const hasFraction=(node)=>node&&typeof node==='object'&&
+   (node.kind==='Fraction'||(node.kind==='Sequence'&&node.children.some(hasFraction))||
+    ['numerator','denominator','exponent','radicand','degree','argument','body'].some(k=>node[k]&&hasFraction(node[k])));
+  if(s.mode==='COMP'&&effectiveDisplayStyle(s.setup,s.mode)==='LineIO'){
+   s.decimalView=!!(E&&s.document&&hasFraction(s.document.root));
+  }
+  s.lastValue=value;s.ans=value.kind==='mode-result'?value.ans:value.kind==='base'?rat(value.value):value.kind==='complex'?value.re:value;s.result=valueDisplay(value,s.setup,s.decimalView,s.mode);s.view='result';s.error=null;s.history.unshift({expression:s.expression,display:s.result});s.history=s.history.slice(0,50);s.historyCursor=-1}catch(e){s.error=e.code||ERROR.MATH;s.errorPos=Number.isInteger(e.position)?e.position:s.cursor;s.view='error';s.result=s.error}return finish()}
  if(E&&s.mode==='COMP'&&s.document&&['FRAC','POW','SQRT','NROOT','SIN','COS','TAN','LOG','LN','LP'].includes(key)){if(s.shift&&key==='SQRT')key='NROOT';const kinds={FRAC:['Fraction'],POW:['Power'],SQRT:['Root'],NROOT:['Root','nth'],SIN:['Function',s.shift?'asin':'sin'],COS:['Function',s.shift?'acos':'cos'],TAN:['Function',s.shift?'atan':'tan'],LOG:['Function','log'],LN:['Function','ln'],LP:['Group']};s.document=E.template(s.document,...kinds[key]);s.view='edit';s.result='';s.shift=false;s.alpha=false;return finish()}
  let replacements={ADD:'+',SUB:'-',MUL:'*',DIV:'/',NEG:'-',POW:'^',SQ:'^2',SQRT:'sqrt(',PI:'pi',SIN:'sin(',COS:'cos(',TAN:'tan(',LP:'(',RP:')',ANS:'Ans'};
  let literal=replacements[key]||(/^[0-9.]$/.test(key)?key:/^[A-FMXY]$/.test(key)?key:null);
