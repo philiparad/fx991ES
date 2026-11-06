@@ -51,6 +51,8 @@ function validate(entry){
    }
   }
  }
+ if(entry.scenarioId!==undefined)check(typeof entry.scenarioId==='string'&&
+   !!global.FX991_REFERENCE_PLAN?.get(entry.scenarioId),'unknown planned scenario ID');
  if(entry.photoRef!==undefined)check(typeof entry.photoRef==='string'&&entry.photoRef.length<=300&&
    !/[<>]/.test(entry.photoRef),'invalid photo reference');
  check(typeof entry.notes==='string'&&entry.notes.length<=2000,'invalid notes');
@@ -72,7 +74,21 @@ function compare(entry){let r=validate(entry);let reference={caseId:r.id,model:r
   issues,firstDivergence:diff.firstDivergence?diff.firstDivergence.step:null,
   actual:out.actual,steps:out.steps};}
 function review(corpus){let evidence=importEvidence(corpus);let results=evidence.records.map(compare);let failures=results.filter(x=>!x.passed);let byCategory={};for(let r of failures)for(let i of r.issues)byCategory[i.category]=(byCategory[i.category]||0)+1;let covered={standard:0,c:0};for(let r of evidence.records)covered[r.model]++;return {schema:'fx991-device-review-v1',totals:{records:results.length,passed:results.length-failures.length,failed:failures.length},coverage:covered,byCategory,results,certified:false};}
-function scenario(id){let p=PRESETS.find(x=>x.id===id);check(!!p,'unknown scenario');return {id:p.id,model:p.model,keys:[...p.keys],manual:p.manual,area:p.area}}
-const API=Object.freeze({PRESETS,MAX,empty,validate,importEvidence,add,compare,review,scenario,classify});
+function scenario(id){
+ const plan=global.FX991_REFERENCE_PLAN?.get(id);
+ if(plan)return {id:plan.id,model:plan.model,keys:[...plan.keys],manual:null,area:plan.area,
+   setup:{...plan.setup},title:plan.title,planned:true};
+ let p=PRESETS.find(x=>x.id===id);check(!!p,'unknown scenario');
+ return {id:p.id,model:p.model,keys:[...p.keys],manual:p.manual,area:p.area,planned:false};
+}
+function scenarios(){
+ return [...(global.FX991_REFERENCE_PLAN?.CASES||[]).map(p=>scenario(p.id)),
+   ...PRESETS.map(p=>scenario(p.id))];
+}
+function planCoverage(corpus){
+ const evidence=importEvidence(corpus);
+ return global.FX991_REFERENCE_PLAN?.coverage(evidence)||{planned:0,recorded:0,unrecorded:0,categories:{},authenticated:false};
+}
+const API=Object.freeze({PRESETS,MAX,empty,validate,importEvidence,add,compare,review,scenario,scenarios,planCoverage,classify});
 global.FX991_DEVICE=API;
 })(typeof window!=='undefined'?window:globalThis);
