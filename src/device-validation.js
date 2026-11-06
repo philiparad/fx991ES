@@ -52,7 +52,7 @@ function validate(entry){
   }
  }
  if(entry.scenarioId!==undefined)check(typeof entry.scenarioId==='string'&&
-   !!global.FX991_REFERENCE_PLAN?.get(entry.scenarioId),'unknown planned scenario ID');
+   (!!global.FX991_REFERENCE_PLAN?.get(entry.scenarioId)||!!global.FX991_FRACTION_VALIDATION?.get(entry.scenarioId)),'unknown planned scenario ID');
  if(entry.photoRef!==undefined)check(typeof entry.photoRef==='string'&&entry.photoRef.length<=300&&
    !/[<>]/.test(entry.photoRef),'invalid photo reference');
  if(entry.media!==undefined){
@@ -81,6 +81,8 @@ function compare(entry){let r=validate(entry);let reference={caseId:r.id,model:r
   actual:out.actual,steps:out.steps};}
 function review(corpus){let evidence=importEvidence(corpus);let results=evidence.records.map(compare);let failures=results.filter(x=>!x.passed);let byCategory={};for(let r of failures)for(let i of r.issues)byCategory[i.category]=(byCategory[i.category]||0)+1;let covered={standard:0,c:0};for(let r of evidence.records)covered[r.model]++;return {schema:'fx991-device-review-v1',totals:{records:results.length,passed:results.length-failures.length,failed:failures.length},coverage:covered,byCategory,results,certified:false};}
 function scenario(id){
+ const focus=global.FX991_FRACTION_VALIDATION?.get(id);
+ if(focus)return {id:focus.id,model:focus.model,keys:[...focus.keys],manual:null,area:'fraction-hardware',setup:{...focus.setup},title:focus.title,planned:true,focus:true,checkpoints:[...focus.checkpoints]};
  const plan=global.FX991_REFERENCE_PLAN?.get(id);
  if(plan)return {id:plan.id,model:plan.model,keys:[...plan.keys],manual:null,area:plan.area,
    setup:{...plan.setup},title:plan.title,planned:true};
@@ -88,7 +90,8 @@ function scenario(id){
  return {id:p.id,model:p.model,keys:[...p.keys],manual:p.manual,area:p.area,planned:false};
 }
 function scenarios(){
- return [...(global.FX991_REFERENCE_PLAN?.CASES||[]).map(p=>scenario(p.id)),
+ return [...(global.FX991_FRACTION_VALIDATION?.CASES||[]).map(p=>scenario(p.id)),
+   ...(global.FX991_REFERENCE_PLAN?.CASES||[]).map(p=>scenario(p.id)),
    ...PRESETS.map(p=>scenario(p.id))];
 }
 function planCoverage(corpus){
