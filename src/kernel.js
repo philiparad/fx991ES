@@ -174,7 +174,22 @@ function dispatchKey(state,key){let s={...state,setup:{...state.setup},memory:{.
  }
  if(key==='STO'){let reg=s.selectedRegister||'A';s.memory[reg]=s.lastValue||s.ans;return finish()}
  if(key==='RCL'){key=s.selectedRegister||'A'}
- if(key==='='){try{sync();if(E&&s.mode==='COMP'&&s.document&&E.invalidSlots(s.document).length){let missing=E.firstMissingAnchor(s.document);throw new CalcError(ERROR.SYNTAX,missing?E.sourceCursor(missing):s.cursor)}let value=calculateExpression(s.mode,s.expression,s);
+ if(key==='='){try{sync();if(E&&s.mode==='COMP'&&s.document){
+   const examine=(seq)=>{for(const child of seq.children){
+     if(child.kind==='MixedFraction'){
+       const digits=x=>x.children.every(t=>t.kind==='Token'&&/^[0-9]$/.test(t.value))?
+         x.children.map(t=>t.value).join(''):null;
+       const whole=digits(child.whole),num=digits(child.numerator),den=digits(child.denominator);
+       if(whole===null||num===null||den===null||whole.length>10||num.length>10||den.length>10||
+          BigInt(whole||'0')<1n||BigInt(num||'0')<1n||BigInt(den||'0')<=BigInt(num||'0'))
+         throw new CalcError(ERROR.ARGUMENT);
+     }
+     for(const part of ['whole','numerator','denominator','exponent','radicand','degree','argument','body'])
+       if(child[part]&&child[part].kind==='Sequence')examine(child[part]);
+   }};
+   examine(s.document.root);
+  }
+  if(E&&s.mode==='COMP'&&s.document&&E.invalidSlots(s.document).length){let missing=E.firstMissingAnchor(s.document);throw new CalcError(ERROR.SYNTAX,missing?E.sourceCursor(missing):s.cursor)}let value=calculateExpression(s.mode,s.expression,s);
   // CASIO distinguishes a dedicated fraction template from a ÷ operation.
   // Under LineIO, a fraction-entry template initially displays an exact
   // fraction; S⇔D then toggles to decimal. Ordinary DIV remains decimal-first.
@@ -185,7 +200,7 @@ function dispatchKey(state,key){let s={...state,setup:{...state.setup},memory:{.
    s.decimalView=!!(E&&s.document&&hasFraction(s.document.root))&&!s.expression.includes('.');
   }
   s.mixedView=false;s.resultScrollX=0;s.lastValue=value;s.ans=value.kind==='mode-result'?value.ans:value.kind==='base'?rat(value.value):value.kind==='complex'?value.re:value;s.result=valueDisplay(value,s.setup,s.decimalView,s.mode);s.view='result';s.error=null;s.history.unshift({expression:s.expression,display:s.result});s.history=s.history.slice(0,50);s.historyCursor=-1}catch(e){s.error=e.code||ERROR.MATH;s.errorPos=Number.isInteger(e.position)?e.position:s.cursor;s.view='error';s.result=s.error}return finish()}
- if(E&&s.mode==='COMP'&&s.document&&['FRAC','POW','SQRT','NROOT','SIN','COS','TAN','LOG','LN','LP'].includes(key)){if(s.shift&&key==='SQRT')key='NROOT';const kinds={FRAC:['Fraction'],POW:['Power'],SQRT:['Root'],NROOT:['Root','nth'],SIN:['Function',s.shift?'asin':'sin'],COS:['Function',s.shift?'acos':'cos'],TAN:['Function',s.shift?'atan':'tan'],LOG:['Function','log'],LN:['Function','ln'],LP:['Group']};s.document=E.template(s.document,...kinds[key]);s.view='edit';s.result='';s.shift=false;s.alpha=false;return finish()}
+ if(E&&s.mode==='COMP'&&s.document&&['FRAC','MIXIN','POW','SQRT','NROOT','SIN','COS','TAN','LOG','LN','LP'].includes(key)){if(s.shift&&key==='SQRT')key='NROOT';const kinds={FRAC:['Fraction'],MIXIN:['MixedFraction'],POW:['Power'],SQRT:['Root'],NROOT:['Root','nth'],SIN:['Function',s.shift?'asin':'sin'],COS:['Function',s.shift?'acos':'cos'],TAN:['Function',s.shift?'atan':'tan'],LOG:['Function','log'],LN:['Function','ln'],LP:['Group']};s.document=E.template(s.document,...kinds[key]);s.view='edit';s.result='';s.shift=false;s.alpha=false;return finish()}
  let replacements={ADD:'+',SUB:'-',MUL:'*',DIV:'/',NEG:'-',POW:'^',SQ:'^2',SQRT:'sqrt(',PI:'pi',SIN:'sin(',COS:'cos(',TAN:'tan(',LP:'(',RP:')',ANS:'Ans'};
  let literal=replacements[key]||(/^[0-9.]$/.test(key)?key:/^[A-FMXY]$/.test(key)?key:null);
  if(literal!==null){if(s.view==='result'){s.expression='';s.cursor=0;s.resultScrollX=0;s.mixedView=false;if(E)s.document=E.create()}if(E&&s.mode==='COMP'&&s.document)s.document=E.insertToken(s.document,literal);else{s.expression=s.expression.slice(0,s.cursor)+literal+s.expression.slice(s.cursor);s.cursor+=literal.length}s.view='edit';s.result='';s.shift=false;s.alpha=false}return finish();}
