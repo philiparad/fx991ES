@@ -431,6 +431,13 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
   return end();
  }
  // P0-03: °′″ enters sexagesimal fields; on a result it toggles DMS/decimal.
+ // P0-05: SHIFT+hyp inserts absolute value, not the hyperbolic menu.
+ if(key==='HYP'&&s.shift&&s.mode==='COMP'&&(s.view==='edit'||s.view==='result')){
+  if(s.view==='result'){s.document=E.create();s.expression='';s.cursor=0}
+  s.document=E.template(s.document,'Function','abs');
+  s.expression=E.serialize(s.document);s.cursor=E.sourceCursor(s.document);
+  s.shift=false;s.alpha=false;s.view='edit';s.result='';s.error=null;return end();
+ }
  // P0-04: the physical hyp key opens six hyperbolic function choices.
  // They do not use the DEG/RAD/GRAD angle setting.
  if(s.view==='hyp-menu'){

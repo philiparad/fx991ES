@@ -1184,6 +1184,21 @@ test('P0-04 HYP menu cancellation preserves editor source',()=>{
  s=K.dispatchKey(s,'AC');eq(s.view,'edit');eq(s.expression,'2');
 });
 
+test('P0-05 SHIFT HYP inserts absolute-value function',()=>{
+ let s=K.createState('standard');
+ for(const k of ['SHIFT','HYP','NEG','7','RP','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');close(K.numeric(s.lastValue),7,1e-12);
+});
+test('P0-05 abs computes difference inside function only',()=>{
+ let s=K.createState('standard');
+ for(const k of ['SHIFT','HYP','2','SUB','7','RP','MUL','2','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');close(K.numeric(s.lastValue),10,1e-12);
+});
+test('P0-05 SHIFT HYP does not open hyperbolic menu',()=>{
+ let s=K.createState('standard');s=K.dispatchKey(s,'SHIFT');s=K.dispatchKey(s,'HYP');
+ eq(s.view,'edit');eq(s.expression.includes('abs('),true);
+});
+
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
