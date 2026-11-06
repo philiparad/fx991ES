@@ -110,6 +110,15 @@ function effectiveDisplayStyle(setup={},mode='COMP'){
  if(['STAT','BASE-N','MATRIX','VECTOR'].includes(mode))return 'LineIO';
  return DISPLAY_STYLES.includes(setup.displayStyle)?setup.displayStyle:'MathO';
 }
+function mixedFractionText(v){
+ if(!v||v.kind!=='rational'||v.d<=1n)return null;
+ const whole=v.n/v.d,rem=(v.n<0n?-v.n:v.n)%v.d;
+ if(whole===0n||rem===0n)return null;
+ const w=String(whole),n=String(rem),d=String(v.d);
+ // Manufacturer documents a ten-character mixed fraction conversion limit.
+ if(w.length+n.length+d.length+2>10)return null;
+ return w+' '+n+'/'+d;
+}
 function valueDisplay(value,setup={},decimalView=false,mode='COMP'){
  if(value.kind==='complex'){let a=format(value.re,setup,true),b=numeric(value.im);return a+(b<0?' - ':' + ')+format(dec(Math.abs(b)),setup,true)+'i'}
  if(value.kind==='base')return value.text;
@@ -122,10 +131,10 @@ function valueDisplay(value,setup={},decimalView=false,mode='COMP'){
  return format(value,setup,true);
 }
 function calculateExpression(mode,source,context){if(mode!=='COMP'&&global.FX991_MODES)return global.FX991_MODES.calculate(mode,source,context);if(mode==='COMP')return evaluate(buildAst(buildDocument(source)),context);if(mode==='CMPLX')return parseComplex(source);if(mode==='BASE-N')return baseCalculate(source);throw new CalcError(ERROR.UNSUPPORTED)}
-function createState(model='standard'){const editor=global.FX991_EDITOR;const memory=Object.fromEntries(['A','B','C','D','E','F','M','X','Y'].map(k=>[k,rat(0n)]));return {model,mode:'COMP',view:'edit',menuPage:0,setup:{angle:'DEG',format:'Norm2',digits:3,displayStyle:'MathO'},shift:false,alpha:false,power:true,expression:'',cursor:0,document:editor?editor.create():null,ans:rat(0n),memory,lastValue:null,decimalView:false,result:'',error:null,errorPos:0,history:[],historyCursor:-1,trace:[]}}
+function createState(model='standard'){const editor=global.FX991_EDITOR;const memory=Object.fromEntries(['A','B','C','D','E','F','M','X','Y'].map(k=>[k,rat(0n)]));return {model,mode:'COMP',view:'edit',menuPage:0,setup:{angle:'DEG',format:'Norm2',digits:3,displayStyle:'MathO'},shift:false,alpha:false,power:true,expression:'',cursor:0,document:editor?editor.create():null,ans:rat(0n),memory,lastValue:null,decimalView:false,mixedView:false,resultScrollX:0,result:'',error:null,errorPos:0,history:[],historyCursor:-1,trace:[]}}
 function modeList(state){return MODELS[state.model].modes}
 function serialValue(v){if(!v)return null;if(v.kind==='rational')return {kind:v.kind,n:v.n.toString(),d:v.d.toString()};if(v.kind==='pi')return {kind:v.kind,coefficient:serialValue(v.coefficient)};if(v.kind==='radical')return {kind:v.kind,coefficient:serialValue(v.coefficient),radicand:v.radicand.toString()};if(isRadicalSum(v))return {kind:'radical-sum',scalar:serialValue(v.scalar),radicals:v.radicals.map(t=>({radicand:t.radicand.toString(),coefficient:serialValue(t.coefficient)}))};if(v.kind==='mode-result')return {kind:v.kind,text:v.text,ans:serialValue(v.ans),data:v.data};if(v.kind==='complex')return {kind:v.kind,re:serialValue(v.re),im:serialValue(v.im)};if(v.kind==='base')return {kind:'base',value:v.value.toString(),radix:v.radix,text:v.text};if(v.kind==='decimal'&&v.n!==undefined)return {kind:'decimal',value:v.value,n:v.n.toString(),d:v.d.toString()};return v}
-function semanticScreen(s){const modes=modeList(s);let message='';if(!s.power)message='OFF';else if(s.view==='mode')message=(s.menuPage===0?modes.slice(0,8).map((m,i)=>(i+1)+':'+m):modes.slice(8).map((m,i)=>(i+1)+':'+m)).join(' ');else if(s.view==='setup')message='1:DEG 2:RAD 3:GRA';else if(s.view==='error')message=s.error;else message=s.result;return {mode:s.mode,view:s.view,expression:s.expression,result:message,displayStyle:effectiveDisplayStyle(s.setup,s.mode),resultValue:s.view==='result'&&s.mode==='COMP'&&effectiveDisplayStyle(s.setup,s.mode)==='MathO'&&!s.decimalView&&s.setup.format!=='Fix'&&s.setup.format!=='Sci'?s.lastValue:null,indicators:[s.setup.angle[0],s.shift?'S':null,s.alpha?'A':null,s.setup.format==='Fix'?'F'+s.setup.digits:s.setup.format==='Sci'?'S'+s.setup.digits:null].filter(Boolean),cursor:s.cursor,document:s.mode==='COMP'&&effectiveDisplayStyle(s.setup,s.mode)!=='LineIO'?s.document:null}}
+function semanticScreen(s){const modes=modeList(s);let message='';if(!s.power)message='OFF';else if(s.view==='mode')message=(s.menuPage===0?modes.slice(0,8).map((m,i)=>(i+1)+':'+m):modes.slice(8).map((m,i)=>(i+1)+':'+m)).join(' ');else if(s.view==='setup')message='1:DEG 2:RAD 3:GRA';else if(s.view==='error')message=s.error;else message=s.result;return {mode:s.mode,view:s.view,expression:s.expression,result:message,displayStyle:effectiveDisplayStyle(s.setup,s.mode),resultValue:s.view==='result'&&s.mode==='COMP'&&effectiveDisplayStyle(s.setup,s.mode)==='MathO'&&!s.decimalView&&s.setup.format!=='Fix'&&s.setup.format!=='Sci'?s.lastValue:null,indicators:[s.setup.angle[0],s.shift?'S':null,s.alpha?'A':null,s.setup.format==='Fix'?'F'+s.setup.digits:s.setup.format==='Sci'?'S'+s.setup.digits:null].filter(Boolean),cursor:s.cursor,resultScrollX:s.resultScrollX||0,document:s.mode==='COMP'&&effectiveDisplayStyle(s.setup,s.mode)!=='LineIO'?s.document:null}}
 function dispatchKey(state,key){let s={...state,setup:{...state.setup},memory:{...state.memory},history:state.history.slice(),trace:state.trace.slice()};const E=global.FX991_EDITOR;const sync=()=>{if(E&&s.mode==='COMP'&&s.document){s.expression=E.serialize(s.document);s.cursor=E.sourceCursor(s.document)}};const finish=()=>{sync();s.trace.push({key,mode:s.mode,view:s.view,expression:s.expression,result:s.result});if(s.trace.length>200)s.trace.shift();return s};
  if(key==='ON'){s.power=true;s.view='edit';return finish()}if(!s.power)return finish();if(key==='SHIFT'){s.shift=!s.shift;s.alpha=false;return finish()}if(key==='ALPHA'){s.alpha=!s.alpha;s.shift=false;return finish()}
  if(key==='AC'&&s.shift){s.power=false;s.shift=false;s.view='off';return finish()}
@@ -143,12 +152,26 @@ function dispatchKey(state,key){let s={...state,setup:{...state.setup},memory:{.
  }
  if(s.view==='setup'){let selected={1:'DEG',2:'RAD',3:'GRAD'}[key];if(selected){s.setup.angle=selected;s.view='edit'}else if(key==='AC')s.view='edit';return finish()}
  if(s.view==='error'){if(['LEFT','RIGHT'].includes(key)){s.view='edit';s.cursor=Math.max(0,Math.min(s.expression.length,s.errorPos))}else if(key==='AC'){s.expression='';s.cursor=0;s.view='edit';s.result='';s.error=null}return finish()}
- if(key==='AC'){s.expression='';s.cursor=0;if(E)s.document=E.create();s.result='';s.view='edit';s.shift=false;s.alpha=false;return finish()}
- if(key==='LEFT'||key==='RIGHT'){if(E&&s.mode==='COMP'&&s.document)s.document=E.move(s.document,key);else s.cursor=Math.max(0,Math.min(s.expression.length,s.cursor+(key==='RIGHT'?1:-1)));s.view='edit';return finish()}
+ if(key==='AC'){s.expression='';s.cursor=0;if(E)s.document=E.create();s.result='';s.resultScrollX=0;s.mixedView=false;s.view='edit';s.shift=false;s.alpha=false;return finish()}
+ if((key==='LEFT'||key==='RIGHT')&&s.view==='result'){
+  const D=global.FX991_DISPLAY;
+  if(D){const range=D.resultExtent(semanticScreen(s));if(range.maxScroll>0){
+   const delta=key==='RIGHT'?16:-16;
+   s.resultScrollX=Math.max(0,Math.min(range.maxScroll,(s.resultScrollX||0)+delta));
+   return finish()
+  }}
+ }
+  if(key==='LEFT'||key==='RIGHT'){if(E&&s.mode==='COMP'&&s.document)s.document=E.move(s.document,key);else s.cursor=Math.max(0,Math.min(s.expression.length,s.cursor+(key==='RIGHT'?1:-1)));s.view='edit';return finish()}
  if(key==='UP'||key==='DOWN'){if(E&&s.mode==='COMP'&&s.document&&s.view==='edit'){let old=s.document.anchor;s.document=E.move(s.document,key);if(old.sequenceId!==s.document.anchor.sequenceId||old.offset!==s.document.anchor.offset)return finish()}if(s.history.length){let i=s.historyCursor+(key==='UP'?1:-1);s.historyCursor=Math.max(0,Math.min(s.history.length-1,i));s.expression=s.history[s.historyCursor].expression;s.cursor=s.expression.length;if(E)s.document=E.fromSource(s.expression);s.result=s.history[s.historyCursor].display;s.view='edit'}return finish()}
  if(key==='RP'&&E&&s.mode==='COMP'&&s.document){s.document=E.exitSlot(s.document);s.view='edit';s.result='';return finish()}
  if(key==='DEL'){if(E&&s.mode==='COMP'&&s.document)s.document=E.del(s.document);else if(s.cursor>0){s.expression=s.expression.slice(0,s.cursor-1)+s.expression.slice(s.cursor);s.cursor--}s.view='edit';return finish()}
- if(key==='S-D'){if(s.lastValue){s.decimalView=!s.decimalView;s.result=valueDisplay(s.lastValue,s.setup,s.decimalView,s.mode)}return finish()}
+ if(key==='S-D'){if(s.lastValue){s.decimalView=!s.decimalView;s.mixedView=false;s.resultScrollX=0;s.result=valueDisplay(s.lastValue,s.setup,s.decimalView,s.mode)}return finish()}
+ if(key==='MIX'&&s.view==='result'&&s.mode==='COMP'&&s.lastValue){
+  const exact=(effectiveDisplayStyle(s.setup,s.mode)==='MathO'?!s.decimalView:s.decimalView);
+  const mixed=exact&&s.setup.format!=='Fix'&&s.setup.format!=='Sci'?mixedFractionText(s.lastValue):null;
+  if(mixed){s.mixedView=!s.mixedView;s.result=s.mixedView?mixed:valueDisplay(s.lastValue,s.setup,s.decimalView,s.mode);s.resultScrollX=0}
+  return finish()
+ }
  if(key==='STO'){let reg=s.selectedRegister||'A';s.memory[reg]=s.lastValue||s.ans;return finish()}
  if(key==='RCL'){key=s.selectedRegister||'A'}
  if(key==='='){try{sync();if(E&&s.mode==='COMP'&&s.document&&E.invalidSlots(s.document).length){let missing=E.firstMissingAnchor(s.document);throw new CalcError(ERROR.SYNTAX,missing?E.sourceCursor(missing):s.cursor)}let value=calculateExpression(s.mode,s.expression,s);
@@ -161,11 +184,11 @@ function dispatchKey(state,key){let s={...state,setup:{...state.setup},memory:{.
   if(s.mode==='COMP'&&effectiveDisplayStyle(s.setup,s.mode)==='LineIO'){
    s.decimalView=!!(E&&s.document&&hasFraction(s.document.root))&&!s.expression.includes('.');
   }
-  s.lastValue=value;s.ans=value.kind==='mode-result'?value.ans:value.kind==='base'?rat(value.value):value.kind==='complex'?value.re:value;s.result=valueDisplay(value,s.setup,s.decimalView,s.mode);s.view='result';s.error=null;s.history.unshift({expression:s.expression,display:s.result});s.history=s.history.slice(0,50);s.historyCursor=-1}catch(e){s.error=e.code||ERROR.MATH;s.errorPos=Number.isInteger(e.position)?e.position:s.cursor;s.view='error';s.result=s.error}return finish()}
+  s.mixedView=false;s.resultScrollX=0;s.lastValue=value;s.ans=value.kind==='mode-result'?value.ans:value.kind==='base'?rat(value.value):value.kind==='complex'?value.re:value;s.result=valueDisplay(value,s.setup,s.decimalView,s.mode);s.view='result';s.error=null;s.history.unshift({expression:s.expression,display:s.result});s.history=s.history.slice(0,50);s.historyCursor=-1}catch(e){s.error=e.code||ERROR.MATH;s.errorPos=Number.isInteger(e.position)?e.position:s.cursor;s.view='error';s.result=s.error}return finish()}
  if(E&&s.mode==='COMP'&&s.document&&['FRAC','POW','SQRT','NROOT','SIN','COS','TAN','LOG','LN','LP'].includes(key)){if(s.shift&&key==='SQRT')key='NROOT';const kinds={FRAC:['Fraction'],POW:['Power'],SQRT:['Root'],NROOT:['Root','nth'],SIN:['Function',s.shift?'asin':'sin'],COS:['Function',s.shift?'acos':'cos'],TAN:['Function',s.shift?'atan':'tan'],LOG:['Function','log'],LN:['Function','ln'],LP:['Group']};s.document=E.template(s.document,...kinds[key]);s.view='edit';s.result='';s.shift=false;s.alpha=false;return finish()}
  let replacements={ADD:'+',SUB:'-',MUL:'*',DIV:'/',NEG:'-',POW:'^',SQ:'^2',SQRT:'sqrt(',PI:'pi',SIN:'sin(',COS:'cos(',TAN:'tan(',LP:'(',RP:')',ANS:'Ans'};
  let literal=replacements[key]||(/^[0-9.]$/.test(key)?key:/^[A-FMXY]$/.test(key)?key:null);
- if(literal!==null){if(s.view==='result'){s.expression='';s.cursor=0;if(E)s.document=E.create()}if(E&&s.mode==='COMP'&&s.document)s.document=E.insertToken(s.document,literal);else{s.expression=s.expression.slice(0,s.cursor)+literal+s.expression.slice(s.cursor);s.cursor+=literal.length}s.view='edit';s.result='';s.shift=false;s.alpha=false}return finish();}
+ if(literal!==null){if(s.view==='result'){s.expression='';s.cursor=0;s.resultScrollX=0;s.mixedView=false;if(E)s.document=E.create()}if(E&&s.mode==='COMP'&&s.document)s.document=E.insertToken(s.document,literal);else{s.expression=s.expression.slice(0,s.cursor)+literal+s.expression.slice(s.cursor);s.cursor+=literal.length}s.view='edit';s.result='';s.shift=false;s.alpha=false}return finish();}
 const GLYPHS={};function addGlyph(chars,rows){for(const c of chars)GLYPHS[c]=rows} // independent compact atlas
 const glyphData={
  '0':['111','101','101','101','111'],'1':['010','110','010','010','111'],'2':['111','001','111','100','111'],'3':['111','001','111','001','111'],'4':['101','101','111','001','001'],'5':['111','100','111','001','111'],'6':['111','100','111','101','111'],'7':['111','001','010','010','010'],'8':['111','101','111','101','111'],'9':['111','101','111','001','111'],
@@ -176,6 +199,6 @@ function rasterizeScreen(screen){if(global.FX991_DISPLAY)return global.FX991_DIS
  if(screen.view==='mode'||screen.view==='setup'){draw(screen.view.toUpperCase(),0,11,23);draw(screen.result,0,20,23)}else if(screen.view==='off'){draw('OFF',42,14)}else {let offset=Math.max(0,screen.cursor-22),visible=screen.expression.slice(offset,offset+23);draw(visible,0,12,23);if(screen.view==='edit')for(let x=4*(screen.cursor-offset);x<4*(screen.cursor-offset)+3;x++)put(x,18);draw(screen.result.slice(-23),0,23,23)}return pixels}
 function frameHash(frame){let h=2166136261;for(const v of frame){h^=v;h=Math.imul(h,16777619)}return (h>>>0).toString(16).padStart(8,'0')}
 function runTrace(test){let state=createState(test.model||'standard');for(const k of test.events)state=dispatchKey(state,k);let screen=semanticScreen(state),frame=rasterizeScreen(screen);return {state,screen,hash:frameHash(frame),pixels:frame}}
-const api={MODELS,ERROR,CalcError,rat,dec,pi,radicalSum,decimalRational,decFromFraction,validateRange,numeric,add,sub,mul,div,pow,sqrt,format,valueToString,tokenize,parse,evaluate,buildDocument,buildAst,calculateExpression,valueDisplay,effectiveDisplayStyle,DISPLAY_STYLES,createState,modeList,dispatchKey,semanticScreen,rasterizeScreen,frameHash,runTrace,serialValue};
+const api={MODELS,ERROR,CalcError,rat,dec,pi,radicalSum,mixedFractionText,decimalRational,decFromFraction,validateRange,numeric,add,sub,mul,div,pow,sqrt,format,valueToString,tokenize,parse,evaluate,buildDocument,buildAst,calculateExpression,valueDisplay,effectiveDisplayStyle,DISPLAY_STYLES,createState,modeList,dispatchKey,semanticScreen,rasterizeScreen,frameHash,runTrace,serialValue};
 global.FX991=Object.freeze(api);
 })(typeof window!=='undefined'?window:globalThis);
