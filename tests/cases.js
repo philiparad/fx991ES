@@ -498,6 +498,15 @@ test('P11 evidence record round-trips unreviewed image fingerprint',()=>{let c=D
 test('P11 mismatch between photo and identifier is refused',()=>{let c=DEVICE_SAMPLE();c.photoRef='another-photo.jpg';c.media=m11();try{DEV.validate(c);throw Error('accepted mismatch')}catch(e){if(e.message==='accepted mismatch')throw e}});
 test('P11 legacy records remain valid without media fingerprint',()=>{let c=DEVICE_SAMPLE();eq(DEV.validate(c).media,undefined)});
 
+// Phase 12: official manufacturer *document* examples — NOT real-device observations.
+test('P12 official example corpus has eleven source-grounded cases',()=>eq(global.FX991_MANUFACTURER_EXAMPLES.CASES.length,11));
+test('P12 official example cases identify source pages',()=>{for(const c of global.FX991_MANUFACTURER_EXAMPLES.CASES){if(![20,21,27].includes(c.page))throw Error(c.id)}});
+test('P12 manufacturer example IDs are unique',()=>eq(new Set(global.FX991_MANUFACTURER_EXAMPLES.CASES.map(c=>c.id)).size,11));
+test('P12 no official example claims physical-device observation',()=>{const r=global.FX991_MANUFACTURER_EXAMPLES.verify();eq(r.physicalObservations,0);for(const c of r.cases){eq(c.physicalKeySequenceVerified,false);eq(c.lcdGlyphParityVerified,false)}});
+test('P12 verified manual semantic-result matches are reported',()=>{const r=global.FX991_MANUFACTURER_EXAMPLES.verify();eq(r.total,11);eq(r.matched,7)});
+test('P12 four documented semantic divergences remain visible',()=>{const r=global.FX991_MANUFACTURER_EXAMPLES.verify();eq(r.divergent,4);eq(r.cases.find(x=>x.caseId==='M12-11').actual,'Argument ERROR')});
+test('P12 textual equality does not claim LCD raster parity',()=>{const c=global.FX991_MANUFACTURER_EXAMPLES.verify().cases.find(x=>x.caseId==='M12-01');eq(c.normalizedTextMatch,true);eq(c.lcdGlyphParityVerified,false)});
+
 // Milestone 24: physical-key resolution, insert/overwrite and structural deletion.
 const KM=global.FX991_KEYS;
 test('M24 key profiles explicit and immutable',()=>{eq(KM.profiles.standard.id,'fx991esplus-2');eq(Object.isFrozen(KM.profiles.c),true)});
