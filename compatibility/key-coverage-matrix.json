@@ -15,7 +15,8 @@
     "P0-05 SHIFT HYP absolute-value template is implemented; device visual parity unverified.",
     "P0-06 factorial SHIFT RECIP implemented; hardware UI parity unverified.",
     "P0-07 SHIFT MUL/DIV permutation/combination routing implemented; hardware parity unverified.",
-    "P0-08 SHIFT/ALPHA EXP10 shortcuts added; hardware parity not measured."
+    "P0-08 SHIFT/ALPHA EXP10 shortcuts added; hardware parity not measured.",
+    "P0-09 SHIFT 0 Rnd() routing implemented; official simulator numeric parity unverified."
   ],
   "buttons": [
     {
@@ -1464,7 +1465,7 @@
       "key": "0",
       "modifier": "shift",
       "action": "Rnd",
-      "capability": "expected-route-missing"
+      "capability": "source-route-unverified"
     },
     {
       "model": "standard",
@@ -11064,7 +11065,7 @@
       "key": "0",
       "modifier": "shift",
       "action": "Rnd",
-      "capability": "expected-route-missing"
+      "capability": "source-route-unverified"
     },
     {
       "model": "c",

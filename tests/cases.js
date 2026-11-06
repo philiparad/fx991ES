@@ -1258,6 +1258,26 @@ test('P0-08 ALPHA e works with implicit multiplication',()=>{
  eq(s.view,'result');close(K.numeric(s.lastValue),2*Math.E,1e-12);
 });
 
+test('P0-09 SHIFT 0 opens Rnd function input',()=>{
+ let s=K.createState('standard');s=K.dispatchKey(s,'SHIFT');s=K.dispatchKey(s,'0');
+ eq(s.view,'edit');eq(s.expression.includes('Rnd('),true);
+});
+test('P0-09 Rnd uses Fix 2 internally',()=>{
+ let s=K.createState('standard');s.setup.format='Fix';s.setup.digits=2;
+ for(const k of ['SHIFT','0','1','DIV','3','RP','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');close(K.numeric(s.lastValue),0.33,1e-12);
+});
+test('P0-09 Rnd retains calculated value in later arithmetic',()=>{
+ let s=K.createState('standard');s.setup.format='Fix';s.setup.digits=2;
+ for(const k of ['SHIFT','0','1','DIV','3','RP','ADD','1','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');close(K.numeric(s.lastValue),1.33,1e-12);
+});
+test('P0-09 SHIFT 0 does not erase preceding addition',()=>{
+ let s=K.createState('standard');s.setup.format='Fix';s.setup.digits=2;
+ for(const k of ['2','ADD','SHIFT','0','1','DIV','3','RP','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');close(K.numeric(s.lastValue),2.33,1e-12);
+});
+
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
