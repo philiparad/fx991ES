@@ -1241,6 +1241,23 @@ test('P0-07 rejects fractional n',()=>{
  eq(s.view,'error');eq(s.error,K.ERROR.MATH);
 });
 
+test('P0-08 SHIFT EXP10 inserts pi',()=>{
+ let s=K.createState('standard');for(const k of ['SHIFT','EXP10','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');close(K.numeric(s.lastValue),Math.PI,1e-12);
+});
+test('P0-08 ALPHA EXP10 inserts e',()=>{
+ let s=K.createState('standard');for(const k of ['ALPHA','EXP10','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');close(K.numeric(s.lastValue),Math.E,1e-12);
+});
+test('P0-08 physical pi can be multiplied by 2',()=>{
+ let s=K.createState('standard');for(const k of ['2','MUL','SHIFT','EXP10','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');close(K.numeric(s.lastValue),2*Math.PI,1e-12);
+});
+test('P0-08 ALPHA e works with implicit multiplication',()=>{
+ let s=K.createState('standard');for(const k of ['2','ALPHA','EXP10','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');close(K.numeric(s.lastValue),2*Math.E,1e-12);
+});
+
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);

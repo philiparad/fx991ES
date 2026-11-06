@@ -14,7 +14,8 @@
     "P0-04 hyperbolic COMP menu implemented; hardware menu artwork/keys unverified.",
     "P0-05 SHIFT HYP absolute-value template is implemented; device visual parity unverified.",
     "P0-06 factorial SHIFT RECIP implemented; hardware UI parity unverified.",
-    "P0-07 SHIFT MUL/DIV permutation/combination routing implemented; hardware parity unverified."
+    "P0-07 SHIFT MUL/DIV permutation/combination routing implemented; hardware parity unverified.",
+    "P0-08 SHIFT/ALPHA EXP10 shortcuts added; hardware parity not measured."
   ],
   "buttons": [
     {
@@ -1511,7 +1512,7 @@
       "key": "EXP10",
       "modifier": "shift",
       "action": "pi",
-      "capability": "expected-route-missing"
+      "capability": "source-route-unverified"
     },
     {
       "model": "standard",
@@ -1519,7 +1520,7 @@
       "key": "EXP10",
       "modifier": "alpha",
       "action": "e",
-      "capability": "expected-route-missing"
+      "capability": "source-route-unverified"
     },
     {
       "model": "standard",
@@ -11111,7 +11112,7 @@
       "key": "EXP10",
       "modifier": "shift",
       "action": "pi",
-      "capability": "expected-route-missing"
+      "capability": "source-route-unverified"
     },
     {
       "model": "c",
@@ -11119,7 +11120,7 @@
       "key": "EXP10",
       "modifier": "alpha",
       "action": "e",
-      "capability": "expected-route-missing"
+      "capability": "source-route-unverified"
     },
     {
       "model": "c",

@@ -507,6 +507,14 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
    return end();
   }
  }
+ // P0-08: SHIFT ×10^x enters pi; ALPHA ×10^x enters Euler's constant.
+ if(((key==='EXP10'&&s.shift)||key==='EULER')&&s.mode==='COMP'&&(s.view==='edit'||s.view==='result')){
+  const value=key==='EULER'?'e':'pi';
+  if(s.view==='result'){s.document=E.create();s.expression='';s.cursor=0}
+  s.document=E.insertToken(s.document,value);
+  s.expression=E.serialize(s.document);s.cursor=E.sourceCursor(s.document);
+  s.view='edit';s.result='';s.error=null;s.shift=false;s.alpha=false;return end();
+ }
  // Educational EXP10 key: enter a power-of-ten template after a coefficient.
  // This is mathematically equivalent to coefficient × 10^exponent, but does
  // not claim exact physical CASIO keypress/raster behavior.
