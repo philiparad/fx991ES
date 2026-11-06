@@ -8,3 +8,5 @@ require('../tools/phase17-review.test.cjs');
 require('../tools/phase17-capture.test.cjs');
 
 require('../tools/phase17-review-ui.test.cjs');
+
+require('../tools/keyboard-shortcuts.test.cjs');
