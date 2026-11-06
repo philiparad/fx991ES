@@ -996,6 +996,31 @@ test('Scientific exponent sign is editable and not duplicated',()=>{
  s=K.dispatchKey(s,'=');eq(s.view,'result');close(K.numeric(s.lastValue),1,1e-6);
 });
 
+
+test('DIFF rejects cusp abs(X) at X=0',()=>{
+ try{N.run(numState(),'DIFF','abs(X)',{at:0});throw Error('missing cusp rejection')}
+ catch(e){eq(e.code,K.ERROR.MATH)}
+});
+test('DIFF still evaluates smooth X squared at 3',()=>close(K.numeric(N.run(numState(),'DIFF','X^2',{at:3}).value),6,1e-6));
+test('INTEGRAL rejects pole 1/X crossing zero',()=>{
+ try{N.run(numState(),'INTEGRAL','1/X',{lower:-1,upper:1});throw Error('missing pole rejection')}
+ catch(e){eq(e.code,K.ERROR.MATH)}
+});
+test('INTEGRAL rejects pole at endpoint',()=>{
+ try{N.run(numState(),'INTEGRAL','1/X',{lower:0,upper:1});throw Error('missing endpoint rejection')}
+ catch(e){eq(e.code,K.ERROR.MATH)}
+});
+test('INTEGRAL rejects sampled interior off-center pole',()=>{
+ try{N.run(numState(),'INTEGRAL','1/(X-0.25)',{lower:0,upper:1});throw Error('missing interior rejection')}
+ catch(e){eq(e.code,K.ERROR.MATH)}
+});
+test('INTEGRAL still evaluates smooth X squared on 0 to 2',()=>close(K.numeric(N.run(numState(),'INTEGRAL','X^2',{lower:0,upper:2}).value),8/3,1e-6));
+test('INTEGRAL reversed bounds preserve sign',()=>close(K.numeric(N.run(numState(),'INTEGRAL','X',{lower:2,upper:0}).value),-2,1e-7));
+test('INTEGRAL intentionally refuses improper but convergent 1/sqrt(X)',()=>{
+ try{N.run(numState(),'INTEGRAL','1/sqrt(X)',{lower:0,upper:1});throw Error('improper integral was silently accepted')}
+ catch(e){eq(e.code,K.ERROR.MATH)}
+});
+
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
