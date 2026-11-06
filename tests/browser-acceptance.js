@@ -79,6 +79,17 @@ const tests=[
    expect(preview.textContent.includes('1')&&preview.textContent.includes('2'),'fraction fields not rendered');
    expect(!preview.classList.contains('invalid'),'completed fraction still marked incomplete');
    expect(x.doc.querySelector('#semantic').textContent.includes('Expression:'),'missing semantic display');
+   clickKey(x.doc,'AC');
+   // Physical-key teaching route: SHIFT + FRAC enters a three-field mixed
+   // template while editing; the same modifier converts results after =.
+   for(const key of ['SHIFT','FRAC','2','RIGHT','3','RIGHT','4'])clickKey(x.doc,key);
+   const mixed=x.doc.querySelector('#natural-preview');
+   expect(mixed.querySelector('.nd-mixed')!==null,'structured mixed-fraction template not visible');
+   expect(!mixed.classList.contains('invalid'),'filled mixed-fraction template marked incomplete');
+   clickKey(x.doc,'=');
+   expect(x.doc.querySelector('#semantic').textContent.includes('Result: 11/4'),'mixed-fraction keypad input failed');
+   clickKey(x.doc,'SHIFT');clickKey(x.doc,'FRAC');
+   expect(x.doc.querySelector('#semantic').textContent.includes('Result: 2 3/4'),'result presentation toggle failed');
  }],
  ['Session v2 serializes structured cursor and imports safely',async x=>{
    let k=x.win.FX991,e=x.win.FX991_SESSION,s=k.createState();
