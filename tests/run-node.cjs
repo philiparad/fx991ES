@@ -6,3 +6,5 @@ const report=globalThis.FX991_TESTS.run();console.log(`${report.passed}/${report
 require('../tools/phase17-review.test.cjs');
 
 require('../tools/phase17-capture.test.cjs');
+
+require('../tools/phase17-review-ui.test.cjs');
