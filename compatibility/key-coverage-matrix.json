@@ -16,7 +16,8 @@
     "P0-06 factorial SHIFT RECIP implemented; hardware UI parity unverified.",
     "P0-07 SHIFT MUL/DIV permutation/combination routing implemented; hardware parity unverified.",
     "P0-08 SHIFT/ALPHA EXP10 shortcuts added; hardware parity not measured.",
-    "P0-09 SHIFT 0 Rnd() routing implemented; official simulator numeric parity unverified."
+    "P0-09 SHIFT 0 Rnd() routing implemented; official simulator numeric parity unverified.",
+    "P0-10 implemented Ran# and RanInt# using injected RNG for deterministic tests; hardware RNG sequence unverified."
   ],
   "buttons": [
     {
@@ -1489,7 +1490,7 @@
       "key": ".",
       "modifier": "shift",
       "action": "Ran#",
-      "capability": "expected-route-missing"
+      "capability": "source-route-unverified"
     },
     {
       "model": "standard",
@@ -1497,7 +1498,7 @@
       "key": ".",
       "modifier": "alpha",
       "action": null,
-      "capability": "legend-unverified"
+      "capability": "source-route-unverified"
     },
     {
       "model": "standard",
@@ -11089,7 +11090,7 @@
       "key": ".",
       "modifier": "shift",
       "action": "Ran#",
-      "capability": "expected-route-missing"
+      "capability": "source-route-unverified"
     },
     {
       "model": "c",
@@ -11097,7 +11098,7 @@
       "key": ".",
       "modifier": "alpha",
       "action": null,
-      "capability": "legend-unverified"
+      "capability": "source-route-unverified"
     },
     {
       "model": "c",

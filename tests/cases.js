@@ -1278,6 +1278,36 @@ test('P0-09 SHIFT 0 does not erase preceding addition',()=>{
  eq(s.view,'result');close(K.numeric(s.lastValue),2.33,1e-12);
 });
 
+test('P0-10 SHIFT decimal invokes Ran# in COMP',()=>{
+ let s=K.createState('standard');for(const k of ['SHIFT','.','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');const n=K.numeric(s.lastValue);
+ eq(n>=0&&n<1,true);close(n,Math.round(n*1000)/1000,1e-12);
+});
+test('P0-10 Ran# supports injected random source',()=>{
+ const s=K.createState('standard'),v=K.evaluate(K.parse('Ran#'),{setup:s.setup,memory:s.memory,ans:s.ans,rng:()=>0.6349});
+ close(K.numeric(v),0.634,1e-12);
+});
+test('P0-10 ALPHA decimal inserts RanInt#(a,b) via SHIFT comma',()=>{
+ let s=K.createState('standard');for(const k of ['ALPHA','.','1','SHIFT','RP','6','RP','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');eq(Number.isInteger(K.numeric(s.lastValue)),true);
+ eq(K.numeric(s.lastValue)>=1&&K.numeric(s.lastValue)<=6,true);
+});
+test('P0-10 RanInt# can inject lower and upper boundary RNG',()=>{
+ const s=K.createState('standard'),ctx={setup:s.setup,memory:s.memory,ans:s.ans};
+ close(K.numeric(K.evaluate(K.parse('RanInt#(1,6)'),{...ctx,rng:()=>0})),1,1e-12);
+ close(K.numeric(K.evaluate(K.parse('RanInt#(1,6)'),{...ctx,rng:()=>0.999999})),6,1e-12);
+});
+test('P0-10 RanInt# rejects reversed bounds',()=>{
+ let s=K.createState('standard');
+ try{K.evaluate(K.parse('RanInt#(6,1)'),{setup:s.setup,memory:s.memory,ans:s.ans,rng:()=>0.5});throw Error('no error')}
+ catch(e){eq(e.code,K.ERROR.MATH)}
+});
+test('P0-10 random source must return value below one',()=>{
+ let s=K.createState('standard');
+ try{K.evaluate(K.parse('Ran#'),{setup:s.setup,memory:s.memory,ans:s.ans,rng:()=>1});throw Error('no error')}
+ catch(e){eq(e.code,K.ERROR.MATH)}
+});
+
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
