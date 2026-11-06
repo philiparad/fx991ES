@@ -18,6 +18,11 @@ def exercise(page):
     page.on("pageerror", lambda error: errors.append(str(error)[:400]))
     page.on("console", lambda msg: errors.append(msg.text[:400]) if msg.type == "error" else None)
     page.locator("#scenario").wait_for(timeout=10000)
+    assert "0 / 50 planned scenarios" in page.locator("#plan-summary").inner_text(), "plan must start unrecorded"
+    page.locator("#scenario").select_option("T04")
+    assert page.locator("#angle").input_value() == "RAD", "plan did not apply angle setup"
+    assert page.locator("#keys").input_value() == "SIN PI DIV 2 RP =", "plan semantic keys missing"
+    assert "PLANNED ONLY" in page.locator("#manual").inner_text(), "plan misidentified as observed"
     page.locator("#scenario").select_option("setup-radian")
     assert page.locator("#keys").input_value() == "SHIFT MODE 4", "outdated setup preset"
     page.locator("#scenario").select_option("c-ineq-menu")
@@ -47,8 +52,13 @@ def exercise(page):
     page.locator("#record").click()
     assert "1 matched / 1 mismatched" in page.locator("#summary").inner_text(), "mismatch not reported"
     assert "step 4" in page.locator("#results").inner_text(), "first diverging key missing"
+    page.locator("#scenario").select_option("A01")
+    page.locator("#result").fill("5")
+    page.locator("#record").click()
+    assert "1 / 50 planned scenarios" in page.locator("#plan-summary").inner_text(), "planned-case coverage not updated"
+
     assert not errors, "browser/CSP error: " + "; ".join(errors)
-    return {"status":"PASS","checks":6,"temporaryFixture":"synthetic-only"}
+    return {"status":"PASS","checks":10,"temporaryFixture":"synthetic-only"}
 
 
 def main(argv=None):
