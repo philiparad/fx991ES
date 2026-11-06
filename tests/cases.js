@@ -792,6 +792,25 @@ test('M32 missing test rows are distinguished from failures',()=>{let r=Object.v
 test('M32 summary export disclaims verified device status',()=>{let r=Object.values(m32ua).map(ua=>m32full(ua));eq(JSON.parse(BE32.evidenceJSON(BE32.summarize(r))).verified,false)});
 test('M32 unknown user-agent does not grant cross-browser coverage',()=>{let r=Object.values(m32ua).map(ua=>m32full(ua));r[2].browser='unknown';eq(BE32.summarize(r).ready,false)});
 
+
+test('EXP10 coefficient ×10^3 equals 2000',()=>{
+ let s=K.createState('standard');
+ for(const key of ['2','EXP10','3','='])s=K.dispatchKey(s,key);
+ eq(s.view,'result');eq(K.numeric(s.lastValue),2000);
+});
+test('EXP10 supports negative exponents',()=>{
+ let s=K.createState('standard');
+ for(const key of ['1','.','2','EXP10','NEG','3','='])s=K.dispatchKey(s,key);
+ eq(s.view,'result');close(K.numeric(s.lastValue),0.0012,1e-12);
+});
+test('EXP10 requires a coefficient and remains non-certifying',()=>{
+ let s=K.createState('standard');s=K.dispatchKey(s,'EXP10');
+ eq(s.expression,'');eq(s.view,'edit');
+ for(const key of ['2','EXP10'])s=K.dispatchKey(s,key);
+ eq(s.view,'edit');
+ eq(K.FX991_DEVICE_CERTIFIED||false,false);
+});
+
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
