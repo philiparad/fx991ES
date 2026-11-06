@@ -213,6 +213,51 @@ def phase17_field_pack_checks(page, base_url):
     return 15
 
 
+
+def phase17_review_checks(page, base_url):
+    """Real-browser review UI checks with synthetic-only observation metadata."""
+    page.goto(base_url + "/tests/phase17-review.html", wait_until="load", timeout=30000)
+    assert "No evidence imported" in page.locator("#load-status").inner_text()
+    assert page.locator(".phase17-review-card").count() == 0
+    page.locator("#export-reviews").click()
+    assert "Import a device evidence JSON file" in page.locator("#export-status").inner_text()
+    fixture={"schema":"fx991-device-evidence-v1","records":[{
+        "id":"synthetic-review-fixture-01","scenarioId":"F16-01",
+        "kind":"physical","device":"SYNTHETIC FIXTURE NOT A DEVICE",
+        "observed":{"result":"SYNTHETIC ONLY"},
+        "checkpoints":[{"step":1,"observed":{"expression":"fixture"}}]
+    }]}
+    page.locator("#evidence-file").set_input_files({
+        "name":"synthetic-review-evidence.json","mimeType":"application/json",
+        "buffer":json.dumps(fixture).encode("utf-8")})
+    page.locator(".phase17-review-card").first.wait_for(timeout=10000)
+    assert page.locator(".phase17-review-card").count() == 1
+    assert page.locator('.phase17-review-card [data-field="disposition"]').input_value() == "", "review decision fabricated"
+    assert page.locator('.phase17-review-card [data-field="reviewer"]').input_value() == "", "reviewer prefilled"
+    assert "missing steps" in page.locator(".phase17-review-card").inner_text(), "missing observations not shown"
+    # No review form selection may be considered completed by default.
+    with page.expect_download(timeout=10000) as download:
+        page.locator("#export-reviews").click()
+    unreviewed=json.loads(Path(download.value.path()).read_text(encoding="utf-8"))
+    assert unreviewed["reviews"] == [], "unreviewed evidence was turned into a review"
+    page.locator('.phase17-review-card [data-field="disposition"]').select_option("inconclusive")
+    page.locator("#export-reviews").click()
+    assert "Review export blocked" in page.locator("#export-status").inner_text(), "partial review must be rejected"
+    page.locator('.phase17-review-card [data-field="reviewer"]').fill("Synthetic second reviewer")
+    page.locator('.phase17-review-card [data-field="reviewedAt"]').fill("2026-11-06")
+    page.locator('.phase17-review-card [data-field="physicalKeyMappingConfirmed"]').select_option("false")
+    page.locator('.phase17-review-card [data-field="checkpointsVerified"]').select_option("false")
+    page.locator('.phase17-review-card [data-field="notes"]').fill("SYNTHETIC FIXTURE ONLY - NO DEVICE")
+    with page.expect_download(timeout=10000) as download:
+        page.locator("#export-reviews").click()
+    reviews=json.loads(Path(download.value.path()).read_text(encoding="utf-8"))
+    assert reviews["schema"] == "fx991-phase17-independent-review-v1"
+    assert len(reviews["reviews"]) == 1
+    assert reviews["reviews"][0]["disposition"] == "inconclusive"
+    assert reviews["reviews"][0]["checkpointsVerified"] is False
+    return 13
+
+
 def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out",default="browser-evidence/device-workbench")
@@ -246,6 +291,7 @@ def main(argv=None):
                             checks=field_sheet_checks(page, url.rsplit("/tests/device.html",1)[0])
                             row["checks"] += checks
                             row["checks"] += phase17_field_pack_checks(page, url.rsplit("/tests/device.html",1)[0])
+                            row["checks"] += phase17_review_checks(page, url.rsplit("/tests/device.html",1)[0])
                         except (PlaywrightError,AssertionError,TimeoutError,ValueError,OSError,AttributeError) as error:
                             row.update(status=classify_failure(stage,error),error=str(error)[:500])
                             if context:
