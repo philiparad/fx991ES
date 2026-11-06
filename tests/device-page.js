@@ -48,6 +48,8 @@ function renderCheckpointInputs(s){
  const focused=!!s.focus;
  $('focused-checkpoint-entry').hidden=!focused;
  $('raw-checkpoints-field').hidden=focused;
+ $('worksheet-import-panel').hidden=!focused;
+ $('worksheet-file').value='';$('worksheet-status').textContent='No worksheet imported; empty readings remain empty.';
  const root=$('checkpoint-entry-rows');root.replaceChildren();
  if(!focused)return;
  for(const step of s.checkpoints){
@@ -115,6 +117,32 @@ function renderCoverage(){
  }
 }
 function render(){renderCoverage();let r=D.review(corpus);$('summary').textContent=r.totals.passed+' matched / '+r.totals.failed+' mismatched from '+r.totals.records+' actual-device records. Standard '+r.coverage.standard+'; C edition '+r.coverage.c+'. Certification: NOT established.';$('categories').textContent=JSON.stringify(r.byCategory,null,2);$('results').replaceChildren();for(let item of r.results){let p=document.createElement('pre');p.className='device-prewrap';p.textContent=(item.passed?'MATCH':'MISMATCH')+' '+item.id+' ('+item.model+')\n'+item.issues.map(i=>'step '+i.step+' '+i.category+': expected '+JSON.stringify(i.expected)+' vs actual '+JSON.stringify(i.actual)).join('\n')+'\nFirst difference: '+(item.firstDivergence??'none');$('results').append(p)}}
+$('worksheet-file').onchange=async event=>{
+ try{
+  const file=event.target.files[0];if(!file)return;
+  if(file.size>1024*1024)throw Error('Worksheet CSV exceeds 1 MiB');
+  const plan=D.scenario($('scenario').value);
+  if(!plan.focus)throw Error('Select a focused F16 scenario to import worksheet rows');
+  const draft=C.worksheetDraft(await file.text(),plan);
+  const root=$('checkpoint-entry-rows');
+  for(const item of draft.values){
+   const row=Array.from(root.querySelectorAll('.checkpoint-capture-row')).find(el=>Number(el.dataset.step)===item.step);
+   if(!row)throw Error('Missing matching form row for checkpoint '+item.step);
+  }
+  // Only modify the form after the entire worksheet has been parsed and validated.
+  for(const row of root.querySelectorAll('.checkpoint-capture-row')){
+   const value=draft.values.find(v=>v.step===Number(row.dataset.step));
+   for(const input of row.querySelectorAll('[data-field]'))input.value=value?(value[input.dataset.field]||''):'';
+  }
+  if(draft.metadata.device)$('device').value=draft.metadata.device;
+  if(draft.metadata.date)$('date').value=draft.metadata.date;
+  checkpointStatus();
+  $('worksheet-status').textContent='Draft loaded for '+draft.scenarioId+': '+draft.entered+
+   ' / '+draft.planned+' checkpoints contain transcribed readings. Not saved as evidence; not independently authenticated. Check each field before recording.';
+  message('Worksheet draft imported locally. Original photographs remain separate. No observation was recorded.');
+ }catch(error){$('worksheet-status').textContent='Worksheet not imported: '+error.message;message(error.message)}
+ event.target.value='';
+};
 $('photo-file').onchange=choosePhoto;
 $('photo-clear').onclick=()=>clearPhoto();
 $('scenario').onchange=selectScenario;
