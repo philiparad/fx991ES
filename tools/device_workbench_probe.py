@@ -27,11 +27,11 @@ def exercise(page):
     assert page.locator("#keys").input_value().startswith("SHIFT FRAC 2 RIGHT 3"), "focused key sequence incorrect"
     assert page.locator("#focused-checkpoint-entry").is_visible()
     assert page.locator("#raw-checkpoints-field").is_hidden()
-    assert page.locator(".checkpoint-capture-row").count() == 6
+    assert page.locator(".checkpoint-capture-row").count() == 5
     assert all(not entry for entry in page.locator(".checkpoint-capture-row input").all_input_values())
-    assert "0 / 6 checkpoints entered" in page.locator("#checkpoint-entry-progress").inner_text()
+    assert "0 / 5 checkpoints entered" in page.locator("#checkpoint-entry-progress").inner_text()
     page.locator(".checkpoint-capture-row").first.locator('[data-field="expression"]').fill("SYNTHETIC LCD FIXTURE")
-    assert "1 / 6 checkpoints entered" in page.locator("#checkpoint-entry-progress").inner_text()
+    assert "1 / 5 checkpoints entered" in page.locator("#checkpoint-entry-progress").inner_text()
     page.locator("#scenario").select_option("A01")
     assert page.locator("#focused-checkpoint-entry").is_hidden()
     assert page.locator("#raw-checkpoints-field").is_visible()
