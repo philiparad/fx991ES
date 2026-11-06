@@ -503,9 +503,28 @@ test('P12 official example corpus has eleven source-grounded cases',()=>eq(globa
 test('P12 official example cases identify source pages',()=>{for(const c of global.FX991_MANUFACTURER_EXAMPLES.CASES){if(![20,21,27].includes(c.page))throw Error(c.id)}});
 test('P12 manufacturer example IDs are unique',()=>eq(new Set(global.FX991_MANUFACTURER_EXAMPLES.CASES.map(c=>c.id)).size,11));
 test('P12 no official example claims physical-device observation',()=>{const r=global.FX991_MANUFACTURER_EXAMPLES.verify();eq(r.physicalObservations,0);for(const c of r.cases){eq(c.physicalKeySequenceVerified,false);eq(c.lcdGlyphParityVerified,false)}});
-test('P12 verified manual semantic-result matches are reported',()=>{const r=global.FX991_MANUFACTURER_EXAMPLES.verify();eq(r.total,11);eq(r.matched,7)});
-test('P12 four documented semantic divergences remain visible',()=>{const r=global.FX991_MANUFACTURER_EXAMPLES.verify();eq(r.divergent,4);eq(r.cases.find(x=>x.caseId==='M12-11').actual,'Argument ERROR')});
+test('P12 verified manual semantic-result matches are reported',()=>{const r=global.FX991_MANUFACTURER_EXAMPLES.verify();eq(r.total,11);eq(r.matched,11)});
+test('P12 previously divergent manufacturer cases now match normalized text',()=>{const r=global.FX991_MANUFACTURER_EXAMPLES.verify();eq(r.divergent,0);eq(r.cases.find(x=>x.caseId==='M12-11').actual,'√6+2√3')});
 test('P12 textual equality does not claim LCD raster parity',()=>{const c=global.FX991_MANUFACTURER_EXAMPLES.verify().cases.find(x=>x.caseId==='M12-01');eq(c.normalizedTextMatch,true);eq(c.lcdGlyphParityVerified,false)});
+
+// Phase 13: exact radical arithmetic and distinct fraction-template semantics.
+test('P13 unlike radical sum remains exact',()=>eq(K.valueToString(evaluate('sqrt(2)+sqrt(3)')),'√3+√2'));
+test('P13 documented radical distributive product exact',()=>eq(K.valueToString(evaluate('(sqrt(2)+2)*sqrt(3)')),'√6+2√3'));
+test('P13 documented compound radical computes approximately when toggled',()=>{const v=evaluate('(sqrt(2)+2)*sqrt(3)');if(Math.abs(K.numeric(v)-5.9135913579)>1e-9)throw Error('numeric parity')});
+test('P13 radical products simplify exactly',()=>eq(K.valueToString(evaluate('sqrt(2)*sqrt(3)')),'√6'));
+test('P13 equal radicals collapse to rational',()=>eq(K.valueToString(evaluate('sqrt(2)*sqrt(2)')),'2'));
+test('P13 unlike radicals cancel exactly',()=>eq(K.valueToString(evaluate('sqrt(2)+sqrt(3)-sqrt(3)')),'√2'));
+test('P13 combine identical radical coefficients',()=>eq(K.valueToString(evaluate('2*sqrt(3)+sqrt(3)')),'3√3'));
+test('P13 rational and radical sum retain exact forms',()=>eq(K.valueToString(evaluate('2+sqrt(3)')),'2+√3'));
+test('P13 exact radical result raster fits LCD',()=>{let s=K.createState();for(const k of ['LP','SQRT','2','RIGHT','ADD','2','RP','MUL','SQRT','3','RIGHT','='])s=K.dispatchKey(s,k);eq(s.result,'√6+2√3');let r=global.FX991_DISPLAY.composeScreen(K.semanticScreen(s));if(!r.resultLayout||r.resultLayout.width>96||r.resultLayout.height>14)throw Error('missing structured radical layout')});
+test('P13 LineIO DIV continues decimal-first',()=>{let s=K.createState();s.setup.displayStyle='LineIO';for(const k of ['1','DIV','5','='])s=K.dispatchKey(s,k);eq(s.result,'0.2');eq(s.decimalView,false)});
+test('P13 LineIO FRAC defaults to fraction form',()=>{let s=K.createState();s.setup.displayStyle='LineIO';for(const k of ['FRAC','1','RIGHT','5','='])s=K.dispatchKey(s,k);eq(s.result,'1/5');eq(s.decimalView,true)});
+test('P13 LineIO fraction toggles to decimal',()=>{let s=K.createState();s.setup.displayStyle='LineIO';for(const k of ['1','SUB','FRAC','4','RIGHT','5','=','S-D'])s=K.dispatchKey(s,k);eq(s.result,'0.2')});
+test('P13 LineIO addition of fraction templates stays exact',()=>{let s=K.createState();s.setup.displayStyle='LineIO';for(const k of ['FRAC','2','RIGHT','3','RIGHT','ADD','FRAC','1','RIGHT','2','='])s=K.dispatchKey(s,k);eq(s.result,'7/6')});
+test('P13 mixed explicit decimal and fraction displays decimal',()=>{let s=K.createState();s.setup.displayStyle='LineIO';for(const k of ['FRAC','1','RIGHT','5','RIGHT','ADD','0','.','5','='])s=K.dispatchKey(s,k);eq(s.result,'0.7')});
+test('P13 exact radical sum survives session Ans serialization',()=>{let s=K.createState();s.ans=evaluate('(sqrt(2)+2)*sqrt(3)');let restored=SS.importJSON(SS.exportJSON(s));eq(K.valueToString(restored.ans),'√6+2√3')});
+test('P13 invalid radical-sum import is rejected',()=>{let s=K.createState();s.ans=evaluate('(sqrt(2)+2)*sqrt(3)');let p=JSON.parse(SS.exportJSON(s));p.ans.radicals[0].radicand='-8';fail28(()=>SS.importJSON(JSON.stringify(p)))});
+test('P13 CASIO published corpus now matches eleven result texts',()=>{const r=global.FX991_MANUFACTURER_EXAMPLES.verify();eq(r.matched,11);eq(r.total,11);eq(r.physicalObservations,0)});
 
 // Milestone 24: physical-key resolution, insert/overwrite and structural deletion.
 const KM=global.FX991_KEYS;
