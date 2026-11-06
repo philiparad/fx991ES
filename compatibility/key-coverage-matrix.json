@@ -13,7 +13,8 @@
     "P0-03 DMS input/conversion COMP route added; physical display and edge parity remain unverified.",
     "P0-04 hyperbolic COMP menu implemented; hardware menu artwork/keys unverified.",
     "P0-05 SHIFT HYP absolute-value template is implemented; device visual parity unverified.",
-    "P0-06 factorial SHIFT RECIP implemented; hardware UI parity unverified."
+    "P0-06 factorial SHIFT RECIP implemented; hardware UI parity unverified.",
+    "P0-07 SHIFT MUL/DIV permutation/combination routing implemented; hardware parity unverified."
   ],
   "buttons": [
     {
@@ -1294,7 +1295,7 @@
       "key": "MUL",
       "modifier": "shift",
       "action": "nPr",
-      "capability": "expected-route-missing"
+      "capability": "source-route-unverified"
     },
     {
       "model": "standard",
@@ -1318,7 +1319,7 @@
       "key": "DIV",
       "modifier": "shift",
       "action": "nCr",
-      "capability": "expected-route-missing"
+      "capability": "source-route-unverified"
     },
     {
       "model": "standard",
@@ -10894,7 +10895,7 @@
       "key": "MUL",
       "modifier": "shift",
       "action": "nPr",
-      "capability": "expected-route-missing"
+      "capability": "source-route-unverified"
     },
     {
       "model": "c",
@@ -10918,7 +10919,7 @@
       "key": "DIV",
       "modifier": "shift",
       "action": "nCr",
-      "capability": "expected-route-missing"
+      "capability": "source-route-unverified"
     },
     {
       "model": "c",

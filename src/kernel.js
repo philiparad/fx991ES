@@ -77,7 +77,7 @@ function format(v,setup={},decimalView=false){
  if(global.FX991_DECIMAL){let r=decimalRational(v);return global.FX991_DECIMAL.format(r.n,r.d,setup)}
  return displayNumber(numeric(v),setup);
 }
-const TOKEN_RE=/(?:\d+(?:\.\d*)?|\.\d+|asinh|acosh|atanh|sinh|cosh|tanh|asin|acos|atan|sin|cos|tan|sqrt|abs|log|ln|exp|Rnd|Ans|pi|[A-FMXY]|[()+\-*/^!])/iy;
+const TOKEN_RE=/(?:\d+(?:\.\d*)?|\.\d+|asinh|acosh|atanh|sinh|cosh|tanh|asin|acos|atan|sin|cos|tan|sqrt|abs|log|ln|exp|Rnd|Ans|pi|nPr|nCr|[A-FMXY]|[()+\-*/^!])/iy;
 // P0-03 sexagesimal input is represented as exact degree + minute/60 +
 // second/3600 arithmetic, preserving source text for edit and replay.
 function normalizeSexagesimal(src){
@@ -103,13 +103,24 @@ function parse(src){const t=tokenize(src);let i=0;let peek=()=>t[i]?.value;let t
  // The document editor and semantic evaluator remain independent.
  function startsImplicit(v){return v==='('||v==='pi'||v==='Ans'||/^[A-FMXY]$/.test(v||'')||['sinh','cosh','tanh','asinh','acosh','atanh','sin','cos','tan','asin','acos','atan','sqrt','abs','log','ln','exp','Rnd'].includes(v)}
  function juxtaposition(){let a=unary();while(startsImplicit(peek()))a={type:'binary',op:'*',implicit:true,left:a,right:unary()};return a}
- function product(){let a=juxtaposition();while(['*','/'].includes(peek())){let op=t[i++].value;a={type:'binary',op,left:a,right:juxtaposition()}}return a}
+ function product(){let a=juxtaposition();while(['*','/','nPr','nCr'].includes(peek())){let op=t[i++].value;a={type:'binary',op,left:a,right:juxtaposition()}}return a}
  function sum(){let a=product();while(['+','-'].includes(peek())){let op=t[i++].value;a={type:'binary',op,left:a,right:product()}}return a}
  let ast=sum();if(i!==t.length)throw new CalcError(ERROR.SYNTAX,t[i].pos);return ast}
 function sourcePosition(ast){if(Number.isInteger(ast.pos))return ast.pos;if(ast.arg)return sourcePosition(ast.arg);if(ast.left)return sourcePosition(ast.left);return 0}
 function evaluate(ast,context){const angle=context.setup?.angle||'DEG';const factor=angle==='DEG'?Math.PI/180:angle==='GRAD'?Math.PI/200:1;
  function walk(a){if(a.type==='group')return walk(a.arg);if(a.type==='number'){if(!a.raw.includes('.'))return rat(BigInt(a.raw));let [left,right]=a.raw.split('.');return rat(BigInt((left||'0')+(right||'')),10n**BigInt(right?.length||0))}
- if(a.type==='symbol')return a.name==='pi'?pi():a.name==='Ans'?context.ans:(context.memory[a.name]||rat(0n));if(a.type==='neg')return neg(walk(a.arg));if(a.type==='binary'){let l=walk(a.left),r=walk(a.right);if(a.op==='/'&&numeric(r)===0)throw new CalcError(ERROR.MATH,sourcePosition(a.right));return {'+':add,'-':sub,'*':mul,'/':div,'^':pow}[a.op](l,r)}if(a.type==='fact'){let x=walk(a.arg);let n=numeric(x);if(!Number.isInteger(n)||n<0||n>69)throw new CalcError(ERROR.MATH);let z=1n;for(let i=2n;i<=BigInt(n);i++)z*=i;return rat(z)}
+ if(a.type==='symbol')return a.name==='pi'?pi():a.name==='Ans'?context.ans:(context.memory[a.name]||rat(0n));if(a.type==='neg')return neg(walk(a.arg));if(a.type==='binary'){let l=walk(a.left),r=walk(a.right);
+ if(a.op==='nPr'||a.op==='nCr'){
+  const n=numeric(l),k=numeric(r);
+  if(!Number.isSafeInteger(n)||!Number.isSafeInteger(k)||n<0||k<0||k>n||n>1e10)throw new CalcError(ERROR.MATH);
+  const count=a.op==='nPr'?k:Math.min(k,n-k);
+  if(count>1000)throw new CalcError(ERROR.MATH);
+  let result=1n;
+  if(a.op==='nPr'){for(let j=0;j<count;j++)result*=BigInt(n-j)}
+  else for(let j=1;j<=count;j++)result=result*BigInt(n-count+j)/BigInt(j);
+  return rat(result);
+ }
+if(a.op==='/'&&numeric(r)===0)throw new CalcError(ERROR.MATH,sourcePosition(a.right));return {'+':add,'-':sub,'*':mul,'/':div,'^':pow}[a.op](l,r)}if(a.type==='fact'){let x=walk(a.arg);let n=numeric(x);if(!Number.isInteger(n)||n<0||n>69)throw new CalcError(ERROR.MATH);let z=1n;for(let i=2n;i<=BigInt(n);i++)z*=i;return rat(z)}
  let x=walk(a.arg);if(a.name==='sqrt')return sqrt(x);if(a.name==='Rnd'){const D=global.FX991_DECIMAL;let r=decimalRational(x),out=D.format(r.n,r.d,context.setup||{}),q=D.parseDecimal(out);return rat(q.n,q.d)}let v=numeric(x);let trig={sin:()=>Math.sin(v*factor),cos:()=>Math.cos(v*factor),tan:()=>Math.tan(v*factor),asin:()=>Math.asin(v)/factor,acos:()=>Math.acos(v)/factor,atan:()=>Math.atan(v)/factor,sinh:()=>Math.sinh(v),cosh:()=>Math.cosh(v),tanh:()=>Math.tanh(v),asinh:()=>Math.asinh(v),acosh:()=>Math.acosh(v),atanh:()=>Math.atanh(v),abs:()=>Math.abs(v),log:()=>Math.log10(v),ln:()=>Math.log(v),exp:()=>Math.exp(v)};return dec(trig[a.name]())}
  return validateRange(walk(ast))}
 function buildDocument(source){return global.FX991_EDITOR?global.FX991_EDITOR.fromSource(source):{kind:'Sequence',id:'root',children:[{kind:'Token',id:'input',value:String(source)}]}}

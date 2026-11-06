@@ -1216,6 +1216,31 @@ test('P0-06 factorial above upper range rejects Math ERROR',()=>{
  eq(s.view,'error');eq(s.error,K.ERROR.MATH);
 });
 
+test('P0-07 permutation key computes 10P4=5040',()=>{
+ let s=K.createState('standard');for(const k of ['1','0','SHIFT','MUL','4','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');close(K.numeric(s.lastValue),5040,1e-10);
+});
+test('P0-07 combination key computes 10C4=210',()=>{
+ let s=K.createState('standard');for(const k of ['1','0','SHIFT','DIV','4','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');close(K.numeric(s.lastValue),210,1e-10);
+});
+test('P0-07 combination key computes 5C0=1',()=>{
+ let s=K.createState('standard');for(const k of ['5','SHIFT','DIV','0','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');close(K.numeric(s.lastValue),1,1e-12);
+});
+test('P0-07 rejects r greater than n',()=>{
+ let s=K.createState('standard');for(const k of ['4','SHIFT','DIV','5','='])s=K.dispatchKey(s,k);
+ eq(s.view,'error');eq(s.error,K.ERROR.MATH);
+});
+test('P0-07 rejects negative n',()=>{
+ let s=K.createState('standard');for(const k of ['NEG','4','SHIFT','MUL','2','='])s=K.dispatchKey(s,k);
+ eq(s.view,'error');eq(s.error,K.ERROR.MATH);
+});
+test('P0-07 rejects fractional n',()=>{
+ let s=K.createState('standard');for(const k of ['4','.','5','SHIFT','DIV','2','='])s=K.dispatchKey(s,k);
+ eq(s.view,'error');eq(s.error,K.ERROR.MATH);
+});
+
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
