@@ -1199,6 +1199,23 @@ test('P0-05 SHIFT HYP does not open hyperbolic menu',()=>{
  eq(s.view,'edit');eq(s.expression.includes('abs('),true);
 });
 
+test('P0-06 factorial SHIFT RECIP evaluates 5 factorial',()=>{
+ let s=K.createState('standard');for(const k of ['5','SHIFT','RECIP','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');close(K.numeric(s.lastValue),120,1e-12);
+});
+test('P0-06 factorial grouped expression computes 40320',()=>{
+ let s=K.createState('standard');for(const k of ['LP','5','ADD','3','RP','SHIFT','RECIP','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');close(K.numeric(s.lastValue),40320,1e-12);
+});
+test('P0-06 factorial negative argument rejects Math ERROR',()=>{
+ let s=K.createState('standard');for(const k of ['NEG','1','SHIFT','RECIP','='])s=K.dispatchKey(s,k);
+ eq(s.view,'error');eq(s.error,K.ERROR.MATH);
+});
+test('P0-06 factorial above upper range rejects Math ERROR',()=>{
+ let s=K.createState('standard');for(const k of ['7','0','SHIFT','RECIP','='])s=K.dispatchKey(s,k);
+ eq(s.view,'error');eq(s.error,K.ERROR.MATH);
+});
+
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
