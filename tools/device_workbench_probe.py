@@ -142,6 +142,48 @@ def field_sheet_checks(page, base_url):
     return 8
 
 
+
+def phase17_field_pack_checks(page, base_url):
+    """Exercise the real browser page; exported fields must remain completely blank."""
+    import csv
+    errors=[]
+    page.on("pageerror", lambda error: errors.append(str(error)[:400]))
+    page.goto(base_url + "/tests/phase17-field-pack.html", wait_until="load", timeout=30000)
+    page.locator(".sheet").first.wait_for(timeout=10000)
+    assert page.locator("#filter").input_value() == "priority", "priority mode not default"
+    assert page.locator(".sheet").count() == 6, "priority worksheets missing"
+    assert page.locator(".steps tbody tr").count() == 34, "priority checkpoint count incorrect"
+    assert "Physical observations captured: 0." in page.locator("#summary").inner_text()
+    assert page.locator(".steps tbody td:nth-child(3)").all_inner_texts() == [""] * 34, "LCD observations prefilled"
+    assert page.locator(".steps tbody td:nth-child(4)").all_inner_texts() == [""] * 34, "physical key mappings prefilled"
+    assert page.locator(".steps tbody td:nth-child(5)").all_inner_texts() == [""] * 34, "photo references prefilled"
+
+    def export_csv(expected_rows):
+        with page.expect_download(timeout=10000) as info:
+            page.locator("#csv").click()
+        assert info.value.suggested_filename == "phase17-blank-physical-checkpoints.csv"
+        path=Path(info.value.path())
+        assert path.read_bytes().startswith(b"\\xef\\xbb\\xbf"), "UTF-8 BOM missing for Excel"
+        rows=list(csv.DictReader(path.read_text(encoding="utf-8-sig").splitlines()))
+        assert len(rows) == expected_rows, "wrong number of checkpoint CSV rows"
+        assert all(row["observedLCD"] == "" and row["observedCursor"] == ""
+            and row["actualPhysicalKey"] == "" and row["photoFile"] == ""
+            and row["device"] == "" and row["operator"] == ""
+            and row["date"] == "" and row["reviewer"] == ""
+            for row in rows), "blank checkpoint CSV contains fabricated evidence"
+        return rows
+
+    priority=export_csv(34)
+    assert len(set(row["scenarioId"] for row in priority)) == 6, "priority ID count wrong"
+    page.locator("#filter").select_option("all")
+    assert page.locator(".sheet").count() == 12, "all twelve worksheets missing"
+    assert page.locator(".steps tbody tr").count() == 59, "full checkpoint count incorrect"
+    all_rows=export_csv(59)
+    assert len(set(row["scenarioId"] for row in all_rows)) == 12, "all scenario IDs missing from CSV"
+    assert not errors, "field-pack JavaScript error: " + "; ".join(errors)
+    return 15
+
+
 def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out",default="browser-evidence/device-workbench")
@@ -174,6 +216,7 @@ def main(argv=None):
                             row.update(exercise(page))
                             checks=field_sheet_checks(page, url.rsplit("/tests/device.html",1)[0])
                             row["checks"] += checks
+                            row["checks"] += phase17_field_pack_checks(page, url.rsplit("/tests/device.html",1)[0])
                         except (PlaywrightError,AssertionError,TimeoutError,ValueError,OSError,AttributeError) as error:
                             row.update(status=classify_failure(stage,error),error=str(error)[:500])
                             if context:
