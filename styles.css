@@ -66,3 +66,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
  .keypad-scientific .key {font-size:9px;height:34px;}
  .keypad-numeric .key {font-size:14px;min-height:44px;}
 }
+
+/* Physical-reference workbench: compatible with strict CSP. */
+.device-workbench-main {display:block;max-width:960px}
+.device-prewrap {white-space:pre-wrap;overflow-wrap:anywhere}
