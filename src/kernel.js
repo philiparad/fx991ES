@@ -194,7 +194,7 @@ function dispatchKey(state,key){let s={...state,setup:{...state.setup},memory:{.
   // Under LineIO, a fraction-entry template initially displays an exact
   // fraction; S⇔D then toggles to decimal. Ordinary DIV remains decimal-first.
   const hasFraction=(node)=>node&&typeof node==='object'&&
-   (node.kind==='Fraction'||(node.kind==='Sequence'&&node.children.some(hasFraction))||
+   (node.kind==='Fraction'||node.kind==='MixedFraction'||(node.kind==='Sequence'&&node.children.some(hasFraction))||
     ['numerator','denominator','exponent','radicand','degree','argument','body'].some(k=>node[k]&&hasFraction(node[k])));
   if(s.mode==='COMP'&&effectiveDisplayStyle(s.setup,s.mode)==='LineIO'){
    s.decimalView=!!(E&&s.document&&hasFraction(s.document.root))&&!s.expression.includes('.');
