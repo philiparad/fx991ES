@@ -5,7 +5,9 @@
   "files": {
     ".github/workflows/browser-acceptance.yml": "995e5823d79c5f0cf9beff214c86e2bc49426566de9c1f2472d3d02693b8983f",
     ".github/workflows/review-browser-artifacts.yml": "4dd8f5f9228227caf8e2a250b503045197ec122069577c08d909754aa760ca6a",
+    "README.md": "6632ae800f84e2d4093f1c3b90286b44a975b3d2013606778f6e95634a650198",
     "compatibility/baseline-v1.json": "480af8e44515131324a2e7c1534c8d24a41708ade795fd438d4158acf59fb6e7",
+    "docs/PHASE17.md": "9eb3257d6a9220f4822f679c35d2e3aa1dd5f2ab7e4fa012f1a382228cd70e8a",
     "docs/acceptance-failure-classification-m55.md": "f4b2279489a6c1148a78686a6583ef6e4febfd33a50d93bb9c11f6d728f2cc68",
     "docs/browser-acceptance.md": "8b75b2f4e974396c478351a085160a29f344c9a311a72b1668283c00c2520ba3",
     "docs/browser-bootstrap-error-capture-m48.md": "3801d7af34cb85dfe2e40efb8e4ef58b879c82df3090f13871ab50473b86b2b3",
@@ -45,7 +47,6 @@
     "docs/native-browser-e2e-m50.md": "8185e29861485323829b0573dd59af5c36d9d7b4522d4e6e6daf5b65ae88d515",
     "docs/native-browser-release-gate-m51.md": "8ab770b8f24252df3d87d848965d3fe7a987cc50984f7233b7942d0ef2fc6e25",
     "docs/persistent-mode-registers.md": "eb4598d797907c109c0441bf396c6515d01bb08af6d4c4665cad1635f4580c60",
-    "docs/PHASE17.md": "79847fb8db0fb52248954c12540de314ada311d6847b1506a9190515b17c4221",
     "docs/physical-reference-phase8.md": "90f86858d1f5d5abe3981cdee855fe84d79a726523a2d6bf7a078e56ab506cfb",
     "docs/playwright-failure-evidence-m54.md": "72cdea7bbab271d1c4be7004be60c496dc5617f23fb01d1eb941e5adbf082256",
     "docs/reference-capture-plan-phase9.md": "233fbcb2cfed5ae7a034fde5d86edde4cf2d0408e6224b65b8a012be782feae1",
@@ -64,7 +65,6 @@
     "docs/structural-session-restoration.md": "0317837af8489e8b409e8aa12c6dde80b790fbbeee611a146a612ab4dcbb76eb",
     "docs/structured-results-phase6.md": "722b8b53e5430f9ac51b972a65259e15fac49f124e091186a5f462a856c6ff14",
     "index.html": "908944075a941d626b1a4af0ce768b138517f071668752520bbfb1e9511fba8f",
-    "README.md": "6632ae800f84e2d4093f1c3b90286b44a975b3d2013606778f6e95634a650198",
     "src/app.js": "94794f36d90eb601370d0db89a6d8c552787bac8d3ecc83f0c00a528096e1110",
     "src/boot-diagnostics.js": "3f5cc1279f4d09b34bcd41548173680a757b21735294081592c2a9ffeab6e30d",
     "src/browser-evidence.js": "c28de1f5fcdc65c508c36b2867236ec1d549fcd2a04f62abe031f86420844620",
@@ -100,9 +100,12 @@
     "tests/cross-browser.html": "d724122807d575e25c0c6905046b8a56542d585c09376eabdc1ffd1c687a0e54",
     "tests/cross-browser.js": "2fed9c2f3abfc5982360abd0210453f8ba8e4c88df2efbe874b6e6d7d0bc509f",
     "tests/device-page.js": "3fcb6458a3c8f463e4e0b98d8440213f6e3912177eab3ea05b04b33a107feba8",
-    "tests/device.html": "c52f0d125d1dc8d3ba46cac2ac01534f1b0b7fca596111b3ed7467a00423a399",
+    "tests/device.html": "56f1db87070dccf79001da94958c40d54fe2987a4361f59a87fcf12299fc528c",
     "tests/differential.html": "b261f6e3481be87114853f3b0509c50e7ddfa7fbdfdf9a9d58da10182e9a046c",
     "tests/keypad-layout.cjs": "9551d92ee2b24bef84e423a8353f9eeca0547119591d7eb63667333f64a31c64",
+    "tests/phase17-field-pack.css": "8d2ce4807065321803fc6ff4adc8df468b92bf1983518e7e13ce8cab322d22fd",
+    "tests/phase17-field-pack.html": "2abf894186111303dbc0dcfa167b4da43a0de0c3f2e2e890b8d5c5ab06b34338",
+    "tests/phase17-field-pack.js": "83e4b21507c988adba7cf7ab17cc0795f9d68f4cd16901f13fab0c5d29ae19eb",
     "tests/rc-page.js": "66e128ee287af4711add00eb6dd1b0a73c4e45371e747a69731af579aefc5e11",
     "tests/rc.html": "5af03dca106fffe8d64058e51fe9b7753878841ecf46f2b11ebcdbea11fa55d4",
     "tests/reference-field-sheet.css": "8a03eaf898e938968a8a001fc9b6a8cb2092f2c4ea39b6c142a7af11ab1e8d03",
@@ -152,7 +155,7 @@
     "tools/tests/test_source_fingerprint_m52.py": "b26faf54b50dc5c3c1d2fbf8b898f794e91dc704a7ceeaf988bf9f34b17e28a8",
     "tools/verify_reference_photos.py": "6d48d8e17ae3ceb7fd4b25276e38224c3d0d216a9da7e5f4b63510a4aa9c1096"
   },
-  "fileCount": 148,
+  "fileCount": 151,
   "status": "CANDIDATE",
   "note": "Checksums describe source integrity; browser and device compatibility are not certified."
 }
