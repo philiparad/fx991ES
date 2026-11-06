@@ -118,7 +118,7 @@
     "tools/ci_diagnostics.py": "347801cb92540ddf751716842c188cdae3a8354195358af8b80d487080496eba",
     "tools/ci_environment.py": "c57a024058d5195ab0d20c5516843971e1f417a761b09f06dd534a38623fbb34",
     "tools/ci_matrix_summary.py": "86bf93d97aeaf27ad2aa1127c824526d6f0ed61ebc84ac8930ab0bb256a17144",
-    "tools/device_workbench_probe.py": "d9ff47dac6afc1f91172f829176cea0430c69b4dbfb0fa862e9827cad262c50d",
+    "tools/device_workbench_probe.py": "fd71166789bb9acc63b1a0dbd061bd3dd57b558754bdd11ec91a70d3dfa42013",
     "tools/evidence_review.py": "d21186f7af3778d8a118e20982c8d7c59869fedbdaf47d03bc1bcc52bfd75d17",
     "tools/github_job_triage.py": "680bb8c1f7338dcbb91bb662dc73b98e0add5b400b7938f4cd456a4bdd5ebcbe",
     "tools/lcd_visual_probe.py": "50df802b95ce75864ca8906dab0095ca4fd22cc483c2ca32c8f327f800ae2ee6",
