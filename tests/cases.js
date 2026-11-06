@@ -1075,6 +1075,30 @@ test('Unknown numerical errors use neutral fallback explanation',()=>{
  eq(global.FX991_ERROR_HELP.forState(s).title,'Numerical calculation failed');
 });
 
+test('Student learning guidance explains domain error in three steps',()=>{
+ const state=N.execute(numState(),'INTEGRAL','1/X',{lower:-1,upper:1});
+ const lesson=global.FX991_ERROR_HELP.lessonForState(state);
+ eq(lesson.steps.length,3);eq(lesson.steps[2].includes('X=0'),true);
+});
+test('Student learning guidance explains cusp and left-right slopes',()=>{
+ const state=N.execute(numState(),'DIFF','abs(X)',{at:0});
+ eq(global.FX991_ERROR_HELP.lessonForState(state).steps[2].includes('left slope -1'),true);
+});
+test('Student learning guidance suggests safer SOLVE guess',()=>{
+ const state=N.execute(numState(),'SOLVE','X^2-2',{guess:0});
+ eq(global.FX991_ERROR_HELP.lessonForState(state).steps[2].includes('X=1'),true);
+});
+test('Student learning guidance stays absent outside numerical error',()=>{
+ const state=N.execute(numState(),'DIFF','X^2',{at:2});
+ eq(global.FX991_ERROR_HELP.lessonForState(state),null);
+ eq(global.FX991_ERROR_HELP.lessonForState({view:'edit',error:K.ERROR.MATH}),null);
+});
+test('Unknown numerical reason receives neutral educational example',()=>{
+ const state={view:'error',error:K.ERROR.MATH,
+  numericalDetails:{operation:'DIFF',error:K.ERROR.MATH,reason:'unknown'}};
+ eq(global.FX991_ERROR_HELP.lessonForState(state).steps[2].includes('X^2'),true);
+});
+
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
