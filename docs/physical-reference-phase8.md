@@ -50,5 +50,10 @@ The existing schema accepts optional `setup`, `checkpoints`, and `photoRef` meta
 - Number of actual independently verified physical or official-emulator observations bundled: **0**.
 - The existing phase-7 source/browser matrix was successful before these phase-8 changes; real browser retesting and source-manifest verification must be performed on the phase-8 commit. Do not reuse older screenshots or approvals as if they tested this revision.
 
+## Browser collection-workbench acceptance
+- `tools/device_workbench_probe.py` launches **real Chromium, Firefox and WebKit** and verifies that the workbench loads, that corrected preset keys are offered, that angle-aware previews calculate, that a checkpoint is matched, and that a deliberately incorrect result reports the first divergent step.
+- All probe-created values exist only in an isolated browser context and are conspicuously labeled **synthetic browser fixtures**; the probe does not export them, place them in the observed-device corpus, or claim physical CASIO hardware tests.
+- The CI workflow runs this diagnostic as an additional required step and uploads its JSON report with other browser evidence. Browser screenshots/reports remain distinct from physical reference evidence.
+
 ## Next gate
 Collect at least 50 legitimate physical observations across all standard modes, including menu entry, result layout, error conditions, angle/number-format transitions and S⇔D cycles. The target is a proposed development objective, not present coverage. Manual verification of photographs and repeatability remains necessary. Neither passing internal tests nor user-imported unverified JSON constitutes hardware certification.
