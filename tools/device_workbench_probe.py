@@ -163,7 +163,7 @@ def phase17_field_pack_checks(page, base_url):
             page.locator("#csv").click()
         assert info.value.suggested_filename == "phase17-blank-physical-checkpoints.csv"
         path=Path(info.value.path())
-        assert path.read_bytes().startswith(b"\\xef\\xbb\\xbf"), "UTF-8 BOM missing for Excel"
+        assert path.read_bytes().startswith(bytes.fromhex("efbbbf")), "UTF-8 BOM missing for Excel"
         rows=list(csv.DictReader(path.read_text(encoding="utf-8-sig").splitlines()))
         assert len(rows) == expected_rows, "wrong number of checkpoint CSV rows"
         assert all(row["observedLCD"] == "" and row["observedCursor"] == ""
