@@ -51,11 +51,11 @@ def exercise(page):
     assert page.locator("#worksheet-import-panel").is_visible()
     page.locator("#worksheet-file").set_input_files({
         "name":"blank-fixture.csv","mimeType":"text/csv","buffer":worksheet()})
-    assert "0 / 5 checkpoints" in page.locator("#worksheet-status").inner_text(), "blank worksheet counted as observation"
+    page.locator("#worksheet-status").filter(has_text="0 / 5 checkpoints").wait_for(timeout=10000)
     assert "0 of 12 focused cases" in page.locator("#fraction-coverage").inner_text(), "worksheet created evidence"
     page.locator("#worksheet-file").set_input_files({
         "name":"synthetic-fixture.csv","mimeType":"text/csv","buffer":worksheet(True)})
-    assert "1 / 5 checkpoints" in page.locator("#worksheet-status").inner_text(), "worksheet draft not transcribed"
+    page.locator("#worksheet-status").filter(has_text="1 / 5 checkpoints").wait_for(timeout=10000)
     assert "SYNTHETIC TRANSCRIPTION" in page.locator(".checkpoint-capture-row").first.locator('[data-field="expression"]').input_value()
     assert "0 of 12 focused cases" in page.locator("#fraction-coverage").inner_text(), "draft import changed corpus"
 
