@@ -30,7 +30,20 @@ function message(m){$('feedback').textContent=m}
 function download(data){let u=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));let a=document.createElement('a');a.href=u;a.download='fx991-device-observations.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1500)}
 function populate(){for(let s of D.scenarios()){let opt=document.createElement('option');opt.value=s.id;
  opt.textContent=(s.planned?'PLAN ':'LEGACY ')+s.id+' — '+(s.title||s.area);$('scenario').append(opt)}selectScenario()}
-function selectScenario(){clearPhoto();let s=D.scenario($('scenario').value);
+function renderFocusedPlan(s){
+ const group=$('fraction-capture-guide');group.hidden=!s.focus;
+ const root=$('fraction-checkpoint-list');root.replaceChildren();
+ if(!s.focus)return;
+ const keys=s.keys;
+ for(let i=0;i<keys.length;i++){
+  const line=document.createElement('div');line.className='device-step-row';
+  const key=document.createElement('span');key.textContent='Step '+(i+1)+' · '+keys[i];
+  const target=document.createElement('span');target.textContent=s.checkpoints.includes(i+1)?
+    'Observe LCD and cursor here; record original photo ID':'Press and continue';
+  line.append(key,target);root.append(line);
+ }
+}
+function selectScenario(){clearPhoto();let s=D.scenario($('scenario').value);renderFocusedPlan(s);
  $('model').value=s.model;$('keys').value=s.keys.join(' ');
  if(s.setup){$('angle').value=s.setup.angle;$('number-format').value=s.setup.format;
  $('digits').value=String(s.setup.digits);$('display-style').value=s.setup.displayStyle}
@@ -42,6 +55,9 @@ function selectScenario(){clearPhoto();let s=D.scenario($('scenario').value);
 function setup(){return {angle:$('angle').value,format:$('number-format').value,digits:Number($('digits').value),displayStyle:$('display-style').value}}
 function checkpoints(){let text=$('checkpoints').value.trim();if(!text)return [];let value=JSON.parse(text);if(!Array.isArray(value))throw Error('Intermediate observations must be a JSON array');return value}
 function renderCoverage(){
+ const focused=window.FX991_FRACTION_VALIDATION.progress(corpus.records);
+ $('fraction-coverage').textContent=focused.recorded+' of '+focused.planned+
+   ' focused cases have self-reported records; independent authentication: NO.';
  const progress=D.planCoverage(corpus);$('plan-summary').textContent=
   progress.recorded+' / '+progress.planned+' planned scenarios have self-reported records; '+
   progress.unrecorded+' remain unrecorded. Independent authentication: NO.';
