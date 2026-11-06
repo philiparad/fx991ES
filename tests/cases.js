@@ -550,6 +550,33 @@ test('P14 square-root square simplification',()=>{eq(K.valueToString(evaluate('s
 test('P14 unlike radicals cancel without decimal loss',()=>{eq(K.valueToString(evaluate('sqrt(2)+sqrt(5)-sqrt(5)')),'√2')});
 test('P14 mixed fraction remains text after session restore',()=>{let s=m31seq(['FRAC','7','RIGHT','6','=','SHIFT','FRAC']);let r=SS.importJSON(SS.exportJSON(s));eq(K.valueToString(r.ans),'7/6')});
 
+// Phase 15: dedicated three-field mixed-fraction *input*, not only display conversion.
+const p15=(keys,style='MathO')=>{let s=K.createState();s.setup.displayStyle=style;for(const k of keys)s=K.dispatchKey(s,k);return s};
+test('P15 SHIFT+FRAC enters mixed template in edit view',()=>{const s=p15(['SHIFT','FRAC']);eq(s.document.root.children[0].kind,'MixedFraction');eq(s.document.anchor.sequenceId,s.document.root.children[0].whole.id)});
+test('P15 dedicated MIXIN key enters mixed template',()=>{const s=p15(['MIXIN']);eq(s.document.root.children[0].kind,'MixedFraction')});
+test('P15 mixed template contains three independent slots',()=>{const s=p15(['MIXIN']);eq(E.inspect(s.document).slots,3);eq(E.inspect(s.document).duplicate,false)});
+test('P15 mixed templates display all three empty fields',()=>{const s=p15(['MIXIN']);eq(E.invalidSlots(s.document).length,3);if(!E.renderHTML(s.document).includes('nd-mixed'))throw Error('mixed editor markup missing')});
+test('P15 mixed cursor advances whole to numerator to denominator',()=>{let s=p15(['MIXIN','2']);const node=s.document.root.children[0];s=K.dispatchKey(s,'RIGHT');eq(s.document.anchor.sequenceId,node.numerator.id);s=K.dispatchKey(s,'3');s=K.dispatchKey(s,'RIGHT');eq(s.document.anchor.sequenceId,node.denominator.id)});
+test('P15 mixed 1 1/6 evaluates to 7/6',()=>{const s=p15(['SHIFT','FRAC','1','RIGHT','1','RIGHT','6','=']);eq(s.view,'result');eq(s.result,'7/6');eq(K.valueToString(s.ans),'7/6')});
+test('P15 mixed 2 3/4 evaluates to 11/4',()=>{const s=p15(['MIXIN','2','RIGHT','3','RIGHT','4','=']);eq(s.result,'11/4')});
+test('P15 unary minus affects whole mixed value',()=>{const s=p15(['NEG','MIXIN','2','RIGHT','3','RIGHT','4','=']);eq(s.result,'-11/4')});
+test('P15 separate mixed templates add exactly',()=>{const s=p15(['MIXIN','1','RIGHT','1','RIGHT','6','RIGHT','ADD','MIXIN','2','RIGHT','1','RIGHT','3','=']);eq(s.result,'7/2')});
+test('P15 mixed input under LineIO defaults to exact fraction',()=>{const s=p15(['MIXIN','1','RIGHT','1','RIGHT','6','='],'LineIO');eq(s.result,'7/6');eq(s.decimalView,true)});
+test('P15 mixed input LineIO toggles to decimal',()=>{const s=p15(['MIXIN','1','RIGHT','1','RIGHT','6','=','S-D'],'LineIO');eq(s.result,'1.166666667')});
+test('P15 incomplete mixed input reports Syntax ERROR first',()=>{const s=p15(['MIXIN','1','=']);eq(s.view,'error');eq(s.error,K.ERROR.SYNTAX)});
+test('P15 mixed denominator zero rejected as Argument ERROR',()=>{const s=p15(['MIXIN','1','RIGHT','1','RIGHT','0','=']);eq(s.error,K.ERROR.ARGUMENT)});
+test('P15 improper mixed numerator rejected',()=>{const s=p15(['MIXIN','2','RIGHT','5','RIGHT','4','=']);eq(s.error,K.ERROR.ARGUMENT)});
+test('P15 zero whole mixed field is rejected',()=>{const s=p15(['MIXIN','0','RIGHT','1','RIGHT','4','=']);eq(s.error,K.ERROR.ARGUMENT)});
+test('P15 nested non-digit numerator refused',()=>{const s=p15(['MIXIN','1','RIGHT','SQRT','4','RIGHT','RIGHT','2','=']);eq(s.error,K.ERROR.ARGUMENT)});
+test('P15 mixed structure draws independent stacked input fields',()=>{const s=p15(['MIXIN','1','RIGHT','1','RIGHT','6']);const layout=L.layoutExpression(s.document);if(layout.height<10||layout.width<10)throw Error('mixed layout missing');eq(L.composeScreen(K.semanticScreen(s)).pixels.length,2976)});
+test('P15 deleting empty mixed template is atomic',()=>{let d=E.template(E.create(),'MixedFraction');d=E.move(d,'LEFT');d=E.delForward(d);eq(d.root.children.length,0)});
+test('P15 mixed input survives session export/import',()=>{const s=p15(['MIXIN','2','RIGHT','1','RIGHT','3']);const x=SS.importJSON(SS.exportJSON(s));eq(x.expression,s.expression);eq(x.document.root.children[0].kind,'MixedFraction');eq(x.document.anchor.sequenceId,s.document.anchor.sequenceId)});
+test('P15 mixed input preserves unique node IDs after restore',()=>{let s=p15(['MIXIN','2','RIGHT','1','RIGHT','3']);s=SS.importJSON(SS.exportJSON(s));s=K.dispatchKey(s,'RIGHT');s=K.dispatchKey(s,'MIXIN');eq(E.inspect(s.document).duplicate,false)});
+test('P15 malformed mixed document session is rejected',()=>{const s=p15(['MIXIN','1','RIGHT','1','RIGHT','6']);const obj=JSON.parse(SS.exportJSON(s));delete obj.document.root.children[0].whole;let rejected=false;try{SS.importJSON(JSON.stringify(obj))}catch(_){rejected=true}eq(rejected,true)});
+test('P15 old fractional session remains backward compatible',()=>{const s=p15(['FRAC','1','RIGHT','2']);const x=SS.importJSON(SS.exportJSON(s));eq(x.document.root.children[0].kind,'Fraction')});
+test('P15 mixed input preserves exact evaluation source across restore',()=>{let s=p15(['MIXIN','3','RIGHT','2','RIGHT','5']);s=SS.importJSON(SS.exportJSON(s));s=K.dispatchKey(s,'=');eq(s.result,'17/5')});
+test('P15 arithmetic boundary rational sum of mixed expressions',()=>eq(K.valueToString(evaluate('((1)+((1)/(6)))+((2)+((1)/(3)))')),'7/2'));
+
 // Milestone 24: physical-key resolution, insert/overwrite and structural deletion.
 const KM=global.FX991_KEYS;
 test('M24 key profiles explicit and immutable',()=>{eq(KM.profiles.standard.id,'fx991esplus-2');eq(Object.isFrozen(KM.profiles.c),true)});
