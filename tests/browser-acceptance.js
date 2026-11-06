@@ -177,7 +177,7 @@ function loadFresh(){return new Promise((resolve,reject)=>{
  frame.src='../index.html?browser-acceptance='+encodeURIComponent(String(performance.now()));
  previous.replaceWith(frame);
 })}
-async function run(){if(running)return;running=true;$('run').disabled=true;entries.length=0;render();
+async function run(){if(running)return;running=true;document.body.dataset.acceptanceComplete='false';$('run').disabled=true;entries.length=0;render();
  for(const [name,fn] of tests){let status='PASS',message='';try{
    const x=await loadFresh();
    // A navigation error is observable from the iframe's document; no fake pass.
@@ -187,7 +187,7 @@ async function run(){if(running)return;running=true;$('run').disabled=true;entri
    expect(x.errors.length===0,'calculator JavaScript errors during interaction: '+x.errors.join('; '));
  }catch(error){status=error&&error.kind==='navigation'?'BLOCKED':'FAIL';message=String(error&&error.message||error)}
  entries.push({name,status,message});render()}
- running=false;$('run').disabled=false;
+ running=false;document.body.dataset.acceptanceComplete='true';$('run').disabled=false;
 }
 $('run').onclick=run;
 $('download').onclick=()=>{
