@@ -7,7 +7,7 @@
     ".github/workflows/review-browser-artifacts.yml": "4dd8f5f9228227caf8e2a250b503045197ec122069577c08d909754aa760ca6a",
     "README.md": "6632ae800f84e2d4093f1c3b90286b44a975b3d2013606778f6e95634a650198",
     "compatibility/baseline-v1.json": "480af8e44515131324a2e7c1534c8d24a41708ade795fd438d4158acf59fb6e7",
-    "docs/PHASE17.md": "efe94797b4cdab2fd8a16b5b404d6756948e6dd5f7a620836815e973e1832da2",
+    "docs/PHASE17.md": "ad2dd29bede09c255567ff8c6dcb0390a3cccf4896ba6c10fea8dced81242d82",
     "docs/acceptance-failure-classification-m55.md": "f4b2279489a6c1148a78686a6583ef6e4febfd33a50d93bb9c11f6d728f2cc68",
     "docs/browser-acceptance.md": "8b75b2f4e974396c478351a085160a29f344c9a311a72b1668283c00c2520ba3",
     "docs/browser-bootstrap-error-capture-m48.md": "3801d7af34cb85dfe2e40efb8e4ef58b879c82df3090f13871ab50473b86b2b3",
@@ -100,7 +100,7 @@
     "tests/cross-browser.html": "d724122807d575e25c0c6905046b8a56542d585c09376eabdc1ffd1c687a0e54",
     "tests/cross-browser.js": "2fed9c2f3abfc5982360abd0210453f8ba8e4c88df2efbe874b6e6d7d0bc509f",
     "tests/device-page.js": "df1afba99af5dae730d37432b7b376e93f10630ab99fc168770e33e0359056ef",
-    "tests/device.html": "247566560891a7ebd6536f0cfdb6605fdb9b243074e11335db5dfb52e31ddcb5",
+    "tests/device.html": "bb18468846c3d83dce00e3272d72fe6dfd9702d87576f50491993546f7cbf250",
     "tests/differential.html": "b261f6e3481be87114853f3b0509c50e7ddfa7fbdfdf9a9d58da10182e9a046c",
     "tests/keypad-layout.cjs": "9551d92ee2b24bef84e423a8353f9eeca0547119591d7eb63667333f64a31c64",
     "tests/phase17-field-pack.css": "8d2ce4807065321803fc6ff4adc8df468b92bf1983518e7e13ce8cab322d22fd",
@@ -115,7 +115,7 @@
     "tests/release-page.js": "72a8ec5b94c5b9406a26a2506b56486a7c2220c2a34f552fbd04cec3710bcb2b",
     "tests/release-readiness.html": "5000522d3df9e99ae9789d3c7b0ebdb274be548c75c540d48b7cff8b15749491",
     "tests/release.html": "f4b8e0347543966c2777e05bf7d695e008ba3530aae38fbb7766b24c50adf26d",
-    "tests/run-node.cjs": "5c853b5935231aa7a202c9e50a454adbbf1e8ee30e2628f6d347558b229d6340",
+    "tests/run-node.cjs": "d7480dc45e054aa30aee8b6889e38d256fff8a30ebacfdd70658a63d4580e11c",
     "tools/actions_artifact_inspector.py": "83bedb284849b7f8949b637bda8b98f745cbf1909d7e1ba778f35db3818a9751",
     "tools/actions_run_collector.py": "6bd5c6dc03e8579b880bece20d8999b4444731bda46e251e810391136b1bde03",
     "tools/browser_interaction_probe.py": "ef674535c8ed2243d3251399d936ad6e87e90e984a689ae552cdae8482675aea",
@@ -153,9 +153,13 @@
     "tools/tests/test_release_report.py": "170b975f5b6fcd23a2209dd367508bee74f9e41d7632a0789ea974b2fba4f011",
     "tools/tests/test_shared_browser_session_m56.py": "ff87c5f4d9c896b2bab22337ce2f0187a5b1d5a9fdf7f74ef18cd33b03ab84c5",
     "tools/tests/test_source_fingerprint_m52.py": "b26faf54b50dc5c3c1d2fbf8b898f794e91dc704a7ceeaf988bf9f34b17e28a8",
-    "tools/verify_reference_photos.py": "6d48d8e17ae3ceb7fd4b25276e38224c3d0d216a9da7e5f4b63510a4aa9c1096"
+    "tools/verify_reference_photos.py": "6d48d8e17ae3ceb7fd4b25276e38224c3d0d216a9da7e5f4b63510a4aa9c1096",
+    "src/phase17-review-ui.js": "88fc2e4cbb67cf0f4f18ce01d751a2811940926d6fed6653b02d0c55fdeeb2bd",
+    "tests/phase17-review.html": "7a6ae5f9a11f17cc413e4bebfb0c23e627395c815da80279431f1193d0caaa44",
+    "tests/phase17-review-page.js": "ee0222a00e3a9093b23b583d410900933e962587fe3a847d832b35b184e4ed3b",
+    "tools/phase17-review-ui.test.cjs": "d3a3da508c810ffb057d3f0e56fc2db79170e11fdbda446393bfeb1abc6e67ff"
   },
-  "fileCount": 151,
+  "fileCount": 155,
   "status": "CANDIDATE",
   "note": "Checksums describe source integrity; browser and device compatibility are not certified."
 }
