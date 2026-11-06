@@ -174,7 +174,7 @@ function dispatchKey(state,key){let s={...state,setup:{...state.setup},memory:{.
  }
  if(key==='STO'){let reg=s.selectedRegister||'A';s.memory[reg]=s.lastValue||s.ans;return finish()}
  if(key==='RCL'){key=s.selectedRegister||'A'}
- if(key==='='){try{sync();if(E&&s.mode==='COMP'&&s.document){
+ if(key==='='){try{sync();if(E&&s.mode==='COMP'&&s.document&&E.invalidSlots(s.document).length){let missing=E.firstMissingAnchor(s.document);throw new CalcError(ERROR.SYNTAX,missing?E.sourceCursor(missing):s.cursor)}if(E&&s.mode==='COMP'&&s.document){
    const examine=(seq)=>{for(const child of seq.children){
      if(child.kind==='MixedFraction'){
        const digits=x=>x.children.every(t=>t.kind==='Token'&&/^[0-9]$/.test(t.value))?
