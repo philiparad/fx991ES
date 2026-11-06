@@ -3,7 +3,7 @@
   "milestone": 40,
   "algorithm": "sha256",
   "files": {
-    ".github/workflows/browser-acceptance.yml": "995e5823d79c5f0cf9beff214c86e2bc49426566de9c1f2472d3d02693b8983f",
+    ".github/workflows/browser-acceptance.yml": "b5cd126fdba9b56cf84617afc4adf7e55b342548aa1840c597f045aa647fb4bd",
     ".github/workflows/review-browser-artifacts.yml": "4dd8f5f9228227caf8e2a250b503045197ec122069577c08d909754aa760ca6a",
     "README.md": "6632ae800f84e2d4093f1c3b90286b44a975b3d2013606778f6e95634a650198",
     "compatibility/baseline-v1.json": "480af8e44515131324a2e7c1534c8d24a41708ade795fd438d4158acf59fb6e7",
