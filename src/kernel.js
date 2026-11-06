@@ -24,7 +24,7 @@ function radicalSum(parts){
   if(!isExactRadical(v)||!isRat(v.coefficient))throw new CalcError(ERROR.ARGUMENT);
   const old=terms.get(v.radicand)||rat(0n);terms.set(v.radicand,rat(old.n*v.coefficient.d+v.coefficient.n*old.d,old.d*v.coefficient.d));
  }
- const radicals=[...terms].filter(([,c])=>c.n!==0n).sort(([a],[b])=>a<b?-1:a>b?1:0).map(([radicand,coefficient])=>({radicand,coefficient}));
+ const radicals=[...terms].filter(([,c])=>c.n!==0n).sort(([a],[b])=>a>b?-1:a<b?1:0).map(([radicand,coefficient])=>({radicand,coefficient}));
  if(!radicals.length)return scalar;
  if(scalar.n===0n&&radicals.length===1)return {kind:'radical',...radicals[0]};
  if(radicals.length>8)throw new CalcError(ERROR.ARGUMENT);
