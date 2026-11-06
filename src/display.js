@@ -90,6 +90,55 @@ function layoutNode(node,anchor){
 }
 function layoutExpression(document){if(!document||!document.root)return glyphBox('');return sequence(document.root,document.anchor)}
 function drawBox(box,fb,x,y){for(const c of box.commands){let xx=x+c.x,yy=y+c.y;if(c.type==='text')fb.text(c.text,xx,yy,2048);else if(c.type==='line')fb.line(x+c.x1,y+c.y1,x+c.x2,y+c.y2);else if(c.type==='child')drawBox(c.box,fb,xx,yy)}}
+
+// Independently-authored exact-result layout. It consumes typed calculator
+// values; no expression strings are evaluated or interpreted as markup.
+function joinedBoxes(left,right){
+ const baseline=Math.max(left.baseline,right.baseline);
+ const height=baseline+Math.max(left.height-1-left.baseline,right.height-1-right.baseline)+1;
+ const commands=[],anchors=[];embed(left,0,baseline-left.baseline,commands,anchors);
+ embed(right,left.width,baseline-right.baseline,commands,anchors);
+ return make(left.width+right.width,height,commands,anchors,baseline);
+}
+function fractionResult(numerator,denominator){
+ const top=glyphBox(String(numerator)),bottom=glyphBox(String(denominator));
+ const width=Math.max(7,top.width,bottom.width)+2,bar=top.height+1;
+ const commands=[],anchors=[];
+ embed(top,Math.floor((width-top.width)/2),0,commands,anchors);
+ commands.push({type:'line',x1:0,y1:bar,x2:width-1,y2:bar});
+ embed(bottom,Math.floor((width-bottom.width)/2),bar+2,commands,anchors);
+ return make(width,bar+2+bottom.height,commands,anchors,bar+2+bottom.baseline);
+}
+function radicalResult(radicand){
+ const body=glyphBox(String(radicand)),width=body.width+7,height=10,commands=[],anchors=[];
+ commands.push({type:'line',x1:0,y1:6,x2:2,y2:9},
+  {type:'line',x1:2,y1:9,x2:5,y2:1},
+  {type:'line',x1:5,y1:1,x2:width-1,y2:1});
+ embed(body,6,3,commands,anchors);
+ return make(width,height,commands,anchors,3+body.baseline);
+}
+function exactResultLayout(value){
+ if(!value||typeof value!=='object')return null;
+ const integerPair=v=>v&&v.kind==='rational'&&typeof v.n==='bigint'&&typeof v.d==='bigint'&&v.d>0n;
+ if(value.kind==='rational'&&integerPair(value)){
+  if(value.d===1n)return null; // Plain integers keep existing result placement.
+  return fractionResult(value.n,value.d);
+ }
+ if(value.kind==='radical'&&integerPair(value.coefficient)){
+  const c=value.coefficient;
+  const prefix=c.n===1n&&c.d===1n?'':c.n===-1n&&c.d===1n?'-':c.d===1n?String(c.n):null;
+  if(prefix===null||typeof value.radicand!=='bigint'||value.radicand<0n)return null;
+  return prefix?joinedBoxes(glyphBox(prefix),radicalResult(value.radicand)):radicalResult(value.radicand);
+ }
+ if(value.kind==='pi'&&integerPair(value.coefficient)){
+  const c=value.coefficient;
+  if(c.n===1n&&c.d===1n)return glyphBox('π');
+  if(c.n===-1n&&c.d===1n)return glyphBox('-π');
+  if(c.d===1n)return joinedBoxes(glyphBox(String(c.n)),glyphBox('π'));
+  return joinedBoxes(fractionResult(c.n,c.d),glyphBox('π'));
+ }
+ return null;
+}
 function composeScreen(screen){let f=new Framebuffer(),status=screen.indicators.join(' ')+' '+screen.mode;f.text(status,0,0);f.line(0,6,95,6);
  // MODE and main SETUP menu: four lines, two numbered options per line.
  // This matches the documented selection layout, not proprietary glyph bitmaps.
@@ -111,7 +160,9 @@ function composeScreen(screen){let f=new Framebuffer(),status=screen.indicators.
  if(screen.view==='off'){f.text('OFF',40,15);return {pixels:f.pixels,overflow:false,scrollX:0,layout:null}}
  if(screen.view==='error'){f.text(screen.result||'ERROR',0,13);return {pixels:f.pixels,overflow:false,scrollX:0,layout:null}}
  let doc=screen.document,box=doc?layoutExpression(doc):glyphBox(screen.expression||'');
- const inputTop=7,inputBottom=22,inputHeight=inputBottom-inputTop;
+ const candidate=screen.view==='result'&&screen.displayStyle==='MathO'?exactResultLayout(screen.resultValue):null;
+ const structuredResult=candidate&&candidate.width<=WIDTH&&candidate.height<=14?candidate:null;
+ const inputTop=7,inputBottom=structuredResult?16:22,inputHeight=inputBottom-inputTop;
  // Scroll around the *editable anchor*, including when deeply nested.
  let caret=box.anchors.find(a=>a.kind==='cursor');
  let anchorX=caret?caret.x:Math.min(box.width,4*(screen.cursor||0));
@@ -140,10 +191,19 @@ function composeScreen(screen){let f=new Framebuffer(),status=screen.indicators.
  if(box.width-scrollX>visibleWidth)f.glyph('>',92,9);
  if(scrollY>0)f.glyph('↑',0,16);
  if(scrollY+inputHeight<box.height)f.glyph('↓',92,16);
- f.line(0,22,95,22);
- let result=String(screen.result||'');if(result.length>24)result=result.slice(-24);f.text(result,Math.max(0,96-4*result.length),25);
- return {pixels:f.pixels,overflow:guttered,scrollX,scrollY,caretVisible,layout:box,viewport:{left,right,top:inputTop,bottom:inputBottom}};
+ f.line(0,inputBottom,95,inputBottom);
+ if(structuredResult){
+  // Keep result fully inside rows 17–30 and preserve the 96×31 buffer.
+  f.clip={left:0,right:WIDTH,top:17,bottom:HEIGHT};
+  drawBox(structuredResult,f,WIDTH-structuredResult.width,HEIGHT-1-structuredResult.height);
+  f.clip=null;
+ }else{
+  let result=String(screen.result||'');if(result.length>24)result=result.slice(-24);
+  f.text(result,Math.max(0,96-4*result.length),25);
+ }
+ return {pixels:f.pixels,overflow:guttered,scrollX,scrollY,caretVisible,layout:box,
+  resultLayout:structuredResult,viewport:{left,right,top:inputTop,bottom:inputBottom}};
 }
 function rasterizeScreen(screen){return composeScreen(screen).pixels}
-const api=Object.freeze({WIDTH,HEIGHT,FONT,Framebuffer,layoutExpression,composeScreen,rasterizeScreen});global.FX991_DISPLAY=api;
+const api=Object.freeze({WIDTH,HEIGHT,FONT,Framebuffer,layoutExpression,exactResultLayout,composeScreen,rasterizeScreen});global.FX991_DISPLAY=api;
 })(typeof window!=='undefined'?window:globalThis);
