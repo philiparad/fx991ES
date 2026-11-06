@@ -61,6 +61,35 @@ def exercise(page):
     return {"status":"PASS","checks":10,"temporaryFixture":"synthetic-only"}
 
 
+def field_sheet_checks(page, base_url):
+    """Real-browser test. Never fills, submits, or invents physical outcomes."""
+    page.goto(base_url + "/tests/reference-field-sheet.html", wait_until="load", timeout=30000)
+    page.locator(".reference-card").first.wait_for(timeout=10000)
+    assert page.locator(".reference-card").count() == 50, "missing planned field cards"
+    assert page.locator(".sheet-page").count() == 25, "expected two cases per A4 sheet"
+    assert page.locator(".sheet-field").count() == 300, "six blank evidence fields per card"
+    assert "all observed-result fields are blank" in page.locator("#sheet-summary").inner_text()
+    page.locator("#area-filter").select_option("arithmetic")
+    assert page.locator(".reference-card").count() == 10, "category filter not applied"
+    page.locator("#area-filter").select_option("all")
+    with page.expect_download(timeout=10000) as info:
+        page.locator("#export-blank-csv").click()
+    downloaded = info.value
+    assert downloaded.suggested_filename.endswith(".csv"), "blank CSV not downloaded"
+    content = Path(downloaded.path()).read_text(encoding="utf-8-sig")
+    lines = content.splitlines()
+    assert len(lines) == 51, "CSV should have 50 planned rows and one header"
+    assert "observedLCD" in lines[0] and "actualPhysicalKeys" in lines[0]
+    # CSV fields following displayStyle are six empty quoted cells, not predicted data.
+    import csv
+    records = list(csv.DictReader(lines))
+    assert len(records) == 50 and all(
+        row["observedLCD"] == "" and row["referenceDevice"] == ""
+        and row["photoId"] == "" and row["actualPhysicalKeys"] == ""
+        for row in records), "CSV prefilled an unobserved value"
+    return 8
+
+
 def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out",default="browser-evidence/device-workbench")
@@ -85,12 +114,14 @@ def main(argv=None):
                         stage="launch"
                         try:
                             browser=getattr(p,name).launch(headless=True)
-                            context=browser.new_context(viewport={"width":1280,"height":900})
+                            context=browser.new_context(viewport={"width":1280,"height":900},accept_downloads=True)
                             page=context.new_page()
                             stage="navigate"
                             page.goto(url,wait_until="load",timeout=30000)
                             stage="interaction"
                             row.update(exercise(page))
+                            checks=field_sheet_checks(page, url.rsplit("/tests/device.html",1)[0])
+                            row["checks"] += checks
                         except (PlaywrightError,AssertionError,TimeoutError,ValueError,OSError) as error:
                             row.update(status=classify_failure(stage,error),error=str(error)[:500])
                             if context:
