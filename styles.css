@@ -101,3 +101,32 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .device-step-row span:first-child{font-family:monospace;font-weight:700}
 .device-step-row span:last-child{color:#5a6c5d}
 @media(max-width:480px){.device-step-row{grid-template-columns:1fr;gap:2px}}
+
+/* Phase 17: readable, responsive physical checkpoint observation form. */
+.checkpoint-capture-row{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px 14px;
+    padding:14px 0;
+    border-bottom:1px solid #cdd8cc;
+}
+.checkpoint-capture-row:last-child{border-bottom:0}
+.checkpoint-capture-row>strong{grid-column:1/-1;font-size:.94rem;color:#224d3b}
+.checkpoint-capture-row label{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+    min-width:0;
+    font-size:.83rem;
+    font-weight:600;
+    line-height:1.4;
+}
+.checkpoint-capture-row input{
+    display:block;
+    width:100%;
+    box-sizing:border-box;
+    min-height:36px;
+    font:inherit;
+    font-weight:400;
+}
+@media(max-width:540px){.checkpoint-capture-row{grid-template-columns:minmax(0,1fr)}}
