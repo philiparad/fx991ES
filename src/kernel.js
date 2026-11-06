@@ -159,7 +159,7 @@ function dispatchKey(state,key){let s={...state,setup:{...state.setup},memory:{.
    (node.kind==='Fraction'||(node.kind==='Sequence'&&node.children.some(hasFraction))||
     ['numerator','denominator','exponent','radicand','degree','argument','body'].some(k=>node[k]&&hasFraction(node[k])));
   if(s.mode==='COMP'&&effectiveDisplayStyle(s.setup,s.mode)==='LineIO'){
-   s.decimalView=!!(E&&s.document&&hasFraction(s.document.root));
+   s.decimalView=!!(E&&s.document&&hasFraction(s.document.root))&&!s.expression.includes('.');
   }
   s.lastValue=value;s.ans=value.kind==='mode-result'?value.ans:value.kind==='base'?rat(value.value):value.kind==='complex'?value.re:value;s.result=valueDisplay(value,s.setup,s.decimalView,s.mode);s.view='result';s.error=null;s.history.unshift({expression:s.expression,display:s.result});s.history=s.history.slice(0,50);s.historyCursor=-1}catch(e){s.error=e.code||ERROR.MATH;s.errorPos=Number.isInteger(e.position)?e.position:s.cursor;s.view='error';s.result=s.error}return finish()}
  if(E&&s.mode==='COMP'&&s.document&&['FRAC','POW','SQRT','NROOT','SIN','COS','TAN','LOG','LN','LP'].includes(key)){if(s.shift&&key==='SQRT')key='NROOT';const kinds={FRAC:['Fraction'],POW:['Power'],SQRT:['Root'],NROOT:['Root','nth'],SIN:['Function',s.shift?'asin':'sin'],COS:['Function',s.shift?'acos':'cos'],TAN:['Function',s.shift?'atan':'tan'],LOG:['Function','log'],LN:['Function','ln'],LP:['Group']};s.document=E.template(s.document,...kinds[key]);s.view='edit';s.result='';s.shift=false;s.alpha=false;return finish()}
