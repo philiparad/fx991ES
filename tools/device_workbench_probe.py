@@ -25,7 +25,16 @@ def exercise(page):
     assert "0 of 12 focused cases" in page.locator("#fraction-coverage").inner_text()
     assert "Observe LCD and cursor here" in page.locator("#fraction-checkpoint-list").inner_text()
     assert page.locator("#keys").input_value().startswith("SHIFT FRAC 2 RIGHT 3"), "focused key sequence incorrect"
+    assert page.locator("#focused-checkpoint-entry").is_visible()
+    assert page.locator("#raw-checkpoints-field").is_hidden()
+    assert page.locator(".checkpoint-capture-row").count() == 6
+    assert all(not entry for entry in page.locator(".checkpoint-capture-row input").all_input_values())
+    assert "0 / 6 checkpoints entered" in page.locator("#checkpoint-entry-progress").inner_text()
+    page.locator(".checkpoint-capture-row").first.locator('[data-field="expression"]').fill("SYNTHETIC LCD FIXTURE")
+    assert "1 / 6 checkpoints entered" in page.locator("#checkpoint-entry-progress").inner_text()
     page.locator("#scenario").select_option("A01")
+    assert page.locator("#focused-checkpoint-entry").is_hidden()
+    assert page.locator("#raw-checkpoints-field").is_visible()
     assert page.locator("#fraction-capture-guide").is_hidden(), "focused plan guide leaked to baseline"
     assert "0 / 50 planned scenarios" in page.locator("#plan-summary").inner_text(), "plan must start unrecorded"
     page.locator("#scenario").select_option("T04")
@@ -61,6 +70,12 @@ def exercise(page):
     page.locator("#record").click()
     assert "1 matched / 1 mismatched" in page.locator("#summary").inner_text(), "mismatch not reported"
     assert "step 4" in page.locator("#results").inner_text(), "first diverging key missing"
+    with page.expect_download(timeout=10000) as discrepancy_download:
+        page.locator("#export-discrepancies").click()
+    discrepancy = json.loads(Path(discrepancy_download.value.path()).read_text(encoding="utf-8"))
+    assert discrepancy["hardwareParityCertified"] is False
+    assert discrepancy["schema"] == "fx991-phase17-discrepancies-v1"
+    assert len(discrepancy["records"]) == 1
     page.locator("#scenario").select_option("A01")
     page.locator("#result").fill("5")
     # Real browser file upload, but photo is a programmatically generated
@@ -95,7 +110,7 @@ def exercise(page):
     assert page.locator("#photo-preview").is_hidden()
 
     assert not errors, "browser/CSP error: " + "; ".join(errors)
-    return {"status":"PASS","checks":22,"temporaryFixture":"synthetic-only"}
+    return {"status":"PASS","checks":30,"temporaryFixture":"synthetic-only"}
 
 
 def field_sheet_checks(page, base_url):
