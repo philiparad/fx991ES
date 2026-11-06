@@ -146,6 +146,9 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
 
  if(key==='ON'){s.power=true;if(s.view==='off')s.view='edit';return end()}
  if(!s.power)return end();
+ if(key==='SHIFT'&&s.view==='hyp-menu'){
+  s.ui.hypMenu.inverse=!s.ui.hypMenu.inverse;s.shift=false;return end();
+ }
  if(key==='SHIFT'){s.shift=!s.shift;s.alpha=false;return end()}
  if(key==='ALPHA'){s.alpha=!s.alpha;s.shift=false;return end()}
  if(key==='AC'&&s.shift){s.power=false;s.view='off';s.shift=false;return end()}

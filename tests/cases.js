@@ -1208,7 +1208,7 @@ test('P0-06 factorial grouped expression computes 40320',()=>{
  eq(s.view,'result');close(K.numeric(s.lastValue),40320,1e-12);
 });
 test('P0-06 factorial negative argument rejects Math ERROR',()=>{
- let s=K.createState('standard');for(const k of ['NEG','1','SHIFT','RECIP','='])s=K.dispatchKey(s,k);
+ let s=K.createState('standard');for(const k of ['LP','NEG','1','RP','SHIFT','RECIP','='])s=K.dispatchKey(s,k);
  eq(s.view,'error');eq(s.error,K.ERROR.MATH);
 });
 test('P0-06 factorial above upper range rejects Math ERROR',()=>{
