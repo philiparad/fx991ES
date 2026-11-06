@@ -54,7 +54,7 @@ function mul(a,b){if((a.kind==='decimal'||b.kind==='decimal')&&global.FX991_DECI
  }return dec(numeric(a)*numeric(b))}
 function div(a,b){if((a.kind==='decimal'||b.kind==='decimal')&&global.FX991_DECIMAL){let x=asRational(a),y=asRational(b);if(y.n===0n)throw new CalcError(ERROR.MATH);return decFromFraction(x.n*y.d,x.d*y.n)}if(isRat(b)&&b.n===0n)throw new CalcError(ERROR.MATH);if(isRat(a)&&isRat(b))return rat(a.n*b.d,a.d*b.n);if(isPi(a)&&isRat(b))return pi(div(a.coefficient,b));if(a.kind==='radical'&&isRat(b))return {...a,coefficient:div(a.coefficient,b)};if(isRadicalSum(a)&&isRat(b))return radicalSum([div(a.scalar,b),...a.radicals.map(t=>({kind:'radical',radicand:t.radicand,coefficient:div(t.coefficient,b)}))]);let bv=numeric(b);if(bv===0)throw new CalcError(ERROR.MATH);return dec(numeric(a)/bv)}
 function pow(a,b){if(isRat(a)&&isRat(b)&&b.d===1n&&b.n>=-999n&&b.n<=999n){let p=b.n<0n?-b.n:b.n;return b.n>=0n?rat(a.n**p,a.d**p):rat(a.d**p,a.n**p)}return dec(Math.pow(numeric(a),numeric(b)))}
-function sqrt(a){if(isRat(a)&&a.n>=0n&&a.n<=1000000000000n&&a.d<=1000000000000n){let n=a.n,d=a.d,coef=1n,radicand=n*d; // sqrt(n/d)=sqrt(n*d)/d
+function sqrt(a){if(isRat(a)&&a.n>=0n&&a.n<=1000000000000n&&a.d<=1000000000000n){let n=a.n,d=a.d,coef=1n,radicand=n*d; if(n===0n)return rat(0n); // sqrt(n/d)=sqrt(n*d)/d
  for(let q=2n;q*q<=radicand&&q<1000000n;q++){let sq=q*q;while(radicand%sq===0n){radicand/=sq;coef*=q}}
  if(radicand===1n)return rat(coef,d);
  return {kind:'radical',coefficient:rat(coef,d),radicand};}
