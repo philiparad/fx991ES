@@ -43,5 +43,5 @@ const duplicated=[...csvRows,csvRows[0]];
 assert.throws(()=>C.worksheetDraft(table(duplicated),PLAN),/Duplicate worksheet checkpoint/);
 assert.throws(()=>C.worksheetDraft(table(csvRows.slice(1)),PLAN),/missing expected checkpoint/);
 assert.throws(()=>C.parseCSV('wrong,columns\nrow'),/Unexpected worksheet CSV columns/);
-assert.throws(()=>C.parseCSV(table(csvRows).replace('"F16-TEST"','"other-plan"')),/No rows match/);
+assert.throws(()=>C.worksheetDraft(table(csvRows).replace('"F16-TEST"','"other-plan"'),PLAN),/No rows match/);
 console.log('Phase 17 worksheet import tests: passed (unverified synthetic drafts only)');
