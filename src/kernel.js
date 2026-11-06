@@ -11,12 +11,48 @@ function rat(n,d=1n){n=BigInt(n);d=BigInt(d);if(!d)throw new CalcError(ERROR.MAT
 function dec(v){if(!Number.isFinite(v))throw new CalcError(ERROR.MATH);const D=global.FX991_DECIMAL;if(!D)return {kind:'decimal',value:v};let fraction=D.parseDecimal(Number(v).toString()),q=D.quantize(fraction.n,fraction.d,15);return {kind:'decimal',value:Number(q.n)/Number(q.d),n:q.n,d:q.d}}
 function pi(c=rat(1n)){return {kind:'pi',coefficient:c}}
 const isRat=v=>v.kind==='rational';const isPi=v=>v.kind==='pi';
-function numeric(v){if(isRat(v))return Number(v.n)/Number(v.d);if(isPi(v))return numeric(v.coefficient)*Math.PI;if(v.kind==='radical')return numeric(v.coefficient)*Math.sqrt(Number(v.radicand));if(v.kind==='decimal')return v.n!==undefined?Number(v.n)/Number(v.d):v.value;throw new CalcError(ERROR.ARGUMENT)}
-function add(a,b){if((a.kind==='decimal'||b.kind==='decimal')&&global.FX991_DECIMAL){let x=asRational(a),y=asRational(b);return decFromFraction(x.n*y.d+y.n*x.d,x.d*y.d)}if(isRat(a)&&isRat(b))return rat(a.n*b.d+b.n*a.d,a.d*b.d);if(isPi(a)&&isPi(b))return pi(add(a.coefficient,b.coefficient));if(a.kind==='radical'&&b.kind==='radical'&&a.radicand===b.radicand)return {kind:'radical',radicand:a.radicand,coefficient:add(a.coefficient,b.coefficient)};return dec(numeric(a)+numeric(b))}
-function neg(a){if(a.kind==='decimal'&&a.n!==undefined)return {...a,n:-a.n,value:-a.value};if(isRat(a))return rat(-a.n,a.d);if(isPi(a))return pi(neg(a.coefficient));if(a.kind==='radical')return {...a,coefficient:neg(a.coefficient)};return dec(-numeric(a))}
+const isExactRadical=v=>v&&v.kind==='radical';
+const isRadicalSum=v=>v&&v.kind==='radical-sum';
+// Bounded exact expression: a rational term and up to eight unlike square roots.
+// The representation is internal and independently authored, not CASIO firmware.
+function radicalSum(parts){
+ let scalar=rat(0n),terms=new Map();
+ for(const v of parts){
+  if(isRat(v)){scalar=rat(scalar.n*v.d+v.n*scalar.d,scalar.d*v.d);continue}
+  const items=isRadicalSum(v)?[v.scalar,...v.radicals.map(t=>({kind:'radical',...t}))]:[v];
+  if(items.length>1){const nested=radicalSum(items);if(isRadicalSum(nested)){scalar=add(scalar,nested.scalar);for(const term of nested.radicals){const old=terms.get(term.radicand)||rat(0n);terms.set(term.radicand,add(old,term.coefficient))}}else if(isRat(nested))scalar=add(scalar,nested);else{const old=terms.get(nested.radicand)||rat(0n);terms.set(nested.radicand,add(old,nested.coefficient))}continue}
+  if(!isExactRadical(v)||!isRat(v.coefficient))throw new CalcError(ERROR.ARGUMENT);
+  const old=terms.get(v.radicand)||rat(0n);terms.set(v.radicand,rat(old.n*v.coefficient.d+v.coefficient.n*old.d,old.d*v.coefficient.d));
+ }
+ const radicals=[...terms].filter(([,c])=>c.n!==0n).sort(([a],[b])=>a<b?-1:a>b?1:0).map(([radicand,coefficient])=>({radicand,coefficient}));
+ if(!radicals.length)return scalar;
+ if(scalar.n===0n&&radicals.length===1)return {kind:'radical',...radicals[0]};
+ if(radicals.length>8)throw new CalcError(ERROR.ARGUMENT);
+ return {kind:'radical-sum',scalar,radicals};
+}
+function exactRadicalParts(v){return isRadicalSum(v)?[v.scalar,...v.radicals.map(t=>({kind:'radical',...t}))]:[v]}
+function normalizeRadicalProduct(a,b){
+ if(isRat(a)&&isRat(b))return mul(a,b);
+ if(isRat(a)&&isExactRadical(b))return {kind:'radical',radicand:b.radicand,coefficient:mul(a,b.coefficient)};
+ if(isRat(b)&&isExactRadical(a))return {kind:'radical',radicand:a.radicand,coefficient:mul(a.coefficient,b)};
+ if(isExactRadical(a)&&isExactRadical(b)){
+  const coefficient=mul(a.coefficient,b.coefficient),root=sqrt(rat(a.radicand*b.radicand));
+  return isRat(root)?mul(coefficient,root):{kind:'radical',radicand:root.radicand,coefficient:mul(coefficient,root.coefficient)};
+ }
+ throw new CalcError(ERROR.ARGUMENT)
+}
+
+function numeric(v){if(isRat(v))return Number(v.n)/Number(v.d);if(isPi(v))return numeric(v.coefficient)*Math.PI;if(v.kind==='radical')return numeric(v.coefficient)*Math.sqrt(Number(v.radicand));if(isRadicalSum(v))return numeric(v.scalar)+v.radicals.reduce((acc,t)=>acc+numeric(t.coefficient)*Math.sqrt(Number(t.radicand)),0);if(v.kind==='decimal')return v.n!==undefined?Number(v.n)/Number(v.d):v.value;throw new CalcError(ERROR.ARGUMENT)}
+function add(a,b){if((a.kind==='decimal'||b.kind==='decimal')&&global.FX991_DECIMAL){let x=asRational(a),y=asRational(b);return decFromFraction(x.n*y.d+y.n*x.d,x.d*y.d)}if(isRat(a)&&isRat(b))return rat(a.n*b.d+b.n*a.d,a.d*b.d);if(isPi(a)&&isPi(b))return pi(add(a.coefficient,b.coefficient));if((isExactRadical(a)||isRadicalSum(a)||isRat(a))&&(isExactRadical(b)||isRadicalSum(b)||isRat(b))&&(isExactRadical(a)||isRadicalSum(a)||isExactRadical(b)||isRadicalSum(b)))return radicalSum([...exactRadicalParts(a),...exactRadicalParts(b)]);return dec(numeric(a)+numeric(b))}
+function neg(a){if(a.kind==='decimal'&&a.n!==undefined)return {...a,n:-a.n,value:-a.value};if(isRat(a))return rat(-a.n,a.d);if(isPi(a))return pi(neg(a.coefficient));if(a.kind==='radical')return {...a,coefficient:neg(a.coefficient)};if(isRadicalSum(a))return radicalSum([neg(a.scalar),...a.radicals.map(t=>({kind:'radical',radicand:t.radicand,coefficient:neg(t.coefficient)}))]);return dec(-numeric(a))}
 function sub(a,b){return add(a,neg(b))}
-function mul(a,b){if((a.kind==='decimal'||b.kind==='decimal')&&global.FX991_DECIMAL){let x=asRational(a),y=asRational(b);return decFromFraction(x.n*y.n,x.d*y.d)}if(isRat(a)&&isRat(b))return rat(a.n*b.n,a.d*b.d);if(isPi(a)&&isRat(b))return pi(mul(a.coefficient,b));if(isPi(b)&&isRat(a))return pi(mul(b.coefficient,a));if(a.kind==='radical'&&isRat(b))return {...a,coefficient:mul(a.coefficient,b)};if(b.kind==='radical'&&isRat(a))return {...b,coefficient:mul(b.coefficient,a)};return dec(numeric(a)*numeric(b))}
-function div(a,b){if((a.kind==='decimal'||b.kind==='decimal')&&global.FX991_DECIMAL){let x=asRational(a),y=asRational(b);if(y.n===0n)throw new CalcError(ERROR.MATH);return decFromFraction(x.n*y.d,x.d*y.n)}if(isRat(b)&&b.n===0n)throw new CalcError(ERROR.MATH);if(isRat(a)&&isRat(b))return rat(a.n*b.d,a.d*b.n);if(isPi(a)&&isRat(b))return pi(div(a.coefficient,b));if(a.kind==='radical'&&isRat(b))return {...a,coefficient:div(a.coefficient,b)};let bv=numeric(b);if(bv===0)throw new CalcError(ERROR.MATH);return dec(numeric(a)/bv)}
+function mul(a,b){if((a.kind==='decimal'||b.kind==='decimal')&&global.FX991_DECIMAL){let x=asRational(a),y=asRational(b);return decFromFraction(x.n*y.n,x.d*y.d)}if(isRat(a)&&isRat(b))return rat(a.n*b.n,a.d*b.d);if(isPi(a)&&isRat(b))return pi(mul(a.coefficient,b));if(isPi(b)&&isRat(a))return pi(mul(b.coefficient,a));if((isExactRadical(a)||isRadicalSum(a)||isRat(a))&&(isExactRadical(b)||isRadicalSum(b)||isRat(b))&&(isExactRadical(a)||isRadicalSum(a)||isExactRadical(b)||isRadicalSum(b))){
+  const products=[];for(const x of exactRadicalParts(a))for(const y of exactRadicalParts(b)){
+   if(products.length>=64)throw new CalcError(ERROR.ARGUMENT);
+   products.push(normalizeRadicalProduct(x,y))
+  }return radicalSum(products)
+ }return dec(numeric(a)*numeric(b))}
+function div(a,b){if((a.kind==='decimal'||b.kind==='decimal')&&global.FX991_DECIMAL){let x=asRational(a),y=asRational(b);if(y.n===0n)throw new CalcError(ERROR.MATH);return decFromFraction(x.n*y.d,x.d*y.n)}if(isRat(b)&&b.n===0n)throw new CalcError(ERROR.MATH);if(isRat(a)&&isRat(b))return rat(a.n*b.d,a.d*b.n);if(isPi(a)&&isRat(b))return pi(div(a.coefficient,b));if(a.kind==='radical'&&isRat(b))return {...a,coefficient:div(a.coefficient,b)};if(isRadicalSum(a)&&isRat(b))return radicalSum([div(a.scalar,b),...a.radicals.map(t=>({kind:'radical',radicand:t.radicand,coefficient:div(t.coefficient,b)}))]);let bv=numeric(b);if(bv===0)throw new CalcError(ERROR.MATH);return dec(numeric(a)/bv)}
 function pow(a,b){if(isRat(a)&&isRat(b)&&b.d===1n&&b.n>=-999n&&b.n<=999n){let p=b.n<0n?-b.n:b.n;return b.n>=0n?rat(a.n**p,a.d**p):rat(a.d**p,a.n**p)}return dec(Math.pow(numeric(a),numeric(b)))}
 function sqrt(a){if(isRat(a)&&a.n>=0n&&a.n<=1000000000000n&&a.d<=1000000000000n){let n=a.n,d=a.d,coef=1n,radicand=n*d; // sqrt(n/d)=sqrt(n*d)/d
  for(let q=2n;q*q<=radicand&&q<1000000n;q++){let sq=q*q;while(radicand%sq===0n){radicand/=sq;coef*=q}}
@@ -27,7 +63,14 @@ function asRational(v){if(isRat(v))return v;if(v.kind==='decimal'){if(v.n!==unde
 function decFromFraction(n,d){if(d<0n){n=-n;d=-d}if(d===0n)throw new CalcError(ERROR.MATH);const q=global.FX991_DECIMAL.quantize(n,d,15);return {kind:'decimal',n:q.n,d:q.d,value:Number(q.n)/Number(q.d)}}
 function decimalRational(v){if(isRat(v))return v;if(v.kind==='decimal')return asRational(v);return global.FX991_DECIMAL.parseDecimal(String(numeric(v)))}
 function validateRange(v){let magnitude=Math.abs(numeric(v));if(!Number.isFinite(magnitude)||magnitude>=1e100)throw new CalcError(ERROR.MATH);if(magnitude!==0&&magnitude<1e-99)throw new CalcError(ERROR.MATH);return v}
-function valueToString(v){if(isRat(v))return v.d===1n?String(v.n):String(v.n)+'/'+String(v.d);if(isPi(v)){let c=v.coefficient;if(isRat(c)&&c.n===0n)return '0';if(isRat(c)&&c.d===1n&&c.n===1n)return 'π';if(isRat(c)&&c.d===1n&&c.n===-1n)return '-π';return valueToString(c)+'π'}if(v.kind==='radical'){let c=valueToString(v.coefficient);return (c==='1'?'':c==='-1'?'-':c)+'√'+String(v.radicand)}return v.n!==undefined?global.FX991_DECIMAL.plain(v.n,v.d,15):Number(v.value.toPrecision(11)).toString()}
+function valueToString(v){if(isRat(v))return v.d===1n?String(v.n):String(v.n)+'/'+String(v.d);if(isPi(v)){let c=v.coefficient;if(isRat(c)&&c.n===0n)return '0';if(isRat(c)&&c.d===1n&&c.n===1n)return 'π';if(isRat(c)&&c.d===1n&&c.n===-1n)return '-π';return valueToString(c)+'π'}if(v.kind==='radical'){let c=valueToString(v.coefficient);return (c==='1'?'':c==='-1'?'-':c)+'√'+String(v.radicand)}if(isRadicalSum(v)){const terms=[...v.radicals];let parts=[];
+  if(v.scalar.n!==0n)parts.push(valueToString(v.scalar));
+  for(const t of terms){const n=t.coefficient.n<0n?-t.coefficient.n:t.coefficient.n;
+   const c=valueToString(rat(n,t.coefficient.d));
+   const body=(c==='1'?'':c)+'√'+t.radicand;
+   parts.push((t.coefficient.n<0n?'-':parts.length?'+':'')+body);
+  }return parts.join('')
+ }return v.n!==undefined?global.FX991_DECIMAL.plain(v.n,v.d,15):Number(v.value.toPrecision(11)).toString()}
 function displayNumber(n,setup){if(!Number.isFinite(n))throw new CalcError(ERROR.MATH);const D=global.FX991_DECIMAL;if(!D)return Number(n.toPrecision(10)).toString();const r=D.parseDecimal(String(n));return D.format(r.n,r.d,setup)}
 function format(v,setup={},decimalView=false){
  if(!decimalView&&setup.format!=='Fix'&&setup.format!=='Sci'&&v.kind!=='decimal')return valueToString(v);
@@ -81,7 +124,7 @@ function valueDisplay(value,setup={},decimalView=false,mode='COMP'){
 function calculateExpression(mode,source,context){if(mode!=='COMP'&&global.FX991_MODES)return global.FX991_MODES.calculate(mode,source,context);if(mode==='COMP')return evaluate(buildAst(buildDocument(source)),context);if(mode==='CMPLX')return parseComplex(source);if(mode==='BASE-N')return baseCalculate(source);throw new CalcError(ERROR.UNSUPPORTED)}
 function createState(model='standard'){const editor=global.FX991_EDITOR;const memory=Object.fromEntries(['A','B','C','D','E','F','M','X','Y'].map(k=>[k,rat(0n)]));return {model,mode:'COMP',view:'edit',menuPage:0,setup:{angle:'DEG',format:'Norm2',digits:3,displayStyle:'MathO'},shift:false,alpha:false,power:true,expression:'',cursor:0,document:editor?editor.create():null,ans:rat(0n),memory,lastValue:null,decimalView:false,result:'',error:null,errorPos:0,history:[],historyCursor:-1,trace:[]}}
 function modeList(state){return MODELS[state.model].modes}
-function serialValue(v){if(!v)return null;if(v.kind==='rational')return {kind:v.kind,n:v.n.toString(),d:v.d.toString()};if(v.kind==='pi')return {kind:v.kind,coefficient:serialValue(v.coefficient)};if(v.kind==='radical')return {kind:v.kind,coefficient:serialValue(v.coefficient),radicand:v.radicand.toString()};if(v.kind==='mode-result')return {kind:v.kind,text:v.text,ans:serialValue(v.ans),data:v.data};if(v.kind==='complex')return {kind:v.kind,re:serialValue(v.re),im:serialValue(v.im)};if(v.kind==='base')return {kind:'base',value:v.value.toString(),radix:v.radix,text:v.text};if(v.kind==='decimal'&&v.n!==undefined)return {kind:'decimal',value:v.value,n:v.n.toString(),d:v.d.toString()};return v}
+function serialValue(v){if(!v)return null;if(v.kind==='rational')return {kind:v.kind,n:v.n.toString(),d:v.d.toString()};if(v.kind==='pi')return {kind:v.kind,coefficient:serialValue(v.coefficient)};if(v.kind==='radical')return {kind:v.kind,coefficient:serialValue(v.coefficient),radicand:v.radicand.toString()};if(isRadicalSum(v))return {kind:'radical-sum',scalar:serialValue(v.scalar),radicals:v.radicals.map(t=>({radicand:t.radicand.toString(),coefficient:serialValue(t.coefficient)}))};if(v.kind==='mode-result')return {kind:v.kind,text:v.text,ans:serialValue(v.ans),data:v.data};if(v.kind==='complex')return {kind:v.kind,re:serialValue(v.re),im:serialValue(v.im)};if(v.kind==='base')return {kind:'base',value:v.value.toString(),radix:v.radix,text:v.text};if(v.kind==='decimal'&&v.n!==undefined)return {kind:'decimal',value:v.value,n:v.n.toString(),d:v.d.toString()};return v}
 function semanticScreen(s){const modes=modeList(s);let message='';if(!s.power)message='OFF';else if(s.view==='mode')message=(s.menuPage===0?modes.slice(0,8).map((m,i)=>(i+1)+':'+m):modes.slice(8).map((m,i)=>(i+1)+':'+m)).join(' ');else if(s.view==='setup')message='1:DEG 2:RAD 3:GRA';else if(s.view==='error')message=s.error;else message=s.result;return {mode:s.mode,view:s.view,expression:s.expression,result:message,displayStyle:effectiveDisplayStyle(s.setup,s.mode),resultValue:s.view==='result'&&s.mode==='COMP'&&effectiveDisplayStyle(s.setup,s.mode)==='MathO'&&!s.decimalView&&s.setup.format!=='Fix'&&s.setup.format!=='Sci'?s.lastValue:null,indicators:[s.setup.angle[0],s.shift?'S':null,s.alpha?'A':null,s.setup.format==='Fix'?'F'+s.setup.digits:s.setup.format==='Sci'?'S'+s.setup.digits:null].filter(Boolean),cursor:s.cursor,document:s.mode==='COMP'&&effectiveDisplayStyle(s.setup,s.mode)!=='LineIO'?s.document:null}}
 function dispatchKey(state,key){let s={...state,setup:{...state.setup},memory:{...state.memory},history:state.history.slice(),trace:state.trace.slice()};const E=global.FX991_EDITOR;const sync=()=>{if(E&&s.mode==='COMP'&&s.document){s.expression=E.serialize(s.document);s.cursor=E.sourceCursor(s.document)}};const finish=()=>{sync();s.trace.push({key,mode:s.mode,view:s.view,expression:s.expression,result:s.result});if(s.trace.length>200)s.trace.shift();return s};
  if(key==='ON'){s.power=true;s.view='edit';return finish()}if(!s.power)return finish();if(key==='SHIFT'){s.shift=!s.shift;s.alpha=false;return finish()}if(key==='ALPHA'){s.alpha=!s.alpha;s.shift=false;return finish()}
