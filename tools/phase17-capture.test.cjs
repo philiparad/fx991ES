@@ -1,0 +1,17 @@
+'use strict';
+const assert=require('node:assert/strict');
+const C=require('../src/phase17-capture.js');
+const plan={keys:['FRAC','1','RIGHT','2','='],checkpoints:[1,3,5]};
+let r=C.build(plan,[]);
+assert.deepEqual(r.missing,[1,3,5]);assert.equal(r.complete,false);
+r=C.build(plan,[{step:3,expression:'1/'},{step:1,view:'edit',physicalKey:'fraction',photoRef:'frame.png'},{step:5,result:'1/2'}]);
+assert.equal(r.complete,true);assert.deepEqual(r.checkpoints.map(p=>p.step),[1,3,5]);
+assert.equal(r.checkpoints[0].physicalKey,'fraction');assert.equal(r.checkpoints[0].photoRef,'frame.png');
+assert.equal(C.build(plan,[{step:1,result:'1'}]).complete,false);
+assert.throws(()=>C.build(plan,[{step:2,result:'wrong'}]),/Unexpected/);
+assert.throws(()=>C.build(plan,[{step:1,result:'1'},{step:1,result:'1'}]),/Duplicate/);
+assert.throws(()=>C.build(plan,[{step:1,physicalKey:'FRAC'}]),/LCD observation/);
+assert.throws(()=>C.build(plan,[{step:1,result:'1',photoRef:'<script>'}]),/Invalid/);
+const diff=C.discrepancies({results:[{id:'fixture',model:'standard',kind:'physical',firstDivergence:4,issues:[{step:4,scope:'terminal',field:'result',category:'numeric-or-format',expected:'2',actual:'3'}]},{id:'match',issues:[]}]});
+assert.equal(diff.hardwareParityCertified,false);assert.equal(diff.records.length,1);assert.equal(diff.records[0].firstDivergence,4);
+console.log('Phase 17 capture module tests: passed (synthetic input only)');
