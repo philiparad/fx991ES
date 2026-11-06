@@ -18,6 +18,7 @@ function serializeValue(v,depth=0){if(depth>4||!plain(v))bad('numeric value');
  if(v.kind==='decimal')return {kind:'decimal',value:number(v.value,'decimal'),n:v.n===undefined?null:String(v.n),d:v.d===undefined?null:String(v.d)};
  if(v.kind==='pi')return {kind:'pi',coefficient:serializeValue(v.coefficient,depth+1)};
  if(v.kind==='radical')return {kind:'radical',coefficient:serializeValue(v.coefficient,depth+1),radicand:String(v.radicand)};
+ if(v.kind==='radical-sum'){if(!Array.isArray(v.radicals)||v.radicals.length<1||v.radicals.length>8)bad('radical terms');return {kind:'radical-sum',scalar:serializeValue(v.scalar,depth+1),radicals:v.radicals.map(t=>({radicand:String(t.radicand),coefficient:serializeValue(t.coefficient,depth+1)}))}};
  if(v.kind==='complex')return {kind:'complex',re:serializeValue(v.re,depth+1),im:serializeValue(v.im,depth+1)};
  if(v.kind==='base')return {kind:'base',value:String(v.value),radix:v.radix,text:String(v.text||'')};
  bad('unsupported numeric kind');}
@@ -26,6 +27,18 @@ function restoreValue(v,depth=0){if(depth>4)bad('value nesting');readonlyObject(
  if(v.kind==='decimal'){let val=number(v.value,'decimal');if((v.n===null||v.n===undefined)&&(v.d===null||v.d===undefined))return {kind:'decimal',value:val};const n=bigintText(v.n,'decimal numerator'),d=bigintText(v.d,'decimal denominator');if(d<=0n)bad('decimal denominator');return {kind:'decimal',value:val,n,d}}
  if(v.kind==='pi')return {kind:'pi',coefficient:restoreValue(v.coefficient,depth+1)};
  if(v.kind==='radical'){let radical=bigintText(v.radicand,'radicand');if(radical<0n)bad('radicand');return {kind:'radical',coefficient:restoreValue(v.coefficient,depth+1),radicand:radical}}
+ if(v.kind==='radical-sum'){
+  if(!Array.isArray(v.radicals)||v.radicals.length<1||v.radicals.length>8)bad('radical term count');
+  const scalar=restoreValue(v.scalar,depth+1);if(scalar.kind!=='rational')bad('radical scalar');
+  const terms=v.radicals.map(t=>{readonlyObject(t,'radical term');let radicand=bigintText(t.radicand,'radicand');if(radicand<=1n||radicand>1000000000000n)bad('radicand range');
+   const coefficient=restoreValue(t.coefficient,depth+1);if(coefficient.kind!=='rational'||coefficient.n===0n)bad('radical coefficient');
+   return {kind:'radical',radicand,coefficient}
+  });
+  const normalized=K.radicalSum([scalar,...terms]);
+  if(normalized.kind!=='radical-sum'||normalized.radicals.length!==terms.length||
+     terms.some((t,i)=>t.radicand!==normalized.radicals[i].radicand))bad('noncanonical radical sum');
+  return normalized
+ }
  if(v.kind==='complex')return {kind:'complex',re:restoreValue(v.re,depth+1),im:restoreValue(v.im,depth+1)};
  if(v.kind==='base'){let rad=integer(v.radix,2,16,'radix');if(![2,8,10,16].includes(rad))bad('radix');return {kind:'base',value:bigintText(v.value,'base value'),radix:rad,text:sizeString(v.text,100,'base text')}}
  bad('unknown value kind');}
