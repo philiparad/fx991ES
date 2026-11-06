@@ -15,7 +15,7 @@ for(const [groupName,items] of Object.entries(keypadLayout)){
   const alternative=document.createElement('div');alternative.className='alt';alternative.textContent=item.legend||' ';
   const button=document.createElement('button');button.type='button';button.className='key '+item.tone;
   button.textContent=labels[item.key]||item.key;
-  button.setAttribute('aria-label',(labels[item.key]||item.key)+' calculator key'+(item.enabled?'':' (not implemented)'));
+  button.setAttribute('aria-label',item.key+' calculator key'+(item.enabled?'':' (not implemented)'));
   if(!item.enabled){button.disabled=true;button.title='Not implemented — teaching panel may provide a separate operation';}
   else button.addEventListener('click',()=>keyEvent(item.key==='RCL'&&!state.shift?'RCL_MENU':item.key));
   cell.append(alternative,button);group.append(cell);
