@@ -60,3 +60,7 @@ python tools/device_workbench_probe.py
 ```
 
 The browser probe needs Playwright and browser installations. A successful unit suite does not substitute for an actual cross-browser execution, and neither can certify CASIO parity.
+
+## Phase 17 CI dependency-install watchdog
+
+The browser workflow now bounds the pinned Playwright Python package install at 3 minutes and the three-engine installation at 9 minutes (with a 15-second termination grace), within the 25-minute job ceiling. Both commands still fail closed on nonzero exits; no browser check is skipped or auto-approved. Subsequent `if: always()` environment diagnostics and evidence collection can run and explain blocked installations. These are **installation ceilings, not proof of a stalled runner or a resolved failure**. Check the *new commit's* GitHub Actions run and inspect final artifacts before claiming browser qualification.
