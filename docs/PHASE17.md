@@ -64,3 +64,7 @@ The browser probe needs Playwright and browser installations. A successful unit 
 ## Phase 17 CI dependency-install watchdog
 
 The browser workflow now bounds the pinned Playwright Python package install at 3 minutes and the three-engine installation at 9 minutes (with a 15-second termination grace), within the 25-minute job ceiling. Both commands still fail closed on nonzero exits; no browser check is skipped or auto-approved. Subsequent `if: always()` environment diagnostics and evidence collection can run and explain blocked installations. These are **installation ceilings, not proof of a stalled runner or a resolved failure**. Check the *new commit's* GitHub Actions run and inspect final artifacts before claiming browser qualification.
+
+## Printable physical observation pack
+
+Open `tests/phase17-field-pack.html` using the same local origin as the device workbench. By default it displays six priority cases (`F16-03`, `F16-04`, `F16-06`, `F16-07`, `F16-11`, `F16-12`). Change the filter to all twelve if needed. Print one A4 page per case or export a UTF-8 BOM CSV containing a row for each valid checkpoint. All LCD, cursor, physical-key, photo, device, operator, date and reviewer fields remain blank. Planned semantic keys and planned setup are explicitly not independent physical readings. Preserve original photographs outside the CSV and transcribe verified results into the device workbench; exporting a blank worksheet does not create a device evidence record or satisfy sign-off.
