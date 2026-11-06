@@ -576,6 +576,10 @@ test('P15 malformed mixed document session is rejected',()=>{const s=p15(['MIXIN
 test('P15 old fractional session remains backward compatible',()=>{const s=p15(['FRAC','1','RIGHT','2']);const x=SS.importJSON(SS.exportJSON(s));eq(x.document.root.children[0].kind,'Fraction')});
 test('P15 mixed input preserves exact evaluation source across restore',()=>{let s=p15(['MIXIN','3','RIGHT','2','RIGHT','5']);s=SS.importJSON(SS.exportJSON(s));s=K.dispatchKey(s,'=');eq(s.result,'17/5')});
 test('P15 arithmetic boundary rational sum of mixed expressions',()=>eq(K.valueToString(evaluate('((1)+((1)/(6)))+((2)+((1)/(3)))')),'7/2'));
+test('P15 LCD caret moves horizontally within mixed denominator',()=>{let s=p15(['MIXIN','1','RIGHT','1','RIGHT','6']);const start=K.frameHash(L.rasterizeScreen(K.semanticScreen(s)));s=K.dispatchKey(s,'LEFT');const moved=K.frameHash(L.rasterizeScreen(K.semanticScreen(s)));if(start===moved)throw Error('cursor frame unchanged');eq(s.view,'edit')});
+test('P15 tall mixed fraction scrolls vertically to selected slot',()=>{let s=p15(['MIXIN','1','RIGHT','1','RIGHT','6']);const a=L.composeScreen(K.semanticScreen(s));s=K.dispatchKey(s,'UP');const b=L.composeScreen(K.semanticScreen(s));if(a.pixels.every((v,i)=>v===b.pixels[i]))throw Error('slot navigation unchanged');eq(s.document.anchor.sequenceId,s.document.root.children[0].numerator.id)});
+test('P15 long mixed input has horizontal editor overflow',()=>{const digits='123456789012345'.split('');const s=p15(['MIXIN',...digits,'RIGHT',...digits,'RIGHT',...digits]);const f=L.composeScreen(K.semanticScreen(s));eq(f.overflow,true);if(f.scrollX<=0)throw Error('missing horizontal input scroll');eq(f.pixels.length,2976)});
+
 
 // Milestone 24: physical-key resolution, insert/overwrite and structural deletion.
 const KM=global.FX991_KEYS;
