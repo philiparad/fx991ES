@@ -93,3 +93,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .nd-mixed{display:inline-flex;align-items:center;vertical-align:middle;gap:2px;padding:0 2px;white-space:nowrap}
 .nd-mixed .nd-whole{display:inline-block;min-width:.55em;text-align:center}
 .nd-mixed .nd-frac{margin:0}
+
+
+/* Phase 16: key-step observation guide is text-only, without simulated observations. */
+.device-step-row{display:grid;grid-template-columns:minmax(110px,1fr) minmax(180px,2fr);
+ gap:10px;border-bottom:1px solid #d1d9cb;padding:6px 4px;font-size:.86rem}
+.device-step-row span:first-child{font-family:monospace;font-weight:700}
+.device-step-row span:last-child{color:#5a6c5d}
+@media(max-width:480px){.device-step-row{grid-template-columns:1fr;gap:2px}}
