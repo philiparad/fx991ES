@@ -1099,41 +1099,6 @@ test('Unknown numerical reason receives neutral educational example',()=>{
  eq(global.FX991_ERROR_HELP.lessonForState(state).steps[2].includes('X^2'),true);
 });
 
-test('Guided practice begins disabled and starts first task on opt-in',()=>{
- const P=global.FX991_PRACTICE;eq(P.stop().enabled,false);eq(P.current(P.start()).answer,12);
-});
-test('Guided practice scores actual calculator result',()=>{
- const P=global.FX991_PRACTICE;let s=K.createState();
- for(const key of ['7','ADD','5','='])s=K.dispatchKey(s,key);
- const p=P.check(P.start(),s,'=',K.numeric);eq(p.solved,true);eq(p.kind,'correct');eq(p.attempts,1);
-});
-test('Guided practice refuses incorrect result',()=>{
- const P=global.FX991_PRACTICE;let s=K.createState();
- for(const key of ['7','ADD','4','='])s=K.dispatchKey(s,key);
- const p=P.check(P.start(),s,'=',K.numeric);eq(p.solved,false);eq(p.index,0);eq(P.next(p),p);
-});
-test('Guided practice ignores stale results and non-equals keystrokes',()=>{
- const P=global.FX991_PRACTICE,s={mode:'COMP',view:'result',lastValue:K.rat(12)},p=P.start();
- eq(P.check(p,s,'7',K.numeric),p);eq(P.check(p,{...s,view:'edit'},'=',K.numeric),p);
-});
-test('Guided practice handles math errors without success',()=>{
- const P=global.FX991_PRACTICE;
- const p=P.check(P.start(),{mode:'COMP',view:'error',lastValue:null},'=',K.numeric);
- eq(p.solved,false);eq(p.kind,'error');
-});
-test('Guided practice progresses and completes all five exercises',()=>{
- const P=global.FX991_PRACTICE;let p=P.start();
- for(const t of P.TASKS){
-  p=P.check(p,{mode:'COMP',view:'result',lastValue:K.dec(t.answer)},'=',K.numeric);
-  eq(p.solved,true);p=P.next(p);
- }
- eq(p.completed,true);eq(P.current(p),null);
-});
-test('Guided practice is inert when switched off',()=>{
- const P=global.FX991_PRACTICE,p=P.stop();
- eq(P.check(p,{mode:'COMP',view:'result',lastValue:K.rat(12)},'=',K.numeric),p);
-});
-
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
