@@ -1049,6 +1049,32 @@ test('DIFF keypad exposes reason for non-differentiable cusp',()=>{
  eq(s.view,'error');eq(s.numericalDetails.reason,'non_differentiable');
 });
 
+
+test('Numerical error explanation exposes domain failure',()=>{
+ let s=N.execute(numState(),'INTEGRAL','1/X',{lower:-1,upper:1});
+ const h=global.FX991_ERROR_HELP.forState(s);
+ eq(h.title,'Undefined function value');eq(h.operation,'INTEGRAL');eq(h.reason,'domain_sample');
+});
+test('Numerical error explanation describes non-differentiable cusp',()=>{
+ let s=N.execute(numState(),'DIFF','abs(X)',{at:0});
+ eq(global.FX991_ERROR_HELP.forState(s).reason,'non_differentiable');
+});
+test('Numerical help never appears for valid results or editing state',()=>{
+ let s=N.execute(numState(),'INTEGRAL','1/X',{lower:-1,upper:1});
+ eq(global.FX991_ERROR_HELP.forState({...s,view:'edit'}),null);
+ eq(global.FX991_ERROR_HELP.forState({...s,view:'result'}),null);
+ eq(global.FX991_ERROR_HELP.forState(N.execute(numState(),'DIFF','X^2',{at:2})),null);
+});
+test('Numerical help rejects stale and unrelated error metadata',()=>{
+ let s=N.execute(numState(),'INTEGRAL','1/X',{lower:-1,upper:1});
+ eq(global.FX991_ERROR_HELP.forState({...s,error:K.ERROR.SYNTAX}),null);
+ eq(global.FX991_ERROR_HELP.forState({...s,numericalDetails:{operation:'STAT',error:s.error,reason:'domain_sample'}}),null);
+});
+test('Unknown numerical errors use neutral fallback explanation',()=>{
+ const s={view:'error',error:K.ERROR.MATH,numericalDetails:{operation:'DIFF',error:K.ERROR.MATH,reason:'unknown'}};
+ eq(global.FX991_ERROR_HELP.forState(s).title,'Numerical calculation failed');
+});
+
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
