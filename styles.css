@@ -87,3 +87,9 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .device-photo-panel p{overflow-wrap:anywhere;font-size:.87rem}
 .device-photo-preview{display:block;max-width:100%;max-height:320px;object-fit:contain;border:1px solid #8d9f8e;background:white;margin:8px 0}
 .device-photo-preview[hidden]{display:none}
+
+
+/* Phase 15: editable mixed fraction has an independent whole-number slot. */
+.nd-mixed{display:inline-flex;align-items:center;vertical-align:middle;gap:2px;padding:0 2px;white-space:nowrap}
+.nd-mixed .nd-whole{display:inline-block;min-width:.55em;text-align:center}
+.nd-mixed .nd-frac{margin:0}
