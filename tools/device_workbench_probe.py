@@ -30,6 +30,35 @@ def exercise(page):
     assert page.locator(".checkpoint-capture-row").count() == 5, "F16-03 must expose its five valid checkpoints"
     assert all(not entry for entry in page.locator(".checkpoint-capture-row input").evaluate_all("(inputs) => inputs.map(input => input.value)")), "checkpoint fields were prefilled"
     assert "0 / 5 checkpoints entered" in page.locator("#checkpoint-entry-progress").inner_text()
+    # Worksheet import is draft-only, never a physical evidence record.
+    import csv
+    from io import StringIO
+    cols=["scenarioId","step","semanticKey","setupAngle","setupDisplay","observedLCD",
+          "observedCursor","actualPhysicalKey","photoFile","device","operator","date","reviewer"]
+    steps=[(2,"FRAC"),(3,"2"),(5,"3"),(6,"RIGHT"),(8,"=")]
+    def worksheet(filled=False):
+        out=StringIO(newline="")
+        writer=csv.writer(out)
+        writer.writerow(cols)
+        for step,key in steps:
+            writer.writerow(["F16-03",str(step),key,"DEG","MathO",
+                "SYNTHETIC TRANSCRIPTION" if filled and step==2 else "",
+                "left" if filled and step==2 else "",
+                "fraction key" if filled and step==2 else "",
+                "fixture.png" if filled and step==2 else "",
+                "","","",""])
+        return out.getvalue().encode("utf-8-sig")
+    assert page.locator("#worksheet-import-panel").is_visible()
+    page.locator("#worksheet-file").set_input_files({
+        "name":"blank-fixture.csv","mimeType":"text/csv","buffer":worksheet()})
+    assert "0 / 5 checkpoints" in page.locator("#worksheet-status").inner_text(), "blank worksheet counted as observation"
+    assert "0 of 12 focused cases" in page.locator("#fraction-coverage").inner_text(), "worksheet created evidence"
+    page.locator("#worksheet-file").set_input_files({
+        "name":"synthetic-fixture.csv","mimeType":"text/csv","buffer":worksheet(True)})
+    assert "1 / 5 checkpoints" in page.locator("#worksheet-status").inner_text(), "worksheet draft not transcribed"
+    assert "SYNTHETIC TRANSCRIPTION" in page.locator(".checkpoint-capture-row").first.locator('[data-field="expression"]').input_value()
+    assert "0 of 12 focused cases" in page.locator("#fraction-coverage").inner_text(), "draft import changed corpus"
+
     page.locator(".checkpoint-capture-row").first.locator('[data-field="expression"]').fill("SYNTHETIC LCD FIXTURE")
     assert "1 / 5 checkpoints entered" in page.locator("#checkpoint-entry-progress").inner_text()
     page.locator("#scenario").select_option("A01")
