@@ -1,6 +1,15 @@
 name: Cross-browser acceptance — M42
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'styles.css'
+      - 'index.html'
+      - 'tools/**'
+      - '.github/workflows/browser-acceptance.yml'
   push:
     branches: [main]
     paths:
@@ -30,10 +39,17 @@ jobs:
         if: always()
         continue-on-error: true
         run: python tools/ci_environment.py --stage before-install --out release-evidence/ci-environment-before.json --markdown release-evidence/ci-environment-before.md
-      - name: Install browser testing dependencies
+      - name: Install browser testing dependencies (bounded and diagnosable)
+        shell: bash
         run: |
-          python -m pip install --disable-pip-version-check playwright==1.56.0
-          python -m playwright install --with-deps chromium firefox webkit
+          set -euo pipefail
+          echo "::group::Install pinned Playwright Python package (3 minute ceiling)"
+          timeout --signal=TERM --kill-after=15s 3m python -m pip install --disable-pip-version-check --retries 2 --timeout 25 playwright==1.56.0
+          echo "::endgroup::"
+          echo "::group::Install Chromium, Firefox and WebKit dependencies (9 minute ceiling)"
+          timeout --signal=TERM --kill-after=15s 9m python -m playwright install --with-deps chromium firefox webkit
+          echo "::endgroup::"
+          echo "All three Playwright browser engines installed; environment preflight will verify them."
       - name: Inspect Playwright/browser installation (must have three browser engines)
         if: always()
         run: |
@@ -52,6 +68,12 @@ jobs:
       - name: Run all 72 browser checks against one shared origin
         if: always()
         run: python tools/shared_browser_session.py --out browser-evidence
+      - name: Capture real LCD screenshots in Chromium Firefox and WebKit
+        if: always()
+        run: python tools/lcd_visual_probe.py --out browser-evidence/lcd-visual
+      - name: Test device evidence workbench in real Chromium Firefox and WebKit
+        if: always()
+        run: python tools/device_workbench_probe.py --out browser-evidence/device-workbench
       - name: Render browser matrix status for GitHub Actions summary
         if: always()
         continue-on-error: true

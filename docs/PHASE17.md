@@ -1,0 +1,80 @@
+# Phase 17 — Authentic fraction/cursor evidence and independent review
+
+## Scope and release boundary
+
+Carry forward the 12 *planned, unobserved* `F16-01` … `F16-12` scenarios in `src/fraction-validation.js`. Phase 16 verified software and browser infrastructure, **not** physical CASIO fidelity. Keep PR #1 in **DRAFT**, do not merge into `main`, and do not present GitHub CI success as hardware certification.
+
+## Collection procedure (for each scenario)
+
+1. On a real fx-991ES PLUS, or an authorized official emulator with edition/version documented, record exact model, date, operator, power/reset state and setup (MathO/LineIO, angle, Norm settings). Do not use the simulator as the source of expected outputs.
+2. Check and document the mapping from each *semantic* simulator key to the actual physical keyboard sequence. The `SHIFT FRAC` notation in the plan is not independently authenticated against physical key legends.
+3. Execute the exact physical sequence; capture a readable original image of the LCD and cursor at every checkpoint, plus the terminal display. Record any keys that differ, including setup navigation, and any scroll indicators.
+4. In `tests/device.html`, select the corresponding `F16-XX` scenario, record only directly observed fields, attach a locally hashed photograph if available, enter the focused checkpoint observations using the structured fields (the old JSON field remains for non-focused scenarios), and export evidence. Keep the original photo files separately; the JSON stores metadata, not image bytes. Do not copy the simulator preview into observations.
+5. Have a **different person** review the images and transcribed outputs, confirm physical key mapping and each checkpoint, and compare the observed screen and cursor behavior with the simulator. Enter a review decision of `match`, `mismatch`, or `inconclusive`; record a specific discrepancy and first divergent step when mismatched.
+6. Preserve original evidence, photo SHA-256 hashes, reviewer notes and a version-controlled discrepancy log. Fix only reproducible mismatches; rerun the browser, LCD, workbench, source-integrity and Node suites after each code change.
+
+**Priority:** `F16-03` and `F16-04` mixed fractions; `F16-06` and `F16-07` cursor movement; `F16-11` scrolling; `F16-12` fraction/decimal conversion. Then complete the remaining six cases.
+
+## Review JSON format
+
+Save a document with schema `fx991-phase17-independent-review-v1`. The following is a **structural example only**, not a measurement or a completed review:
+
+```json
+{
+  "schema": "fx991-phase17-independent-review-v1",
+  "reviews": []
+}
+```
+
+When genuine evidence exists, each review entry has `scenarioId`, `observationId`, `reviewer`, `reviewedAt` (`YYYY-MM-DD`), `disposition` (`match` / `mismatch` / `inconclusive`), `physicalKeyMappingConfirmed` (boolean), `checkpointsVerified` (boolean), and nonempty `notes`. Never fill these from fabricated or assumed observations.
+
+Run:
+
+```bash
+node tools/phase17-review.cjs actual-device-evidence.json independent-reviews.json
+node tools/phase17-review.test.cjs
+```
+
+Exit status 0 indicates all 12 scenarios have complete reviews marked `match` and are **eligible for human sign-off consideration**, **not** hardware parity. A `mismatch` or `inconclusive` review blocks readiness even if all 12 reviews exist. Exit status 1 means a case is pending, mismatched, or inconclusive; 2 means invalid input or invocation. `hardwareParityCertified` and `releaseApproved` are deliberately always false; a separately authorized release decision requires original physical source verification and a human sign-off. Records and reviewer assertions are self-reported and cannot authenticate their own provenance.
+
+## Completion criteria
+
+- Twelve distinct genuine observations, with checkpoints, keyboard mapping, and preserved source photographs or documented equivalent evidence.
+- Twelve independently reviewed cases with no unresolved mismatch or inconclusive result.
+- Any simulator corrections covered by new regression tests and green CI.
+- Explicit human validation of the original source and documented release decision. Until then the draft PR and the physical-fidelity claim remain blocked.
+
+## Structured workbench checkpoint capture
+
+On `tests/device.html`, select `F16-01` through `F16-12` to reveal one blank checkpoint-entry row per planned observation. Each row accepts a directly observed LCD expression/cursor, result, view, actual physical key and original checkpoint photo filename. Empty observations are omitted from the exported `checkpoints` array, and the progress label shows missing checkpoints. The original image bytes are **never** packaged in the JSON. The terminal result remains separately entered in `LCD result as displayed`.
+
+The workbench retains raw JSON checkpoint entry for legacy/non-focused scenarios. `Export discrepancy report` creates `fx991-phase17-discrepancies.json`, recording only the user-reported comparator mismatches and first divergent step. This diagnostic document is *not* independently authenticated hardware evidence. The separate Phase 17 reviewer gate still requires all planned checkpoints and explicit human checks.
+
+Regression commands (developer/CI; do not count synthetic fixtures as physical evidence):
+
+```sh
+node tests/run-node.cjs
+node tools/phase17-capture.test.cjs
+node tools/phase17-review.test.cjs
+python tools/device_workbench_probe.py
+```
+
+The browser probe needs Playwright and browser installations. A successful unit suite does not substitute for an actual cross-browser execution, and neither can certify CASIO parity.
+
+## Phase 17 CI dependency-install watchdog
+
+The browser workflow now bounds the pinned Playwright Python package install at 3 minutes and the three-engine installation at 9 minutes (with a 15-second termination grace), within the 25-minute job ceiling. Both commands still fail closed on nonzero exits; no browser check is skipped or auto-approved. Subsequent `if: always()` environment diagnostics and evidence collection can run and explain blocked installations. These are **installation ceilings, not proof of a stalled runner or a resolved failure**. Check the *new commit's* GitHub Actions run and inspect final artifacts before claiming browser qualification.
+
+## Printable physical observation pack
+
+Open `tests/phase17-field-pack.html` using the same local origin as the device workbench. By default it displays six priority cases (`F16-03`, `F16-04`, `F16-06`, `F16-07`, `F16-11`, `F16-12`). Change the filter to all twelve if needed. Print one A4 page per case or export a UTF-8 BOM CSV containing a row for each valid checkpoint. All LCD, cursor, physical-key, photo, device, operator, date and reviewer fields remain blank. Planned semantic keys and planned setup are explicitly not independent physical readings. Preserve original photographs outside the CSV and transcribe verified results into the device workbench; exporting a blank worksheet does not create a device evidence record or satisfy sign-off.
+
+## Transcribing a completed CSV into the workbench (draft only)
+
+In `tests/device.html`, select the matching `F16-XX` scenario, then use **Import a completed checkpoint CSV as a draft**. The importer parses the exact 13-column blank-worksheet format, checks scenario identity, expected checkpoint numbers and semantic keys, and checks the selected setup. It allows a CSV containing multiple scenarios but imports **only the selected scenario**. Only rows with a transcribed LCD/cursor value fill the editable checkpoint fields. Blank rows remain blank. Conflicting metadata, duplicate steps, missing worksheet rows, malformed CSV and unexpected keys are rejected before changing the fields.
+
+This import does **not** create evidence records, does not accept readings as authenticated, and does not provide a terminal LCD result. Inspect all imported fields against the original photos, record the actual terminal result and device/date, and explicitly click **Record observation and compare** if the evidence is genuinely from a device. After exporting the JSON, arrange independent verification of the physical key mapping and source photographs. Synthetic CI CSV fixtures must never be copied into real-device evidence.
+
+## Independent human review worksheet
+
+Open `tests/phase17-review.html` and import the JSON exported by the device workbench. The page lists only available focused observations and their checkpoint coverage. A **different person** must examine original photo files, physical key mapping and the transcribed display, then manually enter name, review date, disposition, two explicit verification decisions and notes. All review decisions start blank; no matching result is inferred from simulator output. Export creates `fx991-phase17-independent-reviews.json`, compatible with `tools/phase17-review.cjs`. Incomplete review cards are omitted; partially entered cards fail validation and block the export. Never treat a self-reported review or screenshot hash as independent proof of its origin. The Node readiness gate still blocks missing, mismatched or inconclusive cases, and never approves physical parity.

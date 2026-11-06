@@ -231,7 +231,7 @@ def main(argv=None):
                             stage = 'navigate'
                             page.goto(url, wait_until='domcontentloaded', timeout=30000)
                             stage = 'execute'
-                            page.wait_for_function("['passed','failed','blocked'].includes(document.body.dataset.acceptance)",
+                            page.wait_for_function("document.body.dataset.acceptanceComplete === 'true'",
                                                    timeout=args.timeout * 1000)
                             stage = 'capture'
                             with page.expect_download(timeout=15000) as info:

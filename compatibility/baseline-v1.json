@@ -1,0 +1,372 @@
+{
+  "schema": "fx991-reference-v1",
+  "baselineVersion": 1,
+  "referenceDevice": "fx-991ES PLUS 2nd edition",
+  "disclaimer": "All cases are internal exploratory predictions. None is a physical-device or official-emulator observation. A passing simulator comparison is not evidence of CASIO compatibility.",
+  "cases": [
+    {
+      "caseId": "baseline-arithmetic-precedence",
+      "model": "standard",
+      "source": {
+        "kind": "internal",
+        "notes": "Internal exploratory expectation only; not device observed."
+      },
+      "setup": {
+        "angle": "DEG",
+        "format": "Norm2"
+      },
+      "events": [
+        "2",
+        "ADD",
+        "3",
+        "MUL",
+        "4",
+        "="
+      ],
+      "expected": {
+        "result": "14",
+        "view": "result"
+      },
+      "purpose": "Operator precedence",
+      "verification": "unverified",
+      "priority": "P1"
+    },
+    {
+      "caseId": "baseline-addition",
+      "model": "standard",
+      "source": {
+        "kind": "internal",
+        "notes": "Internal exploratory expectation only; not device observed."
+      },
+      "setup": {
+        "angle": "DEG",
+        "format": "Norm2"
+      },
+      "events": [
+        "2",
+        "ADD",
+        "3",
+        "="
+      ],
+      "expected": {
+        "result": "5",
+        "view": "result"
+      },
+      "purpose": "Basic calculation",
+      "verification": "unverified",
+      "priority": "P1"
+    },
+    {
+      "caseId": "baseline-division-zero",
+      "model": "standard",
+      "source": {
+        "kind": "internal",
+        "notes": "Internal exploratory expectation only; not device observed."
+      },
+      "setup": {
+        "angle": "DEG",
+        "format": "Norm2"
+      },
+      "events": [
+        "1",
+        "DIV",
+        "0",
+        "="
+      ],
+      "expected": {
+        "view": "error",
+        "error": "Math ERROR"
+      },
+      "purpose": "Error taxonomy",
+      "verification": "unverified",
+      "priority": "P1"
+    },
+    {
+      "caseId": "baseline-negative-square",
+      "model": "standard",
+      "source": {
+        "kind": "internal",
+        "notes": "Internal exploratory expectation only; not device observed."
+      },
+      "setup": {
+        "angle": "DEG",
+        "format": "Norm2"
+      },
+      "events": [
+        "NEG",
+        "2",
+        "POW",
+        "2",
+        "="
+      ],
+      "expected": {
+        "result": "-4"
+      },
+      "purpose": "Unary minus versus power",
+      "verification": "unverified",
+      "priority": "P1"
+    },
+    {
+      "caseId": "baseline-square-root",
+      "model": "standard",
+      "source": {
+        "kind": "internal",
+        "notes": "Internal exploratory expectation only; not device observed."
+      },
+      "setup": {
+        "angle": "DEG",
+        "format": "Norm2"
+      },
+      "events": [
+        "SQRT",
+        "9",
+        "RP",
+        "="
+      ],
+      "expected": {
+        "result": "3"
+      },
+      "purpose": "Structured root editing",
+      "verification": "unverified",
+      "priority": "P1"
+    },
+    {
+      "caseId": "baseline-fraction",
+      "model": "standard",
+      "source": {
+        "kind": "internal",
+        "notes": "Internal exploratory expectation only; not device observed."
+      },
+      "setup": {
+        "angle": "DEG",
+        "format": "Norm2"
+      },
+      "events": [
+        "FRAC",
+        "1",
+        "DOWN",
+        "2",
+        "RP",
+        "="
+      ],
+      "expected": {
+        "result": "1/2"
+      },
+      "purpose": "Natural fraction template",
+      "verification": "unverified",
+      "priority": "P1"
+    },
+    {
+      "caseId": "baseline-decimal-result",
+      "model": "standard",
+      "source": {
+        "kind": "internal",
+        "notes": "Internal exploratory expectation only; not device observed."
+      },
+      "setup": {
+        "angle": "DEG",
+        "format": "Norm2"
+      },
+      "events": [
+        "1",
+        "DIV",
+        "3",
+        "=",
+        "S-D"
+      ],
+      "expected": {
+        "view": "result"
+      },
+      "purpose": "S-D exact decimal transition (not a firmware screen expectation)",
+      "verification": "unverified",
+      "priority": "P1"
+    },
+    {
+      "caseId": "baseline-angle-degrees",
+      "model": "standard",
+      "source": {
+        "kind": "internal",
+        "notes": "Internal exploratory expectation only; not device observed."
+      },
+      "setup": {
+        "angle": "DEG",
+        "format": "Norm2"
+      },
+      "events": [
+        "SIN",
+        "3",
+        "0",
+        "RP",
+        "="
+      ],
+      "expected": {
+        "view": "result"
+      },
+      "purpose": "Degree trigonometry, result intentionally unasserted",
+      "verification": "unverified",
+      "priority": "P1"
+    },
+    {
+      "caseId": "baseline-setup-menu",
+      "model": "standard",
+      "source": {
+        "kind": "internal",
+        "notes": "Internal exploratory expectation only; not device observed."
+      },
+      "setup": {
+        "angle": "DEG",
+        "format": "Norm2"
+      },
+      "events": [
+        "SHIFT",
+        "MODE"
+      ],
+      "expected": {
+        "view": "setup"
+      },
+      "purpose": "Setup entry state",
+      "verification": "unverified",
+      "priority": "P1"
+    },
+    {
+      "caseId": "baseline-mode-menu",
+      "model": "standard",
+      "source": {
+        "kind": "internal",
+        "notes": "Internal exploratory expectation only; not device observed."
+      },
+      "setup": {
+        "angle": "DEG",
+        "format": "Norm2"
+      },
+      "events": [
+        "MODE"
+      ],
+      "expected": {
+        "view": "mode"
+      },
+      "purpose": "Mode entry state",
+      "verification": "unverified",
+      "priority": "P1"
+    },
+    {
+      "caseId": "baseline-base-menu",
+      "model": "standard",
+      "source": {
+        "kind": "internal",
+        "notes": "Internal exploratory expectation only; not device observed."
+      },
+      "setup": {
+        "angle": "DEG",
+        "format": "Norm2"
+      },
+      "events": [
+        "MODE",
+        "4"
+      ],
+      "expected": {
+        "mode": "BASE-N"
+      },
+      "purpose": "Standard mode selection",
+      "verification": "unverified",
+      "priority": "P1"
+    },
+    {
+      "caseId": "baseline-shift-indicator",
+      "model": "standard",
+      "source": {
+        "kind": "internal",
+        "notes": "Internal exploratory expectation only; not device observed."
+      },
+      "setup": {
+        "angle": "DEG",
+        "format": "Norm2"
+      },
+      "events": [
+        "SHIFT"
+      ],
+      "expected": {
+        "indicators": [
+          "D",
+          "S"
+        ]
+      },
+      "purpose": "Modifier and indicator",
+      "verification": "unverified",
+      "priority": "P1"
+    },
+    {
+      "caseId": "baseline-key-edit",
+      "model": "standard",
+      "source": {
+        "kind": "internal",
+        "notes": "Internal exploratory expectation only; not device observed."
+      },
+      "setup": {
+        "angle": "DEG",
+        "format": "Norm2"
+      },
+      "events": [
+        "1",
+        "2",
+        "3",
+        "LEFT",
+        "DEL"
+      ],
+      "expected": {
+        "expression": "13"
+      },
+      "purpose": "Cursor deletion",
+      "verification": "unverified",
+      "priority": "P1"
+    },
+    {
+      "caseId": "baseline-ans-memory",
+      "model": "standard",
+      "source": {
+        "kind": "internal",
+        "notes": "Internal exploratory expectation only; not device observed."
+      },
+      "setup": {
+        "angle": "DEG",
+        "format": "Norm2"
+      },
+      "events": [
+        "2",
+        "ADD",
+        "3",
+        "="
+      ],
+      "expected": {
+        "ans": "5"
+      },
+      "purpose": "Answer memory",
+      "verification": "unverified",
+      "priority": "P1"
+    },
+    {
+      "caseId": "baseline-c-ineq",
+      "model": "c",
+      "source": {
+        "kind": "internal",
+        "notes": "Internal exploratory expectation only; not device observed."
+      },
+      "setup": {
+        "angle": "DEG",
+        "format": "Norm2"
+      },
+      "events": [
+        "MODE",
+        "DOWN",
+        "DOWN",
+        "1"
+      ],
+      "expected": {
+        "mode": "INEQ"
+      },
+      "purpose": "C-edition mode navigation",
+      "verification": "unverified",
+      "priority": "P2"
+    }
+  ]
+}
