@@ -36,7 +36,7 @@ function regExpression(s,op){let flow=s.ui.registerFlow,cat=flow.category,one=s.
  let encode=cat==='matrix'?matrixText:vectorText;
  return op+':'+encode(one)+(unary.includes(op)?'':'|'+encode(two));}
 function regResult(s,op){try{let expression=regExpression(s,op),value=base.calculateExpression(s.mode,expression,s);
- s.expression=expression;s.cursor=expression.length;s.lastValue=value;s.ans=value.kind==='mode-result'?value.ans:value;s.result=base.valueDisplay(value,s.setup,s.decimalView,s.mode);s.error=null;s.view='result';s.ui.registerFlow=null;
+ s.expression=expression;s.cursor=expression.length;s.resultScrollX=0;s.mixedView=false;s.lastValue=value;s.ans=value.kind==='mode-result'?value.ans:value;s.result=base.valueDisplay(value,s.setup,s.decimalView,s.mode);s.error=null;s.view='result';s.ui.registerFlow=null;
  s.history=[{expression,display:s.result},...s.history].slice(0,50);
  s.ui.lastWizard={mode:s.mode,kind:op,fields:[],values:[],resultPage:0};}
  catch(e){s.error=e.code||base.ERROR.ARGUMENT;s.view='error';s.result=s.error}return s}
@@ -51,7 +51,7 @@ function statNavigate(s,step){let f=s.ui.statFlow,stat=s.ui.modeMemory.stat,cols
 function statResult(s){try{statAccept(s);let stat=s.ui.modeMemory.stat,rows=stat.rows;
  if(!rows.length||(stat.kind==='LINEAR'&&rows.length<2))throw new base.CalcError(base.ERROR.ARGUMENT);
  let expression=stat.kind+':'+(stat.kind==='LINEAR'?rows.map(row=>row.join(',')).join(';'):rows.map(r=>r[0]).join(','));
- let value=base.calculateExpression('STAT',expression,s);s.expression=expression;s.cursor=expression.length;s.lastValue=value;s.ans=value.ans;s.result=value.text;s.view='result';s.error=null;
+ let value=base.calculateExpression('STAT',expression,s);s.expression=expression;s.cursor=expression.length;s.resultScrollX=0;s.mixedView=false;s.lastValue=value;s.ans=value.ans;s.result=value.text;s.view='result';s.error=null;
  s.history=[{expression,display:s.result},...s.history].slice(0,50);s.ui.statFlow=null;}
  catch(e){s.error=e.code||base.ERROR.ARGUMENT;s.view='error';s.result=s.error}return s}
 
