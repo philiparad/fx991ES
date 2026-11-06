@@ -25,7 +25,7 @@ function build(plan,values){
   }else ensure(!physicalKey&&!photoRef,'LCD observation required at checkpoint '+value.step);
  }
  rows.sort((a,b)=>a.step-b.step);
- return {checkpoints:rows,complete:rows.length===allowed.size,missing:plan.checkpoints.filter(s=>!seen.has(s))};
+ return {checkpoints:rows,complete:rows.length===allowed.size,missing:plan.checkpoints.filter(s=>!rows.some(r=>r.step===s))};
 }
 function discrepancies(report){
  ensure(report&&Array.isArray(report.results),'A comparison report is required');
