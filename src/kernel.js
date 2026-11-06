@@ -189,7 +189,7 @@ function dispatchKey(state,key){let s={...state,setup:{...state.setup},memory:{.
    }};
    examine(s.document.root);
   }
-  if(E&&s.mode==='COMP'&&s.document&&E.invalidSlots(s.document).length){let missing=E.firstMissingAnchor(s.document);throw new CalcError(ERROR.SYNTAX,missing?E.sourceCursor(missing):s.cursor)}let value=calculateExpression(s.mode,s.expression,s);
+  let value=calculateExpression(s.mode,s.expression,s);
   // CASIO distinguishes a dedicated fraction template from a ÷ operation.
   // Under LineIO, a fraction-entry template initially displays an exact
   // fraction; S⇔D then toggles to decimal. Ordinary DIV remains decimal-first.
