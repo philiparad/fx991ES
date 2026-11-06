@@ -892,6 +892,64 @@ test('SHIFT CALC only solves expressions containing X',()=>{
  eq(s.ui.calcFlow.variables.join(','),'A');
 });
 
+
+test('DIFF keypad evaluates derivative of X squared at 3',()=>{
+ let s=K.createState('standard');s.expression='X^2';s.cursor=3;
+ s.document=global.FX991_EDITOR.fromSource(s.expression);
+ s=K.dispatchKey(s,'DIFF');eq(s.view,'numerical-input');
+ eq(s.ui.numericalFlow.operation,'DIFF');eq(K.semanticScreen(s).result.includes('X?'),true);
+ for(const key of ['3','='])s=K.dispatchKey(s,key);
+ eq(s.view,'result');close(K.numeric(s.lastValue),6,1e-7);
+ eq(s.expression,'X^2');close(K.numeric(s.memory.X),0);
+ eq(s.numericalDetails.operation,'DIFF');
+});
+test('SHIFT DIFF integrates X squared between 0 and 2',()=>{
+ let s=K.createState('standard');s.expression='X^2';s.cursor=3;
+ s.document=global.FX991_EDITOR.fromSource(s.expression);
+ for(const key of ['SHIFT','DIFF'])s=K.dispatchKey(s,key);
+ eq(s.view,'numerical-input');eq(s.ui.numericalFlow.operation,'INTEGRAL');
+ eq(K.semanticScreen(s).result.includes('Lower?'),true);
+ for(const key of ['0','='])s=K.dispatchKey(s,key);
+ eq(s.view,'numerical-input');eq(K.semanticScreen(s).result.includes('Upper?'),true);
+ for(const key of ['2','='])s=K.dispatchKey(s,key);
+ eq(s.view,'result');close(K.numeric(s.lastValue),8/3,1e-6);
+ eq(s.numericalDetails.operation,'INTEGRAL');
+ eq(s.expression,'X^2');close(K.numeric(s.memory.X),0);
+});
+test('SHIFT DIFF handles reversed bounds and negative limits',()=>{
+ let s=K.createState('standard');s.expression='X';s.cursor=1;
+ s.document=global.FX991_EDITOR.fromSource(s.expression);
+ for(const key of ['SHIFT','DIFF','2','=','NEG','1','='])s=K.dispatchKey(s,key);
+ eq(s.view,'result');close(K.numeric(s.lastValue),-1.5,1e-6);
+});
+test('DIFF AC cancels without changing equation or registers',()=>{
+ let s=K.createState('standard');s.expression='X+1';s.cursor=3;
+ s.document=global.FX991_EDITOR.fromSource(s.expression);
+ s.memory.X=K.rat(9);
+ for(const key of ['DIFF','2','AC'])s=K.dispatchKey(s,key);
+ eq(s.view,'edit');eq(s.expression,'X+1');close(K.numeric(s.memory.X),9);
+});
+test('DIFF rejects malformed coordinate without changing ANS',()=>{
+ let s=K.createState('standard');s.expression='X';s.cursor=1;
+ s.document=global.FX991_EDITOR.fromSource(s.expression);
+ for(const key of ['DIFF','NEG','='])s=K.dispatchKey(s,key);
+ eq(s.view,'error');eq(s.error,K.ERROR.ARGUMENT);
+ close(K.numeric(s.ans),0);eq(s.expression,'X');
+});
+test('INTEGRAL prompts do not commit partial bounds',()=>{
+ let s=K.createState('standard');s.expression='X';s.cursor=1;
+ s.document=global.FX991_EDITOR.fromSource(s.expression);
+ s=K.dispatchKey(s,'SHIFT');s=K.dispatchKey(s,'DIFF');
+ for(const key of ['3','=','AC'])s=K.dispatchKey(s,key);
+ eq(s.view,'edit');eq(s.expression,'X');
+ eq(s.ui.numericalFlow,null);close(K.numeric(s.ans),0);
+});
+test('DIFF key remains inactive outside COMP',()=>{
+ let s=K.createState('standard');s.mode='CMPLX';
+ s=K.dispatchKey(s,'DIFF');eq(s.view,'edit');
+ eq(s.ui.numericalFlow,undefined);
+});
+
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
