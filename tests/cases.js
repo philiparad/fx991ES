@@ -467,6 +467,20 @@ test('P8 invalid setup display style rejected',()=>{let c=DEVICE_SAMPLE();c.setu
 test('P8 observed settings round-trip intact',()=>{let c=DEVICE_SAMPLE();c.setup={angle:'RAD',format:'Fix',digits:2,displayStyle:'LineIO'};c.checkpoints=[{step:1,observed:{expression:'2'}}];c.photoRef='physical-shot-001.png';let p=DEV.add(DEV.empty(),c);let q=DEV.importEvidence(JSON.stringify(p));eq(JSON.stringify(q.records[0]),JSON.stringify(c))});
 test('P8 textual notes cannot substitute for observations',()=>{let c=DEVICE_SAMPLE();c.observed={};c.notes='Expected 5';try{DEV.validate(c);throw Error('accepted note')}catch(e){if(e.message==='accepted note')throw e}});
 
+// Phase 9: 50-case capture plan contains scenarios ONLY, never physical observations.
+test('P9 capture plan has exactly 50 cases',()=>eq(global.FX991_REFERENCE_PLAN.CASES.length,50));
+test('P9 plan identifiers are unique',()=>eq(new Set(global.FX991_REFERENCE_PLAN.CASES.map(x=>x.id)).size,50));
+test('P9 plan contains no recorded or expected CASIO output',()=>{for(const c of global.FX991_REFERENCE_PLAN.CASES){eq(c.sourceStatus,'planned-unobserved');if('observed' in c||'expected' in c||'manual' in c)throw Error('observation in plan')}});
+test('P9 plan category counts are correct',()=>{const c=global.FX991_REFERENCE_PLAN.coverage(DEV.empty());eq(c.planned,50);eq(c.unrecorded,50);eq(c.categories.arithmetic.planned,10);eq(c.categories.trigonometry.planned,8);eq(c.categories.errors.planned,4)});
+test('P9 plan covers seven areas',()=>eq(Object.keys(global.FX991_REFERENCE_PLAN.coverage(DEV.empty()).categories).length,7));
+test('P9 all planned sequences are bounded semantic keys',()=>{for(const x of global.FX991_REFERENCE_PLAN.CASES){if(!x.keys.length||x.keys.some(k=>typeof k!=='string'||k.length>30))throw Error(x.id)}});
+test('P9 scenario selector returns setup and no manufacturer result',()=>{let x=DEV.scenario('T04');eq(x.setup.angle,'RAD');eq(x.planned,true);eq(x.manual,null)});
+test('P9 legacy reference scenario remains selectable',()=>{let x=DEV.scenario('setup-radian');eq(x.planned,false);eq(x.keys.join(' '),'SHIFT MODE 4')});
+test('P9 coverage is zero for observations without associated planned IDs',()=>{let c=DEV.add(DEV.empty(),DEVICE_SAMPLE());eq(DEV.planCoverage(c).recorded,0)});
+test('P9 coverage counts unique assigned scenario IDs only',()=>{let a=DEVICE_SAMPLE();a.id='p9a';a.scenarioId='A01';let b={...a,id:'p9b'};let c=DEV.add(DEV.add(DEV.empty(),a),b);eq(DEV.planCoverage(c).recorded,1)});
+test('P9 unknown scenario ID is rejected',()=>{let c=DEVICE_SAMPLE();c.scenarioId='FAKE';try{DEV.add(DEV.empty(),c);throw Error('accepted fake')}catch(e){if(e.message==='accepted fake')throw e}});
+test('P9 progress makes no claim of physical certification',()=>{let c=global.FX991_REFERENCE_PLAN.coverage(DEV.empty());eq(c.authenticated,false);eq(c.physicalDeviceAgreementVerified,false)});
+
 // Milestone 24: physical-key resolution, insert/overwrite and structural deletion.
 const KM=global.FX991_KEYS;
 test('M24 key profiles explicit and immutable',()=>{eq(KM.profiles.standard.id,'fx991esplus-2');eq(Object.isFrozen(KM.profiles.c),true)});
