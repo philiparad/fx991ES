@@ -1,5 +1,5 @@
 (function(){'use strict';
-const D=window.FX991_DEVICE,K=window.FX991,M=window.FX991_EVIDENCE_MEDIA,$=id=>document.getElementById(id);let corpus=D.empty();
+const D=window.FX991_DEVICE,K=window.FX991,M=window.FX991_EVIDENCE_MEDIA,C=window.FX991_PHASE17_CAPTURE,$=id=>document.getElementById(id);let corpus=D.empty();
 let photo=null,photoObjectUrl=null,photoBusy=false,photoGeneration=0;
 function clearPhoto(clearReference=true){
  photoGeneration++;photo=null;photoBusy=false;
@@ -27,11 +27,56 @@ async function choosePhoto(){
 }
 
 function message(m){$('feedback').textContent=m}
-function download(data){let u=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));let a=document.createElement('a');a.href=u;a.download='fx991-device-observations.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1500)}
+function download(data,name='fx991-device-observations.json'){let u=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));let a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1500)}
 function populate(){for(let s of D.scenarios()){let opt=document.createElement('option');opt.value=s.id;
  opt.textContent=(s.planned?'PLAN ':'LEGACY ')+s.id+' — '+(s.title||s.area);$('scenario').append(opt)}selectScenario()}
+function checkpointStatus(){
+ const root=$('checkpoint-entry-rows');if($('focused-checkpoint-entry').hidden)return;
+ const values=Array.from(root.querySelectorAll('.checkpoint-capture-row')).map(row=>{
+  const value={step:Number(row.dataset.step)};
+  for(const input of row.querySelectorAll('[data-field]'))value[input.dataset.field]=input.value;
+  return value;
+ });
+ const plan=D.scenario($('scenario').value);
+ try{const report=C.build(plan,values);
+  $('checkpoint-entry-progress').textContent=report.checkpoints.length+' / '+plan.checkpoints.length+
+    ' checkpoints entered. '+(report.complete?'All planned checkpoints have observations (not authenticated).':
+    'Missing observed LCD at steps: '+report.missing.join(', ')+'.');
+ }catch(error){$('checkpoint-entry-progress').textContent=error.message}
+}
+function renderCheckpointInputs(s){
+ const focused=!!s.focus;
+ $('focused-checkpoint-entry').hidden=!focused;
+ $('raw-checkpoints-field').hidden=focused;
+ const root=$('checkpoint-entry-rows');root.replaceChildren();
+ if(!focused)return;
+ for(const step of s.checkpoints){
+  const row=document.createElement('div');row.className='checkpoint-capture-row';
+  row.dataset.step=String(step);
+  const heading=document.createElement('strong');heading.textContent='Step '+step+' — '+s.keys[step-1]+' (semantic key)';
+  row.append(heading);
+  for(const [field,caption] of [['expression','Observed LCD expression / cursor'],['result','Observed LCD result'],['view','Observed view'],['physicalKey','Actual physical key'],['photoRef','Original checkpoint photo filename']]){
+   const label=document.createElement('label');label.textContent=caption;
+   const input=document.createElement('input');input.type='text';input.dataset.field=field;
+   input.autocomplete='off';input.setAttribute('aria-label','Step '+step+' '+caption);
+   input.addEventListener('input',checkpointStatus);
+   label.append(input);row.append(label);
+  }
+  root.append(row);
+ }
+ checkpointStatus();
+}
+function focusedCheckpoints(){
+ const s=D.scenario($('scenario').value);
+ const values=Array.from($('checkpoint-entry-rows').querySelectorAll('.checkpoint-capture-row')).map(row=>{
+  const v={step:Number(row.dataset.step)};
+  for(const input of row.querySelectorAll('[data-field]'))v[input.dataset.field]=input.value;
+  return v;
+ });
+ return C.build(s,values).checkpoints;
+}
 function renderFocusedPlan(s){
- const group=$('fraction-capture-guide');group.hidden=!s.focus;
+ const group=$('fraction-capture-guide');group.hidden=!s.focus;renderCheckpointInputs(s);
  const root=$('fraction-checkpoint-list');root.replaceChildren();
  if(!s.focus)return;
  const keys=s.keys;
@@ -74,8 +119,9 @@ $('photo-file').onchange=choosePhoto;
 $('photo-clear').onclick=()=>clearPhoto();
 $('scenario').onchange=selectScenario;
 $('simulate').onclick=()=>{try{let a=$('keys').value.trim().split(/\s+/);if(!a[0])throw Error('Enter a key sequence.');let st=K.createState($('model').value);st.setup={...st.setup,...setup()};for(const k of a)st=K.dispatchKey(st,k);let s=K.semanticScreen(st);$('preview').textContent=JSON.stringify({mode:s.mode,view:s.view,result:s.result,expression:s.expression,indicators:s.indicators},null,2)}catch(e){$('preview').textContent=e.message}};
-$('record').onclick=()=>{try{let observed={};for(let id of ['result','mode','view','error']){let v=$(id).value.trim();if(v)observed[id]=v}if(photoBusy)throw Error('Local photo fingerprint is still being computed');let row={id:$('case-id').value.trim(),model:$('model').value,kind:$('kind').value,device:$('device').value.trim(),observedAt:$('date').value,setup:setup(),scenarioId:D.scenario($('scenario').value).planned?$('scenario').value:undefined,keys:$('keys').value.trim().split(/\s+/),observed,checkpoints:checkpoints(),photoRef:$('photo-ref').value.trim(),media:photo||undefined,notes:$('notes').value};corpus=D.add(corpus,row);message('Recorded '+row.id+'. Export JSON to preserve these observations.');render()}catch(e){message(e.message)}};
+$('record').onclick=()=>{try{let observed={};for(let id of ['result','mode','view','error']){let v=$(id).value.trim();if(v)observed[id]=v}if(photoBusy)throw Error('Local photo fingerprint is still being computed');let row={id:$('case-id').value.trim(),model:$('model').value,kind:$('kind').value,device:$('device').value.trim(),observedAt:$('date').value,setup:setup(),scenarioId:D.scenario($('scenario').value).planned?$('scenario').value:undefined,keys:$('keys').value.trim().split(/\s+/),observed,checkpoints:D.scenario($('scenario').value).focus?focusedCheckpoints():checkpoints(),photoRef:$('photo-ref').value.trim(),media:photo||undefined,notes:$('notes').value};corpus=D.add(corpus,row);message('Recorded '+row.id+'. Export JSON to preserve these observations.');render()}catch(e){message(e.message)}};
 $('export').onclick=()=>download(corpus);
+$('export-discrepancies').onclick=()=>{try{download(C.discrepancies(D.review(corpus)),'fx991-phase17-discrepancies.json');message('Exported self-reported comparison discrepancies. This does not authenticate device provenance.')}catch(e){message(e.message)}};
 $('import').onchange=async e=>{try{if(!e.target.files[0])return;corpus=D.importEvidence(await e.target.files[0].text());clearPhoto();message('Imported '+corpus.records.length+' observation metadata records. Original images must be supplied separately.');render()}catch(err){message(err.message)}e.target.value=''};
 populate();render();
 })();
