@@ -431,6 +431,28 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
   return end();
  }
  // P0-03: °′″ enters sexagesimal fields; on a result it toggles DMS/decimal.
+ // P0-04: the physical hyp key opens six hyperbolic function choices.
+ // They do not use the DEG/RAD/GRAD angle setting.
+ if(s.view==='hyp-menu'){
+  if(key==='AC'){s.view='edit';s.ui.hypMenu=null;return end()}
+  if(key==='SHIFT'){s.ui.hypMenu.inverse=!s.ui.hypMenu.inverse;return end()}
+  const functions=['sinh','cosh','tanh','asinh','acosh','atanh'];
+  let idx=/^[1-6]$/.test(key)?Number(key)-1:
+   ['SIN','COS','TAN'].includes(key)?
+    ['SIN','COS','TAN'].indexOf(key)+(s.ui.hypMenu.inverse?3:0):-1;
+  if(idx>=0){
+   const name=functions[idx];
+   if(s.ui.hypMenu.previousView==='result'){s.document=E.create();s.expression='';s.cursor=0}
+   s.document=E.template(s.document,'Function',name);
+   s.expression=E.serialize(s.document);s.cursor=E.sourceCursor(s.document);
+   s.view='edit';s.result='';s.error=null;s.shift=false;s.alpha=false;s.ui.hypMenu=null;
+  }
+  return end();
+ }
+ if(key==='HYP'&&!s.shift&&s.mode==='COMP'&&(s.view==='edit'||s.view==='result')){
+  s.ui.hypMenu={inverse:false,previousView:s.view};s.view='hyp-menu';s.alpha=false;
+  return end();
+ }
  if(key==='DMS'&&s.mode==='COMP'){
   if(s.view==='result'&&s.lastValue){
    const x=base.numeric(s.lastValue);
@@ -506,6 +528,7 @@ function semanticScreen(s){if(!s.ui)return base.semanticScreen(s);let screen=bas
   screen.result=label+'? '+(f.buffer||'_')+' ('+(f.index+1)+'/'+f.fields.length+')';
   screen.menuItems=null;
  }
+ if(s.view==='hyp-menu'){screen.expression='HYP';screen.result='1:sinh 2:cosh 3:tanh 4:asinh 5:acosh 6:atanh';screen.menuItems=null}
  if(s.view==='register-prompt'){screen.expression=s.ui.pending+' REG';screen.result='A-F M X Y'}
  if(s.ui.insertMode===false)screen.indicators=[...screen.indicators,'OVR'];
  if(s.view==='setup'){

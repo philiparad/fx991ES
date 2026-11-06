@@ -10,7 +10,8 @@
     "Missing routes are backlog candidates, not complete physical behavior characterizations.",
     "C edition is separate; second-edition manual does not establish C-edition parity.",
     "P0-02 COMP reciprocal route added; reference-device behavior not captured.",
-    "P0-03 DMS input/conversion COMP route added; physical display and edge parity remain unverified."
+    "P0-03 DMS input/conversion COMP route added; physical display and edge parity remain unverified.",
+    "P0-04 hyperbolic COMP menu implemented; hardware menu artwork/keys unverified."
   ],
   "buttons": [
     {
@@ -851,7 +852,7 @@
       "key": "HYP",
       "modifier": "normal",
       "action": "HYP",
-      "capability": "enabled-no-route"
+      "capability": "source-route-unverified"
     },
     {
       "model": "standard",
@@ -10451,7 +10452,7 @@
       "key": "HYP",
       "modifier": "normal",
       "action": "HYP",
-      "capability": "enabled-no-route"
+      "capability": "source-route-unverified"
     },
     {
       "model": "c",

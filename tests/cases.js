@@ -1149,6 +1149,41 @@ test('P0-03 DMS key without preceding input is inert',()=>{
  eq(s.expression,'');eq(s.view,'edit');
 });
 
+test('P0-04 HYP opens choice menu',()=>{
+ let s=K.createState('standard');s=K.dispatchKey(s,'HYP');
+ eq(s.view,'hyp-menu');eq(K.semanticScreen(s).expression,'HYP');
+});
+test('P0-04 HYP SIN route calculates sinh(1)',()=>{
+ let s=K.createState('standard');
+ for(const k of ['HYP','SIN','1','RP','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');close(K.numeric(s.lastValue),Math.sinh(1),1e-10);
+});
+test('P0-04 HYP inverse cosh at 1 gives zero',()=>{
+ let s=K.createState('standard');
+ for(const k of ['HYP','5','1','RP','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');close(K.numeric(s.lastValue),0,1e-12);
+});
+test('P0-04 HYP inverse via SHIFT and TAN equals atanh(0.5)',()=>{
+ let s=K.createState('standard');
+ for(const k of ['HYP','SHIFT','TAN','0','.','5','RP','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');close(K.numeric(s.lastValue),Math.atanh(0.5),1e-10);
+});
+test('P0-04 hyperbolic functions do not depend on angle unit',()=>{
+ const a=K.createState('standard'),b=K.createState('standard');
+ b.setup.angle='RAD';
+ close(K.numeric(K.evaluate(K.parse('sinh(1)'),{setup:a.setup,ans:a.ans,memory:a.memory})),
+       K.numeric(K.evaluate(K.parse('sinh(1)'),{setup:b.setup,ans:b.ans,memory:b.memory})),1e-12);
+});
+test('P0-04 inverse cosh rejects invalid real domain',()=>{
+ let s=K.createState('standard');
+ for(const k of ['HYP','5','0','RP','='])s=K.dispatchKey(s,k);
+ eq(s.view,'error');eq(s.error,K.ERROR.MATH);
+});
+test('P0-04 HYP menu cancellation preserves editor source',()=>{
+ let s=K.createState('standard');s=K.dispatchKey(s,'2');s=K.dispatchKey(s,'HYP');
+ s=K.dispatchKey(s,'AC');eq(s.view,'edit');eq(s.expression,'2');
+});
+
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
