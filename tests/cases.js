@@ -424,6 +424,23 @@ test('P4 SETUP cancels secondary page with AC',()=>{let s=K.createState();for(le
 test('P4 LCD MODE grid renders all eight standard choices',()=>{let s=K.createState();s=K.dispatchKey(s,'MODE');let sc=K.semanticScreen(s);eq(sc.menuItems.length,8);let frame=L.composeScreen(sc);eq(frame.pixels.length,96*31)});
 test('P4 LCD SETUP grid renders documented first page',()=>{let s=K.createState();for(let k of ['SHIFT','MODE'])s=K.dispatchKey(s,k);let sc=K.semanticScreen(s);eq(sc.menuItems.length,8);eq(sc.menuItems[0],'1:MthIO');eq(sc.menuItems[7],'8:Norm')});
 
+// Phase 5: display-format policy; actual Casio glyph/rounding parity remains unverified.
+test('P5 default MathO exact rational output',()=>{let s=K.createState();for(let k of ['1','DIV','2','='])s=K.dispatchKey(s,k);eq(s.setup.displayStyle,'MathO');eq(s.result,'1/2')});
+test('P5 SETUP MathO keeps exact fraction',()=>{let s=K.createState();for(let k of ['SHIFT','MODE','1','1','1','DIV','2','='])s=K.dispatchKey(s,k);eq(s.result,'1/2')});
+test('P5 LineO produces linear decimal while input stays natural',()=>{let s=K.createState();for(let k of ['SHIFT','MODE','1','2','1','DIV','2','='])s=K.dispatchKey(s,k);eq(s.result,'0.5');eq(K.semanticScreen(s).displayStyle,'LineO');if(!K.semanticScreen(s).document)throw Error('natural input removed')});
+test('P5 LineIO uses linear input projection and decimal result',()=>{let s=K.createState();for(let k of ['SHIFT','MODE','2','1','DIV','2','='])s=K.dispatchKey(s,k);eq(s.result,'0.5');eq(K.semanticScreen(s).displayStyle,'LineIO');eq(K.semanticScreen(s).document,null)});
+test('P5 Linear S-D reveals exact typed fraction without recalculating',()=>{let s=K.createState();for(let k of ['SHIFT','MODE','2','1','DIV','2','='])s=K.dispatchKey(s,k);eq(s.result,'0.5');s=K.dispatchKey(s,'S-D');eq(s.result,'1/2');eq(K.valueToString(s.ans),'1/2')});
+test('P5 Linear S-D toggles back to approximate result',()=>{let s=K.createState();for(let k of ['SHIFT','MODE','2','1','DIV','2','=','S-D','S-D'])s=K.dispatchKey(s,k);eq(s.result,'0.5')});
+test('P5 Norm1 linear output for one over 200',()=>{let s=K.createState();s.setup.format='Norm1';s.setup.displayStyle='LineO';for(let k of ['1','DIV','2','0','0','='])s=K.dispatchKey(s,k);eq(s.result,'5e-3')});
+test('P5 MathO preserves exact radical',()=>{let s=K.createState();s.expression='sqrt(8)';s.document=E.fromSource(s.expression);s=K.dispatchKey(s,'=');eq(s.result,'2√2')});
+test('P5 LineO approximates radical',()=>{let s=K.createState();s.setup.displayStyle='LineO';s.expression='sqrt(8)';s.document=E.fromSource(s.expression);s=K.dispatchKey(s,'=');if(!s.result.startsWith('2.828'))throw Error(s.result)});
+test('P5 specified Fix overrides exact representation',()=>{let s=K.createState();s.setup.format='Fix';s.setup.digits=2;for(let k of ['1','DIV','2','='])s=K.dispatchKey(s,k);eq(s.result,'0.50')});
+test('P5 selected modes force linear display policy',()=>{for(const mode of ['STAT','BASE-N','MATRIX','VECTOR'])eq(K.effectiveDisplayStyle({displayStyle:'MathO'},mode),'LineIO')});
+test('P5 no mutation of mathematical answer on display preference',()=>{let s=K.createState();for(let k of ['1','DIV','3','='])s=K.dispatchKey(s,k);let ans=K.valueToString(s.ans);eq(K.valueDisplay(s.lastValue,{...s.setup,displayStyle:'LineO'},false),'0.3333333333');eq(K.valueToString(s.ans),ans)});
+test('P5 session round-trip preserves display style',()=>{let s=K.createState();for(let k of ['SHIFT','MODE','1','2'])s=K.dispatchKey(s,k);let copy=SS.importJSON(SS.exportJSON(s));eq(copy.setup.displayStyle,'LineO');eq(copy.ui.displayStyle,'LineO')});
+test('P5 session accepts legacy missing display preference',()=>{let s=K.createState(),obj=JSON.parse(SS.exportJSON(s));delete obj.setup.displayStyle;let copy=SS.importJSON(JSON.stringify(obj));eq(copy.setup.displayStyle,'MathO')});
+test('P5 session rejects invalid display preference',()=>{let s=K.createState(),obj=JSON.parse(SS.exportJSON(s));obj.setup.displayStyle='unsupported';try{SS.importJSON(JSON.stringify(obj));throw Error('accepted invalid style')}catch(e){if(String(e.message)==='accepted invalid style')throw e}});
+
 // Milestone 24: physical-key resolution, insert/overwrite and structural deletion.
 const KM=global.FX991_KEYS;
 test('M24 key profiles explicit and immutable',()=>{eq(KM.profiles.standard.id,'fx991esplus-2');eq(Object.isFrozen(KM.profiles.c),true)});
