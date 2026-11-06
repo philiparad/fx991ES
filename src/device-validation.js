@@ -55,6 +55,12 @@ function validate(entry){
    !!global.FX991_REFERENCE_PLAN?.get(entry.scenarioId),'unknown planned scenario ID');
  if(entry.photoRef!==undefined)check(typeof entry.photoRef==='string'&&entry.photoRef.length<=300&&
    !/[<>]/.test(entry.photoRef),'invalid photo reference');
+ if(entry.media!==undefined){
+  check(typeof global.FX991_EVIDENCE_MEDIA?.validateDescriptor==='function',
+    'evidence media validation unavailable');
+  global.FX991_EVIDENCE_MEDIA.validateDescriptor(entry.media);
+  check(entry.photoRef===entry.media.fileName,'photo reference must match attached file');
+ }
  check(typeof entry.notes==='string'&&entry.notes.length<=2000,'invalid notes');
  return JSON.parse(JSON.stringify(entry));
 }
