@@ -80,3 +80,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .device-category-item strong{text-transform:capitalize}
 .device-category-item span{font-variant-numeric:tabular-nums}
 @media(max-width:460px){.device-category-grid{grid-template-columns:1fr 1fr}.device-category-item{flex-direction:column;gap:3px}}
+
+
+/* Phase 11: local photo preview; review status is always unverified. */
+.device-photo-panel{margin:12px 0;padding:12px;border:1px solid #c6d0c6;border-radius:9px;background:#f5f7f2}
+.device-photo-panel p{overflow-wrap:anywhere;font-size:.87rem}
+.device-photo-preview{display:block;max-width:100%;max-height:320px;object-fit:contain;border:1px solid #8d9f8e;background:white;margin:8px 0}
+.device-photo-preview[hidden]{display:none}
