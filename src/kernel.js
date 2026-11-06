@@ -78,7 +78,21 @@ function format(v,setup={},decimalView=false){
  return displayNumber(numeric(v),setup);
 }
 const TOKEN_RE=/(?:\d+(?:\.\d*)?|\.\d+|asin|acos|atan|sin|cos|tan|sqrt|abs|log|ln|exp|Rnd|Ans|pi|[A-FMXY]|[()+\-*/^!])/iy;
-function tokenize(src){let s=String(src).replace(/\s/g,'').replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-').replace(/π/g,'pi').replace(/√\(/g,'sqrt(');const out=[];let i=0;while(i<s.length){TOKEN_RE.lastIndex=i;let m=TOKEN_RE.exec(s);if(!m)throw new CalcError(ERROR.SYNTAX,i);out.push({value:m[0],pos:i});i=TOKEN_RE.lastIndex}if(!out.length)throw new CalcError(ERROR.SYNTAX,0);return out}
+// P0-03 sexagesimal input is represented as exact degree + minute/60 +
+// second/3600 arithmetic, preserving source text for edit and replay.
+function normalizeSexagesimal(src){
+ const number='(?:\\d+(?:\\.\\d*)?|\\.\\d+)';
+ const triple=new RegExp('('+number+')°('+number+')°('+number+')°','g');
+ const pair=new RegExp('('+number+')°('+number+')°','g');
+ const fragment=(deg,min,sec)=>{
+  const m=Number(min),s=Number(sec);
+  if(m<0||m>=60||s<0||s>=60)throw new CalcError(ERROR.MATH);
+  return '(('+deg+')+('+min+')/60+('+sec+')/3600)';
+ };
+ return src.replace(triple,(_,d,m,s)=>fragment(d,m,s))
+           .replace(pair,(_,d,m)=>fragment(d,m,'0'));
+}
+function tokenize(src){let s=String(src).replace(/\s/g,'').replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-').replace(/π/g,'pi').replace(/√\(/g,'sqrt(');if(s.includes('°'))s=normalizeSexagesimal(s);const out=[];let i=0;while(i<s.length){TOKEN_RE.lastIndex=i;let m=TOKEN_RE.exec(s);if(!m)throw new CalcError(ERROR.SYNTAX,i);out.push({value:m[0],pos:i});i=TOKEN_RE.lastIndex}if(!out.length)throw new CalcError(ERROR.SYNTAX,0);return out}
 function parse(src){const t=tokenize(src);let i=0;let peek=()=>t[i]?.value;let take=v=>{if(peek()===v){i++;return true}return false};let required=v=>{if(!take(v))throw new CalcError(ERROR.SYNTAX,t[i]?.pos??String(src).length)};
  function atom(){let token=t[i];if(!token)throw new CalcError(ERROR.SYNTAX,String(src).length);if(take('(')){let a=sum();required(')');return {type:'group',arg:a}}let v=token.value;if(['sin','cos','tan','asin','acos','atan','sqrt','abs','log','ln','exp','Rnd'].includes(v)){i++;required('(');let a=sum();required(')');return {type:'fn',name:v,arg:a}}i++;if(v==='pi'||v==='Ans'||/^[A-FMXY]$/.test(v))return {type:'symbol',name:v};if(/^\d/.test(v)||/^\./.test(v))return {type:'number',raw:v,pos:token.pos};throw new CalcError(ERROR.SYNTAX,token.pos)}
  function power(){let a=atom();while(take('!'))a={type:'fact',arg:a};if(take('^'))a={type:'binary',op:'^',left:a,right:unary()};return a}

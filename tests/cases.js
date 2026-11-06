@@ -1120,6 +1120,35 @@ test('P0-02 reciprocal empty editor does not introduce invalid operand',()=>{
  eq(s.expression,'');eq(s.view,'edit');
 });
 
+test('P0-03 sexagesimal input evaluates decimal equivalent',()=>{
+ let s=K.createState('standard');
+ for(const k of ['2','DMS','1','5','DMS','1','8','DMS','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');close(K.numeric(s.lastValue),2.255,1e-12);
+ eq(s.result.includes('2°15′18″'),true);
+});
+test('P0-03 sexagesimal addition carries minutes and seconds',()=>{
+ let s=K.createState('standard');
+ for(const k of ['2','DMS','2','0','DMS','3','0','DMS','ADD','0','DMS','3','9','DMS','3','0','DMS','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');close(K.numeric(s.lastValue),3,1e-12);
+ eq(s.result.includes('3°0′0″'),true);
+});
+test('P0-03 decimal to sexagesimal and back uses DMS key',()=>{
+ let s=K.createState('standard');
+ for(const k of ['2','.','2','5','5','='])s=K.dispatchKey(s,k);
+ s=K.dispatchKey(s,'DMS');eq(s.result.includes('2°15′18″'),true);
+ s=K.dispatchKey(s,'DMS');close(K.numeric(s.lastValue),2.255,1e-12);
+ eq(s.ui.dmsResult,false);
+});
+test('P0-03 invalid sexagesimal minutes are rejected',()=>{
+ let s=K.createState('standard');
+ for(const k of ['1','DMS','6','0','DMS','0','DMS','='])s=K.dispatchKey(s,k);
+ eq(s.view,'error');eq(s.error,K.ERROR.MATH);
+});
+test('P0-03 DMS key without preceding input is inert',()=>{
+ let s=K.createState('standard');s=K.dispatchKey(s,'DMS');
+ eq(s.expression,'');eq(s.view,'edit');
+});
+
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);

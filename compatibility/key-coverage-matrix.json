@@ -9,7 +9,8 @@
     "source-route-unverified means a route is declared, not that its behavior matches CASIO.",
     "Missing routes are backlog candidates, not complete physical behavior characterizations.",
     "C edition is separate; second-edition manual does not establish C-edition parity.",
-    "P0-02 COMP reciprocal route added; reference-device behavior not captured."
+    "P0-02 COMP reciprocal route added; reference-device behavior not captured.",
+    "P0-03 DMS input/conversion COMP route added; physical display and edge parity remain unverified."
   ],
   "buttons": [
     {
@@ -826,7 +827,7 @@
       "key": "DMS",
       "modifier": "normal",
       "action": "DMS",
-      "capability": "enabled-no-route"
+      "capability": "source-route-unverified"
     },
     {
       "model": "standard",
@@ -10426,7 +10427,7 @@
       "key": "DMS",
       "modifier": "normal",
       "action": "DMS",
-      "capability": "enabled-no-route"
+      "capability": "source-route-unverified"
     },
     {
       "model": "c",
