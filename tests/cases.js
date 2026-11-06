@@ -950,6 +950,52 @@ test('DIFF key remains inactive outside COMP',()=>{
  eq(s.ui.numericalFlow,undefined);
 });
 
+
+test('DIFF keypad accepts scientific notation evaluation point',()=>{
+ let s=K.createState('standard');s.expression='X^2';s.cursor=3;
+ s.document=global.FX991_EDITOR.fromSource(s.expression);
+ for(const key of ['DIFF','2','EXP10','NEG','3','='])s=K.dispatchKey(s,key);
+ eq(s.view,'result');close(K.numeric(s.lastValue),0.004,1e-7);
+ eq(s.numericalDetails.operation,'DIFF');
+});
+test('INTEGRAL scientific-notation upper limit',()=>{
+ let s=K.createState('standard');s.expression='X';s.cursor=1;
+ s.document=global.FX991_EDITOR.fromSource(s.expression);
+ for(const key of ['SHIFT','DIFF','0','=','2','EXP10','1','='])s=K.dispatchKey(s,key);
+ eq(s.view,'result');close(K.numeric(s.lastValue),200,1e-6);
+});
+test('INTEGRAL lets the user revisit and revise lower bound',()=>{
+ let s=K.createState('standard');s.expression='X';s.cursor=1;
+ s.document=global.FX991_EDITOR.fromSource(s.expression);
+ for(const key of ['SHIFT','DIFF','1','RIGHT','2','LEFT'])s=K.dispatchKey(s,key);
+ eq(s.view,'numerical-input');eq(s.ui.numericalFlow.index,0);eq(s.ui.numericalFlow.buffer,'1');
+ for(const key of ['DEL','3','RIGHT'])s=K.dispatchKey(s,key);
+ eq(s.ui.numericalFlow.index,1);eq(s.ui.numericalFlow.buffer,'2');
+ s=K.dispatchKey(s,'=');eq(s.view,'result');
+ close(K.numeric(s.lastValue),-2.5,1e-6);
+});
+test('Incomplete scientific exponent is a typed argument error',()=>{
+ let s=K.createState('standard');s.expression='X';s.cursor=1;
+ s.document=global.FX991_EDITOR.fromSource(s.expression);
+ for(const key of ['DIFF','2','EXP10','='])s=K.dispatchKey(s,key);
+ eq(s.view,'error');eq(s.error,K.ERROR.ARGUMENT);close(K.numeric(s.ans),0);
+});
+test('Nonfinite scientific exponent is rejected without updating ANS',()=>{
+ let s=K.createState('standard');s.expression='X';s.cursor=1;
+ s.document=global.FX991_EDITOR.fromSource(s.expression);
+ for(const key of ['DIFF','2','EXP10','9','9','9','='])s=K.dispatchKey(s,key);
+ eq(s.view,'error');eq(s.error,K.ERROR.ARGUMENT);close(K.numeric(s.ans),0);
+});
+test('Scientific exponent sign is editable and not duplicated',()=>{
+ let s=K.createState('standard');s.expression='X';s.cursor=1;
+ s.document=global.FX991_EDITOR.fromSource(s.expression);
+ for(const key of ['DIFF','2','EXP10','NEG','NEG'])s=K.dispatchKey(s,key);
+ eq(s.ui.numericalFlow.buffer,'2e');
+ for(const key of ['ADD','3'])s=K.dispatchKey(s,key);
+ eq(s.ui.numericalFlow.buffer,'2e+3');
+ s=K.dispatchKey(s,'=');eq(s.view,'result');close(K.numeric(s.lastValue),1,1e-6);
+});
+
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
