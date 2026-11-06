@@ -60,6 +60,21 @@ function layoutNode(node,anchor){
   embed(bottom,Math.floor((width-bottom.width)/2),bar+2,commands,anchors);
   return make(width,height,commands,anchors,baseline);
  }
+ if(node.kind==='MixedFraction'){
+  const whole=sequence(node.whole,anchor),numerator=sequence(node.numerator,anchor),denominator=sequence(node.denominator,anchor);
+  const fractionWidth=Math.max(7,numerator.width,denominator.width)+2;
+  const fractionBar=numerator.height+1,fracHeight=fractionBar+2+denominator.height;
+  const baseline=Math.max(whole.baseline,fractionBar+2+denominator.baseline);
+  const width=whole.width+3+fractionWidth;
+  const height=baseline+Math.max(whole.height-1-whole.baseline,fracHeight-1-(fractionBar+2+denominator.baseline))+1;
+  const commands=[],anchors=[];
+  embed(whole,0,baseline-whole.baseline,commands,anchors);
+  const x=whole.width+3,y=baseline-(fractionBar+2+denominator.baseline);
+  embed(numerator,x+Math.floor((fractionWidth-numerator.width)/2),y,commands,anchors);
+  commands.push({type:'line',x1:x,y1:y+fractionBar,x2:x+fractionWidth-1,y2:y+fractionBar});
+  embed(denominator,x+Math.floor((fractionWidth-denominator.width)/2),y+fractionBar+2,commands,anchors);
+  return make(width,height,commands,anchors,baseline);
+ }
  if(node.kind==='Power'){
   let exp=sequence(node.exponent,anchor),commands=[],anchors=[];
   embed(exp,0,0,commands,anchors);
