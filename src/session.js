@@ -134,12 +134,12 @@ function extract(state){if(!plain(state)||!plain(state.ui)||!plain(state.ui.mode
  const mem={};for(const k of REGS)mem[k]=serializeValue(state.memory[k]);
  const matrix={},vector={};for(const k of 'ABC'){matrix[k]=shapeMatrix(m.matrix[k]??null,'Mat'+k);vector[k]=shapeVector(m.vector[k]??null,'Vct'+k)}
  const mode=state.mode; if(!MODES.includes(mode))bad('mode');
- const setup={angle:state.setup.angle,format:state.setup.format,digits:state.setup.digits};
+ const setup={angle:state.setup.angle,format:state.setup.format,digits:state.setup.digits,displayStyle:K.effectiveDisplayStyle(state.setup,'COMP')};
  let hist=validateArray(state.history,50,'history').map(h=>({expression:sizeString(h.expression,512,'history expression'),display:sizeString(h.display,512,'history display')}));
  const payload={schema:SCHEMA,version:VERSION,model:state.model,mode,setup,document:state.mode==='COMP'&&state.document?cleanDocument(state.document,state.expression):null,workflow:extractWorkflow(state),expression:sizeString(state.expression,512,'expression'),cursor:state.cursor,decimalView:!!state.decimalView,insertMode:state.ui.insertMode!==false,memory:mem,ans:serializeValue(state.ans),modeMemory:{matrix,vector,stat:shapeStat(m.stat)},history:hist};
  validate(payload);return payload;}
 function validate(p){readonlyObject(p,'root');if(p.schema!==SCHEMA||![1,VERSION].includes(p.version))bad('schema/version');if(!['standard','c'].includes(p.model))bad('model');if(!MODES.includes(p.mode)||(p.model!=='c'&&['INEQ','VERIF','DIST'].includes(p.mode)))bad('mode');
- readonlyObject(p.setup,'setup');if(!['DEG','RAD','GRAD'].includes(p.setup.angle)||!['Norm1','Norm2','Fix','Sci'].includes(p.setup.format))bad('setup');integer(p.setup.digits,0,9,'digits');
+ readonlyObject(p.setup,'setup');if(!['DEG','RAD','GRAD'].includes(p.setup.angle)||!['Norm1','Norm2','Fix','Sci'].includes(p.setup.format))bad('setup');integer(p.setup.digits,0,9,'digits');if(p.setup.displayStyle!==undefined&&!['MathO','LineO','LineIO'].includes(p.setup.displayStyle))bad('display style');
  sizeString(p.expression,512,'expression');integer(p.cursor,0,p.expression.length,'cursor');if(typeof p.decimalView!=='boolean'||typeof p.insertMode!=='boolean')bad('flags');
  readonlyObject(p.memory,'memory');const memory={};for(const r of REGS)memory[r]=restoreValue(p.memory[r]);
  const ans=restoreValue(p.ans);
@@ -150,7 +150,7 @@ function validate(p){readonlyObject(p,'root');if(p.schema!==SCHEMA||![1,VERSION]
  const history=validateArray(p.history,50,'history').map(h=>{readonlyObject(h,'history row');return {expression:sizeString(h.expression,512,'history expression'),display:sizeString(h.display,512,'history display')}});
  return {memory,ans,matrix,vector,stat,history,document,workflow};}
 function exportJSON(state){return JSON.stringify(extract(state),null,2)}
-function importJSON(raw){if(typeof raw!=='string'||raw.length>90000)bad('file size');let obj;try{obj=JSON.parse(raw)}catch(e){bad('JSON syntax')};const clean=validate(obj);let s=K.createState(obj.model);s.mode=obj.mode;s.setup={angle:obj.setup.angle,format:obj.setup.format,digits:obj.setup.digits};s.expression=obj.expression;s.cursor=obj.cursor;s.document=clean.document?E.reserveIds(clean.document):E.fromSource(s.expression);s.decimalView=obj.decimalView;s.ui.insertMode=obj.insertMode;s.ui.modeMemory={matrix:clean.matrix,vector:clean.vector,stat:clean.stat};s.memory=clean.memory;s.ans=clean.ans;s.history=clean.history;
+function importJSON(raw){if(typeof raw!=='string'||raw.length>90000)bad('file size');let obj;try{obj=JSON.parse(raw)}catch(e){bad('JSON syntax')};const clean=validate(obj);let s=K.createState(obj.model);s.mode=obj.mode;s.setup={angle:obj.setup.angle,format:obj.setup.format,digits:obj.setup.digits,displayStyle:obj.setup.displayStyle||'MathO'};s.ui.displayStyle=s.setup.displayStyle;s.expression=obj.expression;s.cursor=obj.cursor;s.document=clean.document?E.reserveIds(clean.document):E.fromSource(s.expression);s.decimalView=obj.decimalView;s.ui.insertMode=obj.insertMode;s.ui.modeMemory={matrix:clean.matrix,vector:clean.vector,stat:clean.stat};s.memory=clean.memory;s.ans=clean.ans;s.history=clean.history;
  // Only validated register/stat workflows can resume; execution results are never restored.
  s.view='edit';s.lastValue=null;s.result='';s.error=null;s.errorPos=0;s.shift=false;s.alpha=false;s.trace=[];s.ui.pending=null;s.ui.wizard=null;s.ui.registerFlow=null;s.ui.statFlow=null;s.ui.lastWizard=null;
  if(clean.workflow){s.view=clean.workflow.view;s.ui.registerFlow=clean.workflow.registerFlow||null;s.ui.statFlow=clean.workflow.statFlow||null;s.ui.wizard=clean.workflow.wizard||null;}
