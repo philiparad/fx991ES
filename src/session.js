@@ -63,6 +63,8 @@ function cleanDocument(doc,expression){
    out.value=sizeString(n.value,24,'token');if(!out.value||/[\u0000-\u001f]/.test(out.value))bad('token character');
   }else if(kind==='Fraction'){
    out.numerator=walk(n.numerator,depth+1);out.denominator=walk(n.denominator,depth+1);
+  }else if(kind==='MixedFraction'){
+   out.whole=walk(n.whole,depth+1);out.numerator=walk(n.numerator,depth+1);out.denominator=walk(n.denominator,depth+1);
   }else if(kind==='Power')out.exponent=walk(n.exponent,depth+1);
   else if(kind==='Root'){
    out.radicand=walk(n.radicand,depth+1);out.degree=n.degree===null||n.degree===undefined?null:walk(n.degree,depth+1);
@@ -71,7 +73,7 @@ function cleanDocument(doc,expression){
    out.name=n.name;out.argument=walk(n.argument,depth+1);
   }else if(kind==='Group')out.body=walk(n.body,depth+1);
   else bad('node type');
-  if(kind!=='Sequence'&&kind!=='Token')for(const sub of ['numerator','denominator','exponent','radicand','degree','argument','body'])if(out[sub]!==undefined&&out[sub]!==null&&out[sub].kind!=='Sequence')bad('slot type');
+  if(kind!=='Sequence'&&kind!=='Token')for(const sub of ['whole','numerator','denominator','exponent','radicand','degree','argument','body'])if(out[sub]!==undefined&&out[sub]!==null&&out[sub].kind!=='Sequence')bad('slot type');
   return out;
  }
  const root=walk(doc.root,0);if(root.kind!=='Sequence')bad('root type');
