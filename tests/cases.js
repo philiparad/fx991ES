@@ -455,6 +455,18 @@ test('P6 oversized exact fraction falls back to textual result',()=>{let b=L.exa
 test('P6 exact result layout does not mutate numerator denominator',()=>{const v=K.rat(1n,7n),before=K.valueToString(v);L.exactResultLayout(v);eq(K.valueToString(v),before)});
 test('P6 result rendering remains deterministic',()=>{let s=K.createState();for(const k of ['1','DIV','3','='])s=K.dispatchKey(s,k);let a=K.rasterizeScreen(K.semanticScreen(s)),b=K.rasterizeScreen(K.semanticScreen(s));eq(K.frameHash(a),K.frameHash(b))});
 
+// Phase 8 — real-reference observation schema and checkpoint differential (fixtures are synthetic only).
+test('P8 corrected setup preset enters RAD',()=>{eq(DEV.scenario('setup-radian').keys.join(' '),'SHIFT MODE 4')});
+test('P8 corrected C menu preset enters INEQ',()=>{eq(DEV.scenario('c-ineq-menu').keys.join(' '),'MODE DOWN 1')});
+test('P8 setup controlled observation compares final result',()=>{let c=DEVICE_SAMPLE();c.id='p8-rad-fixture';c.setup={angle:'RAD',format:'Norm2',digits:3,displayStyle:'LineO'};c.observed={result:'5'};eq(DEV.compare(c).passed,true)});
+test('P8 intermediate checkpoint matches observed state',()=>{let c=DEVICE_SAMPLE();c.id='p8-check-fixture';c.checkpoints=[{step:2,observed:{expression:'2+'}}];let o=DEV.compare(c);eq(o.passed,true);eq(o.firstDivergence,null)});
+test('P8 first intermediate mismatch reports key step',()=>{let c=DEVICE_SAMPLE();c.id='p8-mismatch-fixture';c.checkpoints=[{step:2,observed:{expression:'2-'}}];let o=DEV.compare(c);eq(o.passed,false);eq(o.firstDivergence,2);eq(o.issues[0].scope,'checkpoint')});
+test('P8 duplicate checkpoint steps rejected',()=>{let c=DEVICE_SAMPLE();c.checkpoints=[{step:1,observed:{result:'x'}},{step:1,observed:{result:'y'}}];try{DEV.validate(c);throw Error('accepted duplicate')}catch(e){if(e.message==='accepted duplicate')throw e}});
+test('P8 out of range checkpoint step rejected',()=>{let c=DEVICE_SAMPLE();c.checkpoints=[{step:99,observed:{result:'5'}}];try{DEV.validate(c);throw Error('accepted step')}catch(e){if(e.message==='accepted step')throw e}});
+test('P8 invalid setup display style rejected',()=>{let c=DEVICE_SAMPLE();c.setup={displayStyle:'NoSuchStyle'};try{DEV.validate(c);throw Error('accepted style')}catch(e){if(e.message==='accepted style')throw e}});
+test('P8 observed settings round-trip intact',()=>{let c=DEVICE_SAMPLE();c.setup={angle:'RAD',format:'Fix',digits:2,displayStyle:'LineIO'};c.checkpoints=[{step:1,observed:{expression:'2'}}];c.photoRef='physical-shot-001.png';let p=DEV.add(DEV.empty(),c);let q=DEV.importEvidence(JSON.stringify(p));eq(JSON.stringify(q.records[0]),JSON.stringify(c))});
+test('P8 textual notes cannot substitute for observations',()=>{let c=DEVICE_SAMPLE();c.observed={};c.notes='Expected 5';try{DEV.validate(c);throw Error('accepted note')}catch(e){if(e.message==='accepted note')throw e}});
+
 // Milestone 24: physical-key resolution, insert/overwrite and structural deletion.
 const KM=global.FX991_KEYS;
 test('M24 key profiles explicit and immutable',()=>{eq(KM.profiles.standard.id,'fx991esplus-2');eq(Object.isFrozen(KM.profiles.c),true)});
