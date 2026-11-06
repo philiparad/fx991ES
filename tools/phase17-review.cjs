@@ -65,6 +65,7 @@ function inspect(evidence,reviews){
   independentlyReviewed:rows.filter(r=>['human-reviewed-match','human-reviewed-discrepancy','inconclusive'].includes(r.status)).length,
   discrepancies:rows.filter(r=>r.status==='human-reviewed-discrepancy').map(r=>r.scenarioId),
   allReviewed:rows.every(r=>['human-reviewed-match','human-reviewed-discrepancy','inconclusive'].includes(r.status)),
+  readyForHumanSignoff:rows.every(r=>r.status==='human-reviewed-match'),
   hardwareParityCertified:false,releaseApproved:false,
   warning:'Human review readiness only; neither evidence claims nor matches authenticate the physical device.',rows};
 }
@@ -72,7 +73,7 @@ if(require.main===module){
  try{
   const argv=process.argv.slice(2);
   if(argv.length!==2){console.error('Usage: node tools/phase17-review.cjs evidence.json independent-reviews.json');process.exitCode=2}
-  else{const report=inspect(JSON.parse(fs.readFileSync(argv[0],'utf8')),JSON.parse(fs.readFileSync(argv[1],'utf8')));console.log(JSON.stringify(report,null,2));if(!report.allReviewed)process.exitCode=1}
+  else{const report=inspect(JSON.parse(fs.readFileSync(argv[0],'utf8')),JSON.parse(fs.readFileSync(argv[1],'utf8')));console.log(JSON.stringify(report,null,2));if(!report.readyForHumanSignoff)process.exitCode=1}
  }catch(error){console.error('Phase 17 review failed: '+error.message);process.exitCode=2}
 }
 module.exports={inspect,SCHEMA,IDS,CHECKPOINTS,hasCheckpoints};
