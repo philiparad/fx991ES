@@ -481,6 +481,23 @@ test('P9 coverage counts unique assigned scenario IDs only',()=>{let a=DEVICE_SA
 test('P9 unknown scenario ID is rejected',()=>{let c=DEVICE_SAMPLE();c.scenarioId='FAKE';try{DEV.add(DEV.empty(),c);throw Error('accepted fake')}catch(e){if(e.message==='accepted fake')throw e}});
 test('P9 progress makes no claim of physical certification',()=>{let c=global.FX991_REFERENCE_PLAN.coverage(DEV.empty());eq(c.authenticated,false);eq(c.physicalDeviceAgreementVerified,false)});
 
+// Phase 11 — local photo hashes are metadata, not CASIO device authentication.
+const PH11=global.FX991_EVIDENCE_MEDIA;
+const m11=()=>({fileName:'original-lcd.png',mediaType:'image/png',bytes:100,
+ sha256:'a'.repeat(64),hashAlgorithm:'SHA-256',reviewStatus:'unreviewed'});
+test('P11 independent photo descriptor accepts lowercase SHA-256',()=>eq(PH11.validateDescriptor(m11()).reviewStatus,'unreviewed'));
+test('P11 explicit review state cannot claim physical certification',()=>{let x=m11();x.reviewStatus='verified';try{PH11.validateDescriptor(x);throw Error('accepted certification')}catch(e){if(e.message==='accepted certification')throw e}});
+test('P11 bad photo hash rejected',()=>{let x=m11();x.sha256='BAD';try{PH11.validateDescriptor(x);throw Error('accepted hash')}catch(e){if(e.message==='accepted hash')throw e}});
+test('P11 image bytes limited to twelve MiB',()=>{let x=m11();x.bytes=PH11.MAX_BYTES+1;try{PH11.validateDescriptor(x);throw Error('accepted oversize')}catch(e){if(e.message==='accepted oversize')throw e}});
+test('P11 photo name forbids directory traversal',()=>{let x=m11();x.fileName='../private.png';try{PH11.validateDescriptor(x);throw Error('accepted path')}catch(e){if(e.message==='accepted path')throw e}});
+test('P11 recognizable PNG file signature',()=>{eq(PH11.signature(new Uint8Array([137,80,78,71,13,10,26,10])), 'image/png')});
+test('P11 recognizable JPEG file signature',()=>{eq(PH11.signature(new Uint8Array([255,216,255,224])), 'image/jpeg')});
+test('P11 recognizable WebP file signature',()=>{eq(PH11.signature(new Uint8Array([82,73,70,70,0,0,0,0,87,69,66,80])), 'image/webp')});
+test('P11 unrelated file cannot masquerade as accepted image',()=>eq(PH11.signature(new Uint8Array([60,115,99,114,105,112,116,62])),null));
+test('P11 evidence record round-trips unreviewed image fingerprint',()=>{let c=DEVICE_SAMPLE();c.photoRef='original-lcd.png';c.media=m11();let e=DEV.add(DEV.empty(),c);eq(DEV.importEvidence(JSON.stringify(e)).records[0].media.sha256,'a'.repeat(64))});
+test('P11 mismatch between photo and identifier is refused',()=>{let c=DEVICE_SAMPLE();c.photoRef='another-photo.jpg';c.media=m11();try{DEV.validate(c);throw Error('accepted mismatch')}catch(e){if(e.message==='accepted mismatch')throw e}});
+test('P11 legacy records remain valid without media fingerprint',()=>{let c=DEVICE_SAMPLE();eq(DEV.validate(c).media,undefined)});
+
 // Milestone 24: physical-key resolution, insert/overwrite and structural deletion.
 const KM=global.FX991_KEYS;
 test('M24 key profiles explicit and immutable',()=>{eq(KM.profiles.standard.id,'fx991esplus-2');eq(Object.isFrozen(KM.profiles.c),true)});
