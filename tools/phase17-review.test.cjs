@@ -45,3 +45,11 @@ assert.deepEqual(mismatch.discrepancies,[IDS[2]]);
 fullReviews.reviews[2].disposition='inconclusive';
 assert.equal(inspect(fullEvidence,fullReviews).readyForHumanSignoff,false);
 console.log('Phase 17 signoff gate tests: pass (synthetic fixtures only)');
+
+const physicalPlan=globalThis.FX991_FRACTION_VALIDATION || (require('../src/fraction-validation.js'), globalThis.FX991_FRACTION_VALIDATION);
+assert.equal(physicalPlan.CASES.length,IDS.length);
+for(const plan of physicalPlan.CASES){
+ assert.deepEqual([...plan.checkpoints],CHECKPOINTS[plan.id],plan.id+' reviewer checkpoints diverge from validated scenario');
+ assert.ok(plan.checkpoints.every(step=>step<=plan.keys.length&&step>0),plan.id+' impossible checkpoint');
+}
+console.log('Phase 17 plan-review checkpoint alignment: passed');
