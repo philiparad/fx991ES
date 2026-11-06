@@ -64,6 +64,9 @@ jobs:
       - name: Capture real LCD screenshots in Chromium Firefox and WebKit
         if: always()
         run: python tools/lcd_visual_probe.py --out browser-evidence/lcd-visual
+      - name: Test device evidence workbench in real Chromium Firefox and WebKit
+        if: always()
+        run: python tools/device_workbench_probe.py --out browser-evidence/device-workbench
       - name: Render browser matrix status for GitHub Actions summary
         if: always()
         continue-on-error: true
