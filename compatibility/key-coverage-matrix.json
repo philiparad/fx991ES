@@ -8,7 +8,8 @@
     "Key layout and some legends are approximate until physical capture.",
     "source-route-unverified means a route is declared, not that its behavior matches CASIO.",
     "Missing routes are backlog candidates, not complete physical behavior characterizations.",
-    "C edition is separate; second-edition manual does not establish C-edition parity."
+    "C edition is separate; second-edition manual does not establish C-edition parity.",
+    "P0-02 COMP reciprocal route added; reference-device behavior not captured."
   ],
   "buttons": [
     {
@@ -609,7 +610,7 @@
       "key": "RECIP",
       "modifier": "normal",
       "action": "RECIP",
-      "capability": "enabled-no-route"
+      "capability": "source-route-unverified"
     },
     {
       "model": "standard",
@@ -10209,7 +10210,7 @@
       "key": "RECIP",
       "modifier": "normal",
       "action": "RECIP",
-      "capability": "enabled-no-route"
+      "capability": "source-route-unverified"
     },
     {
       "model": "c",

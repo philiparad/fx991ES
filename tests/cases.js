@@ -1099,6 +1099,27 @@ test('Unknown numerical reason receives neutral educational example',()=>{
  eq(global.FX991_ERROR_HELP.lessonForState(state).steps[2].includes('X^2'),true);
 });
 
+test('P0-02 reciprocal key yields 0.5 for 2',()=>{
+ let s=K.createState('standard');for(const k of ['2','RECIP','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');close(K.numeric(s.lastValue),0.5,1e-12);
+});
+test('P0-02 reciprocal retains operator precedence after addition',()=>{
+ let s=K.createState('standard');for(const k of ['5','ADD','2','RECIP','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');close(K.numeric(s.lastValue),5.5,1e-12);
+});
+test('P0-02 reciprocal zero yields Math ERROR',()=>{
+ let s=K.createState('standard');for(const k of ['0','RECIP','='])s=K.dispatchKey(s,k);
+ eq(s.view,'error');eq(s.error,K.ERROR.MATH);
+});
+test('P0-02 reciprocal after result uses Ans',()=>{
+ let s=K.createState('standard');for(const k of ['4','=','RECIP','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');close(K.numeric(s.lastValue),0.25,1e-12);
+});
+test('P0-02 reciprocal empty editor does not introduce invalid operand',()=>{
+ let s=K.createState('standard');s=K.dispatchKey(s,'RECIP');
+ eq(s.expression,'');eq(s.view,'edit');
+});
+
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
