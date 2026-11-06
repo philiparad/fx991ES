@@ -76,7 +76,7 @@ function downloadCSV(){
  a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 for(const area of PLAN.CATEGORIES){
- const o=document.createElement('option');o.value=area;o.textContent=area;o.append;
+ const o=document.createElement('option');o.value=area;o.textContent=area;
  $('area-filter').append(o);
 }
 $('area-filter').onchange=()=>render($('area-filter').value);
