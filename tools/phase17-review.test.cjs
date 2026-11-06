@@ -13,7 +13,6 @@ v.reviews[0].observationId='wrong';r=inspect(e,v);assert.equal(r.rows[0].status,
 v.reviews[0].observationId='auth-01';v.reviews[0].physicalKeyMappingConfirmed=false;r=inspect(e,v);assert.equal(r.rows[0].status,'review-incomplete');
 assert.throws(()=>inspect({schema:'wrong',records:[]},reviews()),/Invalid device evidence/);
 assert.throws(()=>inspect(e,{schema:SCHEMA,reviews:[v.reviews[0],v.reviews[0]]}),/Duplicate independent review/);
-console.log('Phase 17 readiness tests: passed (all inputs are synthetic test fixtures)');
 
 // A bare terminal result does not constitute checkpoint review evidence.
 const incomplete=empty();incomplete.records.push({...e.records[0],checkpoints:[]});
@@ -21,3 +20,4 @@ assert.equal(inspect(incomplete,v).rows[0].status,'checkpoint-observations-missi
 const partial=empty();partial.records.push({...e.records[0],checkpoints:e.records[0].checkpoints.slice(1)});
 assert.equal(inspect(partial,v).independentlyReviewed,0);
 assert.equal(inspect(e,v).hardwareParityCertified,false);
+console.log('Phase 17 readiness tests: passed (all inputs are synthetic test fixtures)');
