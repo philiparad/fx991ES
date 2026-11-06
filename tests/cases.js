@@ -441,6 +441,20 @@ test('P5 session round-trip preserves display style',()=>{let s=K.createState();
 test('P5 session accepts legacy missing display preference',()=>{let s=K.createState(),obj=JSON.parse(SS.exportJSON(s));delete obj.setup.displayStyle;let copy=SS.importJSON(JSON.stringify(obj));eq(copy.setup.displayStyle,'MathO')});
 test('P5 session rejects invalid display preference',()=>{let s=K.createState(),obj=JSON.parse(SS.exportJSON(s));obj.setup.displayStyle='unsupported';try{SS.importJSON(JSON.stringify(obj));throw Error('accepted invalid style')}catch(e){if(String(e.message)==='accepted invalid style')throw e}});
 
+// Phase 6: independent exact MathO raster layout (not hardware pixel parity).
+test('P6 typed half displays as stacked fraction on MathO LCD',()=>{let s=K.createState();for(const k of ['1','DIV','2','='])s=K.dispatchKey(s,k);let f=L.composeScreen(K.semanticScreen(s));eq(f.resultLayout.height,13);eq(f.viewport.bottom,16);eq(f.pixels.length,2976)});
+test('P6 numerator and denominator occupy separate LCD rows',()=>{let s=K.createState();for(const k of ['1','DIV','2','='])s=K.dispatchKey(s,k);let p=L.composeScreen(K.semanticScreen(s)).pixels;const row=y=>p.slice(y*96,(y+1)*96).some(Boolean);if(!row(17)||!row(23)||!row(27))throw Error('missing stacked components')});
+test('P6 negative rational uses numerator sign',()=>{let b=L.exactResultLayout(K.rat(-3n,5n));eq(b.height,13);eq(b.width>=8,true)});
+test('P6 integral result stays on plain result row',()=>{let s=K.createState();for(const k of ['2','ADD','3','='])s=K.dispatchKey(s,k);eq(L.composeScreen(K.semanticScreen(s)).resultLayout,null)});
+test('P6 radical result draws overbar and glyph independently',()=>{let s=K.createState();s.document=E.fromSource('sqrt(8)');s.expression='sqrt(8)';s=K.dispatchKey(s,'=');let b=L.composeScreen(K.semanticScreen(s)).resultLayout;if(!b||b.height!==10)throw Error('radical layout missing')});
+test('P6 pi multiple has structure in exact mode',()=>{let s=K.createState();s.document=E.fromSource('pi/2');s.expression='pi/2';s=K.dispatchKey(s,'=');let b=L.composeScreen(K.semanticScreen(s)).resultLayout;if(!b||b.height!==13)throw Error('pi fraction layout missing')});
+test('P6 fraction switches to text on MathO S-D',()=>{let s=K.createState();for(const k of ['1','DIV','2','=','S-D'])s=K.dispatchKey(s,k);eq(L.composeScreen(K.semanticScreen(s)).resultLayout,null)});
+test('P6 LineO never paints structured fractions',()=>{let s=K.createState();s.setup.displayStyle='LineO';for(const k of ['1','DIV','2','='])s=K.dispatchKey(s,k);eq(L.composeScreen(K.semanticScreen(s)).resultLayout,null)});
+test('P6 Fix forces normal decimal text row',()=>{let s=K.createState();s.setup.format='Fix';s.setup.digits=2;for(const k of ['1','DIV','2','='])s=K.dispatchKey(s,k);eq(L.composeScreen(K.semanticScreen(s)).resultLayout,null)});
+test('P6 oversized exact fraction falls back to textual result',()=>{let b=L.exactResultLayout(K.rat(123456789012345678901234567890n,333333333333333333333333333331n));if(!(b.width>96))throw Error('not wide enough');let s=K.semanticScreen(K.createState());s.view='result';s.displayStyle='MathO';s.resultValue=K.rat(123456789012345678901234567890n,333333333333333333333333333331n);s.result='long';eq(L.composeScreen(s).resultLayout,null)});
+test('P6 exact result layout does not mutate numerator denominator',()=>{const v=K.rat(1n,7n),before=K.valueToString(v);L.exactResultLayout(v);eq(K.valueToString(v),before)});
+test('P6 result rendering remains deterministic',()=>{let s=K.createState();for(const k of ['1','DIV','3','='])s=K.dispatchKey(s,k);let a=K.rasterizeScreen(K.semanticScreen(s)),b=K.rasterizeScreen(K.semanticScreen(s));eq(K.frameHash(a),K.frameHash(b))});
+
 // Milestone 24: physical-key resolution, insert/overwrite and structural deletion.
 const KM=global.FX991_KEYS;
 test('M24 key profiles explicit and immutable',()=>{eq(KM.profiles.standard.id,'fx991esplus-2');eq(Object.isFrozen(KM.profiles.c),true)});
