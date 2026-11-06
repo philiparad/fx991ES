@@ -4,3 +4,5 @@ for(const file of ['src/natural-editor.js','src/decimal15.js','src/display.js','
 const report=globalThis.FX991_TESTS.run();console.log(`${report.passed}/${report.total} tests passed`);for(const t of report.details.filter(x=>!x.pass))console.log('FAIL',t.name,t.error);if(report.failed)process.exitCode=1;
 // Phase 17 hardware-review readiness checks use synthetic fixtures, never device evidence.
 require('../tools/phase17-review.test.cjs');
+
+require('../tools/phase17-capture.test.cjs');
