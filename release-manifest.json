@@ -86,7 +86,7 @@
     "tests/compatibility-baseline.cjs": "8106204493f0bbecdc3d0762be378052d62b600b491a18b393fcd3625d6c3362",
     "tests/cross-browser.html": "d724122807d575e25c0c6905046b8a56542d585c09376eabdc1ffd1c687a0e54",
     "tests/cross-browser.js": "2fed9c2f3abfc5982360abd0210453f8ba8e4c88df2efbe874b6e6d7d0bc509f",
-    "tests/device-page.js": "0ef0f22cfd4aaa9e76f9d4c1e2415d91074a3c040b99f55029bf6cc56258c443",
+    "tests/device-page.js": "a3d20e5bca44af0f642d8b975dbaf422cf48aee8b5a7deaa9907e780ac130b56",
     "tests/device.html": "9e04f811626836743d33469a9bec7f7675624763f24f01f210ca6f8f111da610",
     "tests/differential.html": "b261f6e3481be87114853f3b0509c50e7ddfa7fbdfdf9a9d58da10182e9a046c",
     "tests/keypad-layout.cjs": "9551d92ee2b24bef84e423a8353f9eeca0547119591d7eb63667333f64a31c64",
