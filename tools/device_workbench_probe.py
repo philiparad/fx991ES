@@ -68,7 +68,7 @@ def exercise(page):
     page.locator("#photo-file").set_input_files({
         "name":"synthetic-browser-photo.png", "mimeType":"image/png", "buffer":png
     })
-    page.wait_for_function("document.querySelector('#photo-status').textContent.includes('SHA-256')",timeout=10000)
+    page.locator("#photo-status").filter(has_text="SHA-256").wait_for(timeout=10000)
     assert page.locator("#photo-ref").input_value() == "synthetic-browser-photo.png"
     assert page.locator("#photo-preview").is_visible(), "local preview not shown"
     assert hashlib.sha256(png).hexdigest() in page.locator("#photo-status").inner_text()
