@@ -61,9 +61,9 @@ def exercise(page):
         data = kind + payload
         return (struct.pack(">I", len(payload)) + data +
                 struct.pack(">I", zlib.crc32(data) & 0xffffffff))
-    png = (b"\\x89PNG\\r\\n\\x1a\\n" +
+    png = (b"\x89PNG\r\n\x1a\n" +
            chunk(b"IHDR", struct.pack(">IIBBBBB",1,1,8,2,0,0,0)) +
-           chunk(b"IDAT", zlib.compress(b"\\x00\\x23\\x78\\xa0")) +
+           chunk(b"IDAT", zlib.compress(b"\x00\x23\x78\xa0")) +
            chunk(b"IEND", b""))
     page.locator("#photo-file").set_input_files({
         "name":"synthetic-browser-photo.png", "mimeType":"image/png", "buffer":png
