@@ -581,6 +581,21 @@ test('P15 tall mixed fraction scrolls vertically to selected slot',()=>{let s=p1
 test('P15 long mixed input has horizontal editor overflow',()=>{const digits='123456789012345'.split('');const s=p15(['MIXIN',...digits,'RIGHT',...digits,'RIGHT',...digits]);const f=L.composeScreen(K.semanticScreen(s));eq(f.overflow,true);if(f.scrollX<=0)throw Error('missing horizontal input scroll');eq(f.pixels.length,2976)});
 
 
+// Phase 16: real hardware fraction workflow plans — observations remain absent.
+const F16=global.FX991_FRACTION_VALIDATION;
+test('P16 hardware fraction capture contains twelve planned cases',()=>eq(F16.CASES.length,12));
+test('P16 capture plans contain no claimed device observations',()=>{for(const c of F16.CASES){eq(c.deviceObservation,null);eq(c.status,'unobserved-plan');eq(c.physicalKeyMappingVerified,false)}});
+test('P16 each checkpoint references an existing semantic key',()=>{for(const c of F16.CASES){if(!c.checkpoints.length||c.checkpoints.some(n=>!Number.isInteger(n)||n<1||n>c.keys.length))throw Error(c.id)}});
+test('P16 planned capture IDs are unique',()=>eq(new Set(F16.CASES.map(x=>x.id)).size,12));
+test('P16 blank worksheets contain no observed LCD text',()=>{for(const c of F16.CASES){let b=F16.blank(c.id);eq(b.actualLCD,'');eq(b.physicalKeySequence,'');eq(b.independentlyReviewed,false);if(b.checkpoints.some(p=>p.observedLCD!==''||p.photoFile!==''))throw Error('pre-filled observation')}});
+test('P16 unknown reference sheet ID rejected',()=>{let error=false;try{F16.blank('fake')}catch(_){error=true}eq(error,true)});
+test('P16 real-device records for focus IDs remain self-reported',()=>{let c=DEVICE_SAMPLE();c.scenarioId='F16-03';let e=DEV.add(DEV.empty(),c);eq(F16.progress(e.records).recorded,1);eq(DEV.review(e).certified,false);eq(F16.progress(e.records).physicalParityCertified,false)});
+test('P16 duplicate focus IDs cannot inflate case coverage',()=>{let c=DEVICE_SAMPLE();c.scenarioId='F16-03';let d={...c,id:'other'};eq(F16.progress([c,d]).recorded,1)});
+test('P16 base fifty-case progress excludes focused hardware cases',()=>{let c=DEVICE_SAMPLE();c.scenarioId='F16-03';eq(DEV.planCoverage(DEV.add(DEV.empty(),c)).recorded,0)});
+test('P16 focused scenarios available through workbench',()=>{let x=DEV.scenario('F16-03');eq(x.focus,true);eq(x.planned,true);eq(x.keys[1],'FRAC');eq(x.checkpoints.length>0,true)});
+test('P16 focused first mismatch identifies exact key-step',()=>{let c=DEVICE_SAMPLE();c.scenarioId='F16-01';c.keys=[...F16.get('F16-01').keys];c.checkpoints=[{step:1,observed:{expression:'bad-reference-fixture'}}];let r=DEV.compare(c);eq(r.passed,false);eq(r.firstDivergence,1);eq(r.issues[0].scope,'checkpoint')});
+test('P16 no focused records means no physical verification',()=>{const r=F16.progress([]);eq(r.planned,12);eq(r.recorded,0);eq(r.independentlyAuthenticated,false);eq(r.physicalParityCertified,false)});
+
 // Milestone 24: physical-key resolution, insert/overwrite and structural deletion.
 const KM=global.FX991_KEYS;
 test('M24 key profiles explicit and immutable',()=>{eq(KM.profiles.standard.id,'fx991esplus-2');eq(Object.isFrozen(KM.profiles.c),true)});
