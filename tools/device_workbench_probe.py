@@ -27,8 +27,8 @@ def exercise(page):
     assert page.locator("#keys").input_value().startswith("SHIFT FRAC 2 RIGHT 3"), "focused key sequence incorrect"
     assert page.locator("#focused-checkpoint-entry").is_visible()
     assert page.locator("#raw-checkpoints-field").is_hidden()
-    assert page.locator(".checkpoint-capture-row").count() == 5
-    assert all(not entry for entry in page.locator(".checkpoint-capture-row input").evaluate_all("(inputs) => inputs.map(input => input.value)"))
+    assert page.locator(".checkpoint-capture-row").count() == 5, "F16-03 must expose its five valid checkpoints"
+    assert all(not entry for entry in page.locator(".checkpoint-capture-row input").evaluate_all("(inputs) => inputs.map(input => input.value)")), "checkpoint fields were prefilled"
     assert "0 / 5 checkpoints entered" in page.locator("#checkpoint-entry-progress").inner_text()
     page.locator(".checkpoint-capture-row").first.locator('[data-field="expression"]').fill("SYNTHETIC LCD FIXTURE")
     assert "1 / 5 checkpoints entered" in page.locator("#checkpoint-entry-progress").inner_text()
@@ -174,7 +174,7 @@ def main(argv=None):
                             row.update(exercise(page))
                             checks=field_sheet_checks(page, url.rsplit("/tests/device.html",1)[0])
                             row["checks"] += checks
-                        except (PlaywrightError,AssertionError,TimeoutError,ValueError,OSError) as error:
+                        except (PlaywrightError,AssertionError,TimeoutError,ValueError,OSError,AttributeError) as error:
                             row.update(status=classify_failure(stage,error),error=str(error)[:500])
                             if context:
                                 try: page.screenshot(path=str(out/f"{name}-device-workbench-failure.png"),full_page=True,timeout=5000)
