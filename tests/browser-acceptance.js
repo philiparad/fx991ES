@@ -25,6 +25,21 @@ const tests=[
    expect(x.doc.querySelector('#expression').value==='','AC did not clear expression');
    for(const key of ['4','MUL','5','='])clickKey(x.doc,key);
    expect(x.doc.querySelector('#semantic').textContent.includes('Result: 20'),'keypad did not calculate after AC');
+   // New exact mixed-fraction key path uses real DOM keypad events, not only a pure state mock.
+   clickKey(x.doc,'AC');
+   for(const key of ['FRAC','7','RIGHT','6','=','SHIFT','FRAC'])clickKey(x.doc,key);
+   expect(x.doc.querySelector('#semantic').textContent.includes('Result: 1 1/6'),'mixed fraction keypad toggle failed');
+   clickKey(x.doc,'SHIFT');clickKey(x.doc,'FRAC');
+   expect(x.doc.querySelector('#semantic').textContent.includes('Result: 7/6'),'mixed fraction round trip failed');
+   // Long results must remain on the result screen while RIGHT scrolls the LCD.
+   clickKey(x.doc,'AC');
+   for(const key of '12345678901234567890123456789')clickKey(x.doc,key);
+   clickKey(x.doc,'=');
+   const before=x.doc.querySelector('#lcd').getContext('2d').getImageData(0,0,96,31).data;
+   clickKey(x.doc,'RIGHT');
+   const after=x.doc.querySelector('#lcd').getContext('2d').getImageData(0,0,96,31).data;
+   expect(x.doc.querySelector('#semantic').textContent.includes('State: result'),'result scroll unexpectedly edited input');
+   expect(before.some((v,i)=>v!==after[i]),'horizontal result scrolling did not update actual canvas');
  }],
  ['Typing in the input field calculates implicit multiplication',async x=>{
    const input=x.doc.querySelector('#expression');input.value='2(3+4)';input.dispatchEvent(new x.win.Event('input',{bubbles:true}));
