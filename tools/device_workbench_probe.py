@@ -54,11 +54,39 @@ def exercise(page):
     assert "step 4" in page.locator("#results").inner_text(), "first diverging key missing"
     page.locator("#scenario").select_option("A01")
     page.locator("#result").fill("5")
+    # Real browser file upload, but photo is a programmatically generated
+    # one-pixel PNG fixture. It is NOT a photograph of a CASIO device.
+    import struct, zlib, hashlib
+    def chunk(kind, payload):
+        data = kind + payload
+        return (struct.pack(">I", len(payload)) + data +
+                struct.pack(">I", zlib.crc32(data) & 0xffffffff))
+    png = (b"\\x89PNG\\r\\n\\x1a\\n" +
+           chunk(b"IHDR", struct.pack(">IIBBBBB",1,1,8,2,0,0,0)) +
+           chunk(b"IDAT", zlib.compress(b"\\x00\\x23\\x78\\xa0")) +
+           chunk(b"IEND", b""))
+    page.locator("#photo-file").set_input_files({
+        "name":"synthetic-browser-photo.png", "mimeType":"image/png", "buffer":png
+    })
+    page.wait_for_function("document.querySelector('#photo-status').textContent.includes('SHA-256')",timeout=10000)
+    assert page.locator("#photo-ref").input_value() == "synthetic-browser-photo.png"
+    assert page.locator("#photo-preview").is_visible(), "local preview not shown"
+    assert hashlib.sha256(png).hexdigest() in page.locator("#photo-status").inner_text()
     page.locator("#record").click()
     assert "1 / 50 planned scenarios" in page.locator("#plan-summary").inner_text(), "planned-case coverage not updated"
+    with page.expect_download(timeout=10000) as download:
+        page.locator("#export").click()
+    evidence = json.loads(Path(download.value.path()).read_text(encoding="utf-8"))
+    media = evidence["records"][-1]["media"]
+    assert media["sha256"] == hashlib.sha256(png).hexdigest()
+    assert media["reviewStatus"] == "unreviewed"
+    assert "data" not in media and "base64" not in media, "image embedded in JSON"
+    page.locator("#photo-clear").click()
+    assert page.locator("#photo-ref").input_value() == ""
+    assert page.locator("#photo-preview").is_hidden()
 
     assert not errors, "browser/CSP error: " + "; ".join(errors)
-    return {"status":"PASS","checks":10,"temporaryFixture":"synthetic-only"}
+    return {"status":"PASS","checks":16,"temporaryFixture":"synthetic-only"}
 
 
 def field_sheet_checks(page, base_url):
