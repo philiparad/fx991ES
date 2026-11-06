@@ -1,6 +1,15 @@
 name: Cross-browser acceptance — M42
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'styles.css'
+      - 'index.html'
+      - 'tools/**'
+      - '.github/workflows/browser-acceptance.yml'
   push:
     branches: [main]
     paths:
@@ -52,6 +61,9 @@ jobs:
       - name: Run all 72 browser checks against one shared origin
         if: always()
         run: python tools/shared_browser_session.py --out browser-evidence
+      - name: Capture real LCD screenshots in Chromium Firefox and WebKit
+        if: always()
+        run: python tools/lcd_visual_probe.py --out browser-evidence/lcd-visual
       - name: Render browser matrix status for GitHub Actions summary
         if: always()
         continue-on-error: true
