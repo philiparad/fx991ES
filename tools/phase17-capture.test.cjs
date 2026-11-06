@@ -15,3 +15,33 @@ assert.throws(()=>C.build(plan,[{step:1,result:'1',photoRef:'<script>'}]),/Inval
 const diff=C.discrepancies({results:[{id:'fixture',model:'standard',kind:'physical',firstDivergence:4,issues:[{step:4,scope:'terminal',field:'result',category:'numeric-or-format',expected:'2',actual:'3'}]},{id:'match',issues:[]}]});
 assert.equal(diff.hardwareParityCertified,false);assert.equal(diff.records.length,1);assert.equal(diff.records[0].firstDivergence,4);
 console.log('Phase 17 capture module tests: passed (synthetic input only)');
+
+
+const PLAN={id:'F16-TEST',keys:['FRAC','1','RIGHT','2','='],checkpoints:[1,3,5],
+ setup:{angle:'DEG',displayStyle:'MathO'}};
+const cols=['scenarioId','step','semanticKey','setupAngle','setupDisplay','observedLCD','observedCursor','actualPhysicalKey','photoFile','device','operator','date','reviewer'];
+const quote=v=>'"'+String(v).replace(/"/g,'""')+'"';
+const table=(rows)=>[cols,...rows].map(row=>row.map(quote).join(',')).join('\r\n')+'\r\n';
+const csvRows=PLAN.checkpoints.map(step=>[PLAN.id,String(step),PLAN.keys[step-1],'DEG','MathO','','','','','','','','']);
+const emptyWorksheet=C.worksheetDraft('\uFEFF'+table(csvRows),PLAN);
+assert.equal(emptyWorksheet.entered,0);
+assert.equal(emptyWorksheet.complete,false);
+assert.equal(emptyWorksheet.physicalParityCertified,false);
+assert.deepEqual(emptyWorksheet.values,[]);
+csvRows[1][5]='LCD "fraction", cursor left';
+csvRows[1][6]='left';
+csvRows[1][7]='physical fraction key';
+csvRows[1][8]='original-photo-003.png';
+const imported=C.worksheetDraft(table(csvRows),PLAN);
+assert.equal(imported.entered,1);
+assert.equal(imported.complete,false);
+assert.equal(imported.values[0].step,3);
+assert.equal(imported.values[0].expression,'LCD "fraction", cursor left | Cursor: left');
+assert.equal(imported.values[0].photoRef,'original-photo-003.png');
+assert.throws(()=>C.worksheetDraft(table(csvRows.map(row=>[...row.slice(0,2),'WRONG',...row.slice(3)])),PLAN),/Semantic key mismatch/);
+const duplicated=[...csvRows,csvRows[0]];
+assert.throws(()=>C.worksheetDraft(table(duplicated),PLAN),/Duplicate worksheet checkpoint/);
+assert.throws(()=>C.worksheetDraft(table(csvRows.slice(1)),PLAN),/missing expected checkpoint/);
+assert.throws(()=>C.parseCSV('wrong,columns\nrow'),/Unexpected worksheet CSV columns/);
+assert.throws(()=>C.parseCSV(table(csvRows).replace('"F16-TEST"','"other-plan"')),/No rows match/);
+console.log('Phase 17 worksheet import tests: passed (unverified synthetic drafts only)');
