@@ -21,7 +21,7 @@ def exercise(page):
     # Phase 16: focused observation instructions are visible, not fabricated results.
     page.locator("#scenario").select_option("F16-03")
     assert page.locator("#fraction-capture-guide").is_visible(), "focused plan guide hidden"
-    assert page.locator("#fraction-checkpoint-list .device-step-row").count() == 9, "mixed-fraction key path incomplete"
+    assert page.locator("#fraction-checkpoint-list .device-step-row").count() == 8, "mixed-fraction key path incomplete"
     assert "0 of 12 focused cases" in page.locator("#fraction-coverage").inner_text()
     assert "Observe LCD and cursor here" in page.locator("#fraction-checkpoint-list").inner_text()
     assert page.locator("#keys").input_value().startswith("SHIFT FRAC 2 RIGHT 3"), "focused key sequence incorrect"
