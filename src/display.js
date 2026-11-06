@@ -156,6 +156,17 @@ function exactResultLayout(value){
  }
  return null;
 }
+// Viewport of a long result. Result and editable expression scroll independently.
+function resultExtent(screen){
+ if(screen.view!=='result')return {box:null,structured:false,maxScroll:0,width:0,offset:0};
+ const candidate=screen.displayStyle==='MathO'?exactResultLayout(screen.resultValue):null;
+ const structured=!!(candidate&&candidate.height<=14);
+ const box=structured?candidate:glyphBox(String(screen.result||''));
+ // Four-pixel gutters preserve overflow indicators without clipping the data.
+ const maxScroll=Math.max(0,box.width-88);
+ const offset=Math.max(0,Math.min(maxScroll,Number.isFinite(screen.resultScrollX)?Math.floor(screen.resultScrollX):0));
+ return {box,structured,maxScroll,width:box.width,offset};
+}
 function composeScreen(screen){let f=new Framebuffer(),status=screen.indicators.join(' ')+' '+screen.mode;f.text(status,0,0);f.line(0,6,95,6);
  // MODE and main SETUP menu: four lines, two numbered options per line.
  // This matches the documented selection layout, not proprietary glyph bitmaps.
@@ -177,8 +188,8 @@ function composeScreen(screen){let f=new Framebuffer(),status=screen.indicators.
  if(screen.view==='off'){f.text('OFF',40,15);return {pixels:f.pixels,overflow:false,scrollX:0,layout:null}}
  if(screen.view==='error'){f.text(screen.result||'ERROR',0,13);return {pixels:f.pixels,overflow:false,scrollX:0,layout:null}}
  let doc=screen.document,box=doc?layoutExpression(doc):glyphBox(screen.expression||'');
- const candidate=screen.view==='result'&&screen.displayStyle==='MathO'?exactResultLayout(screen.resultValue):null;
- const structuredResult=candidate&&candidate.width<=WIDTH&&candidate.height<=14?candidate:null;
+ const resultInfo=resultExtent(screen);
+ const structuredResult=resultInfo.structured?resultInfo.box:null;
  const inputTop=7,inputBottom=structuredResult?16:22,inputHeight=inputBottom-inputTop;
  // Scroll around the *editable anchor*, including when deeply nested.
  let caret=box.anchors.find(a=>a.kind==='cursor');
@@ -209,8 +220,15 @@ function composeScreen(screen){let f=new Framebuffer(),status=screen.indicators.
  if(scrollY>0)f.glyph('↑',0,16);
  if(scrollY+inputHeight<box.height)f.glyph('↓',92,16);
  f.line(0,inputBottom,95,inputBottom);
- if(structuredResult){
-  // Keep result fully inside rows 17–30 and preserve the 96×31 buffer.
+ if(screen.view==='result'&&resultInfo.maxScroll>0){
+  // Start with the left portion and display a separate result overflow gutter.
+  f.clip={left:4,right:92,top:structuredResult?17:24,bottom:HEIGHT};
+  if(structuredResult)drawBox(structuredResult,f,4-resultInfo.offset,HEIGHT-1-structuredResult.height);
+  else drawBox(resultInfo.box,f,4-resultInfo.offset,25);
+  f.clip=null;
+  if(resultInfo.offset>0)f.glyph('<',0,25);
+  if(resultInfo.offset<resultInfo.maxScroll)f.glyph('>',92,25);
+ }else if(structuredResult){
   f.clip={left:0,right:WIDTH,top:17,bottom:HEIGHT};
   drawBox(structuredResult,f,WIDTH-structuredResult.width,HEIGHT-1-structuredResult.height);
   f.clip=null;
@@ -219,8 +237,10 @@ function composeScreen(screen){let f=new Framebuffer(),status=screen.indicators.
   f.text(result,Math.max(0,96-4*result.length),25);
  }
  return {pixels:f.pixels,overflow:guttered,scrollX,scrollY,caretVisible,layout:box,
-  resultLayout:structuredResult,viewport:{left,right,top:inputTop,bottom:inputBottom}};
+  resultLayout:structuredResult,viewport:{left,right,top:inputTop,bottom:inputBottom},
+  resultScrollX:resultInfo.offset,resultMaxScroll:resultInfo.maxScroll,
+  resultOverflow:resultInfo.maxScroll>0};
 }
 function rasterizeScreen(screen){return composeScreen(screen).pixels}
-const api=Object.freeze({WIDTH,HEIGHT,FONT,Framebuffer,layoutExpression,exactResultLayout,composeScreen,rasterizeScreen});global.FX991_DISPLAY=api;
+const api=Object.freeze({WIDTH,HEIGHT,FONT,Framebuffer,layoutExpression,exactResultLayout,resultExtent,composeScreen,rasterizeScreen});global.FX991_DISPLAY=api;
 })(typeof window!=='undefined'?window:globalThis);
