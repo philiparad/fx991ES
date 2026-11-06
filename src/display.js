@@ -130,6 +130,23 @@ function exactResultLayout(value){
   if(prefix===null||typeof value.radicand!=='bigint'||value.radicand<0n)return null;
   return prefix?joinedBoxes(glyphBox(prefix),radicalResult(value.radicand)):radicalResult(value.radicand);
  }
+ if(value.kind==='radical-sum'&&integerPair(value.scalar)&&Array.isArray(value.radicals)&&value.radicals.length<=8){
+  let combined=null;
+  if(value.scalar.n!==0n){
+   const scalar=value.scalar;
+   combined=scalar.d===1n?glyphBox(String(scalar.n)):fractionResult(scalar.n,scalar.d);
+  }
+  for(const term of value.radicals){
+   if(!integerPair(term.coefficient)||term.coefficient.d!==1n||
+      typeof term.radicand!=='bigint'||term.radicand<=1n)return null;
+   const n=term.coefficient.n,absolute=n<0n?-n:n;
+   const rad=radicalResult(term.radicand);
+   const base=absolute===1n?rad:joinedBoxes(glyphBox(String(absolute)),rad);
+   if(!combined)combined=n<0n?joinedBoxes(glyphBox('-'),base):base;
+   else combined=joinedBoxes(combined,joinedBoxes(glyphBox(n<0n?'-':'+'),base));
+  }
+  return combined;
+ }
  if(value.kind==='pi'&&integerPair(value.coefficient)){
   const c=value.coefficient;
   if(c.n===1n&&c.d===1n)return glyphBox('π');
