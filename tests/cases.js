@@ -811,6 +811,42 @@ test('EXP10 requires a coefficient and remains non-certifying',()=>{
  eq(K.FX991_DEVICE_CERTIFIED||false,false);
 });
 
+test('CALC keypad evaluates the existing X expression',()=>{
+ let s=K.createState('standard');s.expression='X^2+1';s.cursor=s.expression.length;
+ s.document=global.FX991_EDITOR.fromSource(s.expression);
+ s=K.dispatchKey(s,'CALC');eq(s.view,'calc-input');eq(s.ui.calcFlow.operation,'CALC');
+ for(const key of ['2','='])s=K.dispatchKey(s,key);
+ eq(s.view,'result');close(K.numeric(s.lastValue),5);
+ close(K.numeric(s.memory.X),2);eq(s.expression,'X^2+1');
+});
+test('CALC supports signed decimal X substitutions',()=>{
+ let s=K.createState('standard');s.expression='X+1';s.cursor=3;
+ s.document=global.FX991_EDITOR.fromSource(s.expression);
+ for(const key of ['CALC','NEG','2','.','5','='])s=K.dispatchKey(s,key);
+ eq(s.view,'result');close(K.numeric(s.lastValue),-1.5);
+});
+test('CALC cancellation and invalid parameter do not evaluate',()=>{
+ let s=K.createState('standard');s.expression='X+2';s.cursor=3;
+ s.document=global.FX991_EDITOR.fromSource(s.expression);
+ s=K.dispatchKey(s,'CALC');s=K.dispatchKey(s,'AC');eq(s.view,'edit');eq(s.expression,'X+2');
+ s=K.dispatchKey(s,'CALC');s=K.dispatchKey(s,'NEG');s=K.dispatchKey(s,'=');
+ eq(s.view,'error');eq(s.error,K.ERROR.ARGUMENT);
+});
+test('SHIFT CALC invokes the existing COMP numerical root solver',()=>{
+ let s=K.createState('standard');s.expression='X^2-2';s.cursor=s.expression.length;
+ s.document=global.FX991_EDITOR.fromSource(s.expression);
+ for(const key of ['SHIFT','CALC'])s=K.dispatchKey(s,key);
+ eq(s.view,'calc-input');eq(s.ui.calcFlow.operation,'SOLVE');
+ for(const key of ['1','='])s=K.dispatchKey(s,key);
+ eq(s.view,'result');close(K.numeric(s.lastValue),Math.sqrt(2),1e-8);
+ close(K.numeric(s.memory.X),Math.sqrt(2),1e-8);
+ eq(s.numericalDetails.operation,'SOLVE');
+});
+test('CALC does not interrupt expressions without X or other modes',()=>{
+ let s=K.createState('standard');s=K.dispatchKey(s,'2');s=K.dispatchKey(s,'CALC');eq(s.view,'edit');
+ let t=K.createState('standard');t.mode='CMPLX';t=K.dispatchKey(t,'CALC');eq(t.view,'edit');
+});
+
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
