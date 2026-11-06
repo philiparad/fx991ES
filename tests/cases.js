@@ -847,6 +847,51 @@ test('CALC does not interrupt expressions without X or other modes',()=>{
  let t=K.createState('standard');t.mode='CMPLX';t=K.dispatchKey(t,'CALC');eq(t.view,'edit');
 });
 
+
+test('CALC sequential prompt uses every register in first-use order',()=>{
+ let s=K.createState('standard');s.expression='Y+A*X';s.cursor=5;s.document=global.FX991_EDITOR.fromSource(s.expression);
+ s=K.dispatchKey(s,'CALC');eq(s.ui.calcFlow.variables.join(','),'Y,A,X');
+ eq(K.semanticScreen(s).result.includes('Y?'),true);
+ for(const key of ['4','='])s=K.dispatchKey(s,key);
+ eq(s.view,'calc-input');close(K.numeric(s.memory.Y),0);
+ eq(K.semanticScreen(s).result.includes('A?'),true);
+ for(const key of ['2','='])s=K.dispatchKey(s,key);
+ eq(K.semanticScreen(s).result.includes('X?'),true);
+ for(const key of ['3','='])s=K.dispatchKey(s,key);
+ eq(s.view,'result');close(K.numeric(s.lastValue),10);
+ close(K.numeric(s.memory.Y),4);close(K.numeric(s.memory.A),2);close(K.numeric(s.memory.X),3);
+});
+test('CALC defaults to existing A and M stored values',()=>{
+ let s=K.createState('standard');s.memory.A=K.rat(7);s.memory.M=K.rat(2);
+ s.expression='A+M';s.cursor=3;s.document=global.FX991_EDITOR.fromSource(s.expression);
+ s=K.dispatchKey(s,'CALC');eq(K.semanticScreen(s).result.includes('[7]'),true);
+ s=K.dispatchKey(s,'=');eq(K.semanticScreen(s).result.includes('[2]'),true);
+ s=K.dispatchKey(s,'=');eq(s.view,'result');close(K.numeric(s.lastValue),9);
+});
+test('CALC invalid final variable does not commit staged values',()=>{
+ let s=K.createState('standard');s.memory.A=K.rat(9);
+ s.expression='A+X';s.cursor=3;s.document=global.FX991_EDITOR.fromSource(s.expression);
+ for(const key of ['CALC','4','=','NEG','='])s=K.dispatchKey(s,key);
+ eq(s.view,'error');eq(s.error,K.ERROR.ARGUMENT);close(K.numeric(s.memory.A),9);
+});
+test('CALC cancel after first variable preserves all register values',()=>{
+ let s=K.createState('standard');s.expression='A+Y';s.cursor=3;s.document=global.FX991_EDITOR.fromSource(s.expression);
+ for(const key of ['CALC','6','=','AC'])s=K.dispatchKey(s,key);
+ eq(s.view,'edit');close(K.numeric(s.memory.A),0);eq(s.expression,'A+Y');
+});
+test('SHIFT CALC uses stored A in X-based equation',()=>{
+ let s=K.createState('standard');s.memory.A=K.rat(2);
+ s.expression='X-A';s.cursor=3;s.document=global.FX991_EDITOR.fromSource(s.expression);
+ for(const key of ['SHIFT','CALC','1','='])s=K.dispatchKey(s,key);
+ eq(s.view,'result');close(K.numeric(s.lastValue),2,1e-8);close(K.numeric(s.memory.A),2);
+});
+test('SHIFT CALC only solves expressions containing X',()=>{
+ let s=K.createState('standard');s.expression='A+3';s.cursor=3;s.document=global.FX991_EDITOR.fromSource(s.expression);
+ for(const key of ['SHIFT','CALC'])s=K.dispatchKey(s,key);
+ eq(s.view,'edit');s=K.dispatchKey(s,'CALC');eq(s.view,'calc-input');
+ eq(s.ui.calcFlow.variables.join(','),'A');
+});
+
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
