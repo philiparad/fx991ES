@@ -13,7 +13,7 @@ const wizardConfigs={
  STAT:{menu:['1VAR','1VAR5','LINEAR3'],fields:{'1VAR':['x1','x2','x3'],'1VAR5':['x1','x2','x3','x4','x5'],LINEAR3:['x1','y1','x2','y2','x3','y3']}},
  TABLE:{menu:['SINGLE','FUNCTION','DUAL'],fields:{SINGLE:['start','end','step'],FUNCTION:['f(X)','start','end','step'],DUAL:['f(X)','g(X)','start','end','step']}}
 };
-function decorate(s){if(!s.ui)s.ui={page:0,pending:null,setupSection:null,wizard:null,insertMode:true};if(s.ui.insertMode===undefined)s.ui.insertMode=true;
+function decorate(s){if(!s.ui)s.ui={page:0,pending:null,setupSection:null,wizard:null,insertMode:true};if(s.ui.insertMode===undefined)s.ui.insertMode=true;if(!base.DISPLAY_STYLES.includes(s.setup.displayStyle))s.setup.displayStyle=base.DISPLAY_STYLES.includes(s.ui.displayStyle)?s.ui.displayStyle:'MathO';s.ui.displayStyle=s.setup.displayStyle;
  if(!s.ui.modeMemory)s.ui.modeMemory={matrix:{A:null,B:null,C:null},vector:{A:null,B:null,C:null},stat:{kind:'1VAR',rows:[]}};
  return s}
 // Milestone 27 persistent mode-memory: plain numeric arrays only; no executable text.
@@ -36,7 +36,7 @@ function regExpression(s,op){let flow=s.ui.registerFlow,cat=flow.category,one=s.
  let encode=cat==='matrix'?matrixText:vectorText;
  return op+':'+encode(one)+(unary.includes(op)?'':'|'+encode(two));}
 function regResult(s,op){try{let expression=regExpression(s,op),value=base.calculateExpression(s.mode,expression,s);
- s.expression=expression;s.cursor=expression.length;s.lastValue=value;s.ans=value.kind==='mode-result'?value.ans:value;s.result=base.valueDisplay(value,s.setup,s.decimalView);s.error=null;s.view='result';s.ui.registerFlow=null;
+ s.expression=expression;s.cursor=expression.length;s.lastValue=value;s.ans=value.kind==='mode-result'?value.ans:value;s.result=base.valueDisplay(value,s.setup,s.decimalView,s.mode);s.error=null;s.view='result';s.ui.registerFlow=null;
  s.history=[{expression,display:s.result},...s.history].slice(0,50);
  s.ui.lastWizard={mode:s.mode,kind:op,fields:[],values:[],resultPage:0};}
  catch(e){s.error=e.code||base.ERROR.ARGUMENT;s.view='error';s.result=s.error}return s}
@@ -70,7 +70,7 @@ function safeNumber(t){if(!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(t))throw new ba
 function safeFunction(t){if(!t||t.length>96||!/^[A-Za-z0-9.+\-*/^() ]+$/.test(t))throw new base.CalcError(base.ERROR.ARGUMENT);try{base.parse(t)}catch(e){throw new base.CalcError(e.code||base.ERROR.SYNTAX)}return t}
 function acceptField(w){let field=w.fields[w.index],value=/^[fg]\(X\)$/.test(field)?safeFunction(w.buffer):safeNumber(w.buffer);w.values[w.index]=value;return value}
 function pushBuffer(w,k){if(k==='NEG'){w.buffer=w.buffer.startsWith('-')?w.buffer.slice(1):'-'+w.buffer;return}let map={ADD:'+',SUB:'-',MUL:'*',DIV:'/',LP:'(',RP:')',POW:'^',SQ:'^2',PI:'pi',ANS:'Ans'};if(/^[0-9.]$/.test(k)||(/^[X]$/.test(k)&&/^[fg]\(X\)$/.test(w.fields[w.index])))w.buffer+=k;else if(/^[fg]\(X\)$/.test(w.fields[w.index])&&map[k])w.buffer+=map[k]}
-function finishWizard(s){let w=s.ui.wizard;try{let expression=wizardExpression(w),value=base.calculateExpression(w.mode,expression,s);s.expression=expression;s.cursor=expression.length;s.lastValue=value;s.ans=value.kind==='mode-result'?value.ans:value.kind==='complex'?value.re:value.kind==='base'?base.rat(value.value):value;s.result=base.valueDisplay(value,s.setup,s.decimalView);s.view='result';s.error=null;s.history=[{expression,display:s.result},...s.history].slice(0,50);s.historyCursor=-1;s.ui.lastWizard={mode:w.mode,kind:w.kind,fields:[...w.fields],values:[...w.values],resultPage:0};s.ui.wizard=null}catch(e){s.error=e.code||base.ERROR.MATH;s.errorPos=s.cursor;s.view='error';s.result=s.error;s.ui.wizard=null}return s}
+function finishWizard(s){let w=s.ui.wizard;try{let expression=wizardExpression(w),value=base.calculateExpression(w.mode,expression,s);s.expression=expression;s.cursor=expression.length;s.lastValue=value;s.ans=value.kind==='mode-result'?value.ans:value.kind==='complex'?value.re:value.kind==='base'?base.rat(value.value):value;s.result=base.valueDisplay(value,s.setup,s.decimalView,s.mode);s.view='result';s.error=null;s.history=[{expression,display:s.result},...s.history].slice(0,50);s.historyCursor=-1;s.ui.lastWizard={mode:w.mode,kind:w.kind,fields:[...w.fields],values:[...w.values],resultPage:0};s.ui.wizard=null}catch(e){s.error=e.code||base.ERROR.MATH;s.errorPos=s.cursor;s.view='error';s.result=s.error;s.ui.wizard=null}return s}
 function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredClone(state.ui):undefined,history:state.history.slice(),memory:{...state.memory},trace:state.trace.slice(),setup:{...state.setup}});
  const end=()=>record(s,key);
  // Persistent matrix/vector registers and editable STAT data are intentionally
@@ -201,7 +201,7 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
    }
    if(s.ui.setupSection==='MthIO'&&['1','2'].includes(key)){
     // Record the preferred output layout; exact firmware raster/output is unverified.
-    s.ui.displayStyle=key==='1'?'MathO':'LineO';s.ui.setupSection=null;s.view='edit';return end()
+    s.ui.displayStyle=key==='1'?'MathO':'LineO';s.setup.displayStyle=s.ui.displayStyle;s.ui.setupSection=null;s.view='edit';return end()
    }
    return end();
   }
@@ -213,7 +213,7 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
    return end();
   }
   if(key==='1'){s.ui.setupSection='MthIO';return end()}
-  if(key==='2'){s.ui.displayStyle='LineIO';s.view='edit';return end()}
+  if(key==='2'){s.ui.displayStyle='LineIO';s.setup.displayStyle='LineIO';s.view='edit';return end()}
   if(['3','4','5'].includes(key)){s.setup.angle={3:'DEG',4:'RAD',5:'GRAD'}[key];s.view='edit';return end()}
   if(key==='6'||key==='7'){s.ui.setupSection=key==='6'?'Fix':'Sci';return end()}
   if(key==='8'){s.ui.setupSection='Norm';return end()}
