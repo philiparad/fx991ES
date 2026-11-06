@@ -526,6 +526,30 @@ test('P13 exact radical sum survives session Ans serialization',()=>{let s=K.cre
 test('P13 invalid radical-sum import is rejected',()=>{let s=K.createState();s.ans=evaluate('(sqrt(2)+2)*sqrt(3)');let p=JSON.parse(SS.exportJSON(s));p.ans.radicals[0].radicand='-8';fail28(()=>SS.importJSON(JSON.stringify(p)))});
 test('P13 CASIO published corpus now matches eleven result texts',()=>{const r=global.FX991_MANUFACTURER_EXAMPLES.verify();eq(r.matched,11);eq(r.total,11);eq(r.physicalObservations,0)});
 
+// Phase 14: mixed fraction display plus independently scrollable exact result.
+test('P14 improper fraction toggles to mixed result',()=>{let s=m31seq(['FRAC','7','RIGHT','6','=','SHIFT','FRAC']);eq(s.result,'1 1/6');eq(s.mixedView,true);eq(K.valueToString(s.ans),'7/6')});
+test('P14 mixed toggle is reversible',()=>{let s=m31seq(['FRAC','7','RIGHT','6','=','SHIFT','FRAC','SHIFT','FRAC']);eq(s.result,'7/6');eq(s.mixedView,false)});
+test('P14 negative mixed fractions retain sign',()=>{let s=m31seq(['NEG','FRAC','7','RIGHT','6','=','SHIFT','FRAC']);eq(s.result,'-1 1/6')});
+test('P14 reduced proper fraction has no mixed form',()=>{let s=m31seq(['FRAC','1','RIGHT','6','=','SHIFT','FRAC']);eq(s.result,'1/6');eq(s.mixedView,false)});
+test('P14 integers do not become mixed fractions',()=>{let s=m31seq(['3','=','SHIFT','FRAC']);eq(s.result,'3');eq(s.mixedView,false)});
+test('P14 mixed fraction digit ceiling disallows huge conversions',()=>{eq(K.mixedFractionText(K.rat(123456789012345n,13n)),null)});
+test('P14 allowed mixed fraction stays within documented digit ceiling',()=>{eq(K.mixedFractionText(K.rat(11n,4n)),'2 3/4')});
+test('P14 mixed conversion cannot alter stored Ans',()=>{let s=m31seq(['FRAC','7','RIGHT','6','=','SHIFT','FRAC','S-D']);eq(K.valueToString(s.ans),'7/6');eq(s.mixedView,false)});
+test('P14 mixed MathO result uses plain mixed string not improper stacked fraction',()=>{let s=m31seq(['FRAC','7','RIGHT','6','=','SHIFT','FRAC']);eq(L.composeScreen(K.semanticScreen(s)).resultLayout,null)});
+test('P14 MIX shortcut handled by controller',()=>{let s=m31seq(['FRAC','1','1','RIGHT','4','=']);eq(s.view,'result')});
+test('P14 long integer result displays an overflow viewport',()=>{let s=m31seq([...'12345678901234567890123456789'.split(''),'=']);let frame=L.composeScreen(K.semanticScreen(s));eq(frame.resultOverflow,true);if(frame.resultMaxScroll<=0)throw Error('no scroll extent')});
+test('P14 result RIGHT scrolls while keeping result view',()=>{let s=m31seq([...'12345678901234567890123456789'.split(''),'=']);s=K.dispatchKey(s,'RIGHT');eq(s.view,'result');eq(s.resultScrollX,16)});
+test('P14 result LEFT reverses result scroll',()=>{let s=m31seq([...'12345678901234567890123456789'.split(''),'=','RIGHT','LEFT']);eq(s.view,'result');eq(s.resultScrollX,0)});
+test('P14 result scrolling has clamped right boundary',()=>{let s=m31seq([...'12345678901234567890123456789'.split(''),'=']);for(let i=0;i<15;i++)s=K.dispatchKey(s,'RIGHT');let frame=L.composeScreen(K.semanticScreen(s));eq(s.resultScrollX,frame.resultMaxScroll);eq(s.view,'result')});
+test('P14 result scrolling does not alter typed Ans',()=>{let s=m31seq([...'12345678901234567890123456789'.split(''),'=']);let original=K.valueToString(s.ans);s=K.dispatchKey(s,'RIGHT');eq(K.valueToString(s.ans),original)});
+test('P14 long structured fraction can scroll independently',()=>{let s=K.createState();let numerator='1234567890123456789012345678901';s.document=E.fromSource(numerator+'/31');s.expression=E.serialize(s.document);s=K.dispatchKey(s,'=');let r=L.composeScreen(K.semanticScreen(s));if(s.view!=='result')throw Error(s.result);if(r.resultMaxScroll<=0)throw Error('fraction not wider than LCD');s=K.dispatchKey(s,'RIGHT');eq(s.view,'result');eq(s.resultScrollX,16)});
+test('P14 S-D resets stale result viewport',()=>{let s=m31seq([...'12345678901234567890123456789'.split(''),'=','RIGHT','S-D']);eq(s.resultScrollX,0)});
+test('P14 short result LEFT retains earlier edit cursor behavior',()=>{let s=m31seq(['1','ADD','2','=','LEFT']);eq(s.view,'edit')});
+test('P14 exact radical boundary sqrt zero',()=>{eq(K.valueToString(evaluate('sqrt(0)')),'0')});
+test('P14 square-root square simplification',()=>{eq(K.valueToString(evaluate('sqrt(5)*sqrt(5)')),'5')});
+test('P14 unlike radicals cancel without decimal loss',()=>{eq(K.valueToString(evaluate('sqrt(2)+sqrt(5)-sqrt(5)')),'√2')});
+test('P14 mixed fraction remains text after session restore',()=>{let s=m31seq(['FRAC','7','RIGHT','6','=','SHIFT','FRAC']);let r=SS.importJSON(SS.exportJSON(s));eq(K.valueToString(r.ans),'7/6')});
+
 // Milestone 24: physical-key resolution, insert/overwrite and structural deletion.
 const KM=global.FX991_KEYS;
 test('M24 key profiles explicit and immutable',()=>{eq(KM.profiles.standard.id,'fx991esplus-2');eq(Object.isFrozen(KM.profiles.c),true)});
