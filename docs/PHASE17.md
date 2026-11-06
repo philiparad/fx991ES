@@ -35,7 +35,7 @@ node tools/phase17-review.cjs actual-device-evidence.json independent-reviews.js
 node tools/phase17-review.test.cjs
 ```
 
-Exit status 0 indicates all 12 scenarios have review-complete metadata, **not** hardware parity. Exit status 1 means some cases are pending; 2 means invalid input or invocation. `hardwareParityCertified` and `releaseApproved` are deliberately always false; a separately authorized release decision requires original physical source verification and a human sign-off. Records and reviewer assertions are self-reported and cannot authenticate their own provenance.
+Exit status 0 indicates all 12 scenarios have complete reviews marked `match` and are **eligible for human sign-off consideration**, **not** hardware parity. A `mismatch` or `inconclusive` review blocks readiness even if all 12 reviews exist. Exit status 1 means a case is pending, mismatched, or inconclusive; 2 means invalid input or invocation. `hardwareParityCertified` and `releaseApproved` are deliberately always false; a separately authorized release decision requires original physical source verification and a human sign-off. Records and reviewer assertions are self-reported and cannot authenticate their own provenance.
 
 ## Completion criteria
 
