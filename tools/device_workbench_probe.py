@@ -18,6 +18,15 @@ def exercise(page):
     page.on("pageerror", lambda error: errors.append(str(error)[:400]))
     page.on("console", lambda msg: errors.append(msg.text[:400]) if msg.type == "error" else None)
     page.locator("#scenario").wait_for(timeout=10000)
+    # Phase 16: focused observation instructions are visible, not fabricated results.
+    page.locator("#scenario").select_option("F16-03")
+    assert page.locator("#fraction-capture-guide").is_visible(), "focused plan guide hidden"
+    assert page.locator("#fraction-checkpoint-list .device-step-row").count() == 9, "mixed-fraction key path incomplete"
+    assert "0 of 12 focused cases" in page.locator("#fraction-coverage").inner_text()
+    assert "Observe LCD and cursor here" in page.locator("#fraction-checkpoint-list").inner_text()
+    assert page.locator("#keys").input_value().startswith("SHIFT FRAC 2 RIGHT 3"), "focused key sequence incorrect"
+    page.locator("#scenario").select_option("A01")
+    assert page.locator("#fraction-capture-guide").is_hidden(), "focused plan guide leaked to baseline"
     assert "0 / 50 planned scenarios" in page.locator("#plan-summary").inner_text(), "plan must start unrecorded"
     page.locator("#scenario").select_option("T04")
     assert page.locator("#angle").input_value() == "RAD", "plan did not apply angle setup"
@@ -86,7 +95,7 @@ def exercise(page):
     assert page.locator("#photo-preview").is_hidden()
 
     assert not errors, "browser/CSP error: " + "; ".join(errors)
-    return {"status":"PASS","checks":16,"temporaryFixture":"synthetic-only"}
+    return {"status":"PASS","checks":22,"temporaryFixture":"synthetic-only"}
 
 
 def field_sheet_checks(page, base_url):
