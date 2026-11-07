@@ -23,6 +23,7 @@ CHECK_NAMES = (
     'Real keypad SHIFT percent calculates 150 times 20 percent',
     'Real keypad ALPHA colon advances sequential statements',
     'Real keypad SHIFT CONST selects speed of light',
+    'Teaching expression editor does not replace physical keypad workflow',
 )
 
 
@@ -204,6 +205,19 @@ def perform_check(name, page):
             key(value)
         semantic = page.locator('#semantic').inner_text()
         assert 'Result: 299792458' in semantic, 'constant result mismatch: ' + semantic
+    elif name == CHECK_NAMES[9]:
+        field = page.locator('#expression')
+        field.fill('1+2')
+        page.locator('#calculate').click()
+        assert 'Result: 3' in page.locator('#semantic').inner_text(), 'teaching editor calculation failed'
+        def key(value):
+            page.get_by_role('button', name=value+' calculator key', exact=True).first.click()
+        key('AC')
+        for value in ('7', 'ADD', '8', '='):
+            key(value)
+        semantic = page.locator('#semantic').inner_text()
+        assert 'Result: 15' in semantic, 'physical keypad changed by teaching editor: ' + semantic
+        assert 'Expression: 7+8' in semantic, 'physical input was not isolated'
     else:
         raise AssertionError('unregistered check')
 
