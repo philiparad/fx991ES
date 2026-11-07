@@ -1476,6 +1476,30 @@ test('P1-03 empty expression field cannot calculate',()=>{
  let s=K.createState();for(const k of ['DIFF','='])s=K.dispatchKey(s,k);
  eq(s.view,'error');
 });
+
+test('P1-04 SHIFT ADD begins polar conversion',()=>{
+ let s=K.createState();for(const k of ['SHIFT','ADD'])s=K.dispatchKey(s,k);
+ eq(s.view,'coordinate-input');eq(s.ui.coordinateFlow.kind,'POL');
+});
+test('P1-04 Pol(3,4) stores radius 5 and angle',()=>{
+ let s=K.createState();for(const k of ['SHIFT','ADD','3','=','4','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');close(K.numeric(s.memory.X),5,1e-12);
+ close(K.numeric(s.memory.Y),53.13010235415598,1e-8);
+});
+test('P1-04 Rec(5, 0 degrees) gives (5,0)',()=>{
+ let s=K.createState();for(const k of ['SHIFT','SUB','5','=','0','='])s=K.dispatchKey(s,k);
+ close(K.numeric(s.memory.X),5,1e-12);close(K.numeric(s.memory.Y),0,1e-12);
+});
+test('P1-04 Rec respects RAD angle setting',()=>{
+ let s=K.createState();s.setup.angle='RAD';
+ for(const k of ['SHIFT','SUB','2','=','1','.','5','7','0','7','9','6','3','2','6','8','='])s=K.dispatchKey(s,k);
+ close(K.numeric(s.memory.Y),2,1e-6);
+});
+test('P1-04 conversion cancellation does not overwrite X/Y',()=>{
+ let s=K.createState();s.memory.X=K.rat(8n);
+ for(const k of ['SHIFT','ADD','3','AC'])s=K.dispatchKey(s,k);
+ eq(s.view,'edit');eq(K.valueToString(s.memory.X),'8');
+});
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
