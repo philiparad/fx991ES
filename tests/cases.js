@@ -1308,12 +1308,12 @@ test('P0-10 random source must return value below one',()=>{
  catch(e){eq(e.code,K.ERROR.MATH)}
 });
 
-function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
-global.FX991_TESTS=Object.freeze({run,cases});
-})(typeof window!=='undefined'?window:globalThis);
-
-
 // P0-11: physical SHIFT POW inserts an indexed-root template.
 test('P0-11 SHIFT POW maps to nth root',()=>eq(KM.resolve('standard','POW','shift'),'NROOT'));
 test('P0-11 fifth root of 32 from keypad',()=>{let s=K.createState();for(const key of ['SHIFT','POW','5','RIGHT','3','2','='])s=K.dispatchKey(s,key);close(K.numeric(s.lastValue),2,1e-12)});
 test('P0-11 indexed root template consumes SHIFT',()=>{let s=K.createState();for(const key of ['SHIFT','POW'])s=K.dispatchKey(s,key);eq(s.shift,false);eq(s.alpha,false);if(!s.document.root.children.some(n=>n.kind==='Root'&&n.degree))throw Error('missing indexed root')});
+
+function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
+global.FX991_TESTS=Object.freeze({run,cases});
+})(typeof window!=='undefined'?window:globalThis);
+
