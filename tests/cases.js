@@ -1327,6 +1327,13 @@ test('P0-13 1234 cycles 1.234e3 then 1234e0',()=>{let s=K.createState();for(cons
 test('P0-13 SHIFT ENG from 123 shifts left',()=>{let s=K.createState();for(const k of ['1','2','3','=','SHIFT','ENG'])s=K.dispatchKey(s,k);eq(s.result,'0.123×10^3');eq(s.shift,false);s=K.dispatchKey(s,'SHIFT');s=K.dispatchKey(s,'ENG');eq(s.result,'0.000123×10^6')});
 test('P0-13 ENG zero has stable value',()=>{let s=K.createState();for(const k of ['0','=','ENG'])s=K.dispatchKey(s,k);eq(s.result,'0×10^0');eq(K.valueToString(s.lastValue),'0')});
 test('P0-13 ENG notation reset on new evaluation',()=>{let s=K.createState();for(const k of ['1','2','3','4','=','ENG','AC','2','=','ENG'])s=K.dispatchKey(s,k);eq(s.result,'2×10^0')});
+
+test('P0-14 M+ accumulates results and M- subtracts',()=>{let s=K.createState();for(const k of ['1','0','MUL','5','MPLUS','AC','1','0','ADD','5','SHIFT','MPLUS'])s=K.dispatchKey(s,k);eq(K.valueToString(s.memory.M),'35');eq(K.valueToString(s.lastValue),'15');eq(s.shift,false)});
+test('P0-14 M is retained after AC',()=>{let s=K.createState();for(const k of ['7','MPLUS','AC'])s=K.dispatchKey(s,k);eq(K.valueToString(s.memory.M),'7')});
+test('P0-14 ALPHA MPLUS recalls M within expression',()=>{let s=K.createState();for(const k of ['7','MPLUS','AC','ALPHA','MPLUS','MUL','2','='])s=K.dispatchKey(s,k);eq(K.valueToString(s.lastValue),'14')});
+test('P0-14 RCL register prompt accepts ALPHA MPLUS',()=>{let s=K.createState();for(const k of ['7','MPLUS','AC','RCL_MENU','ALPHA','MPLUS'])s=K.dispatchKey(s,k);eq(s.expression,'M');eq(s.view,'edit')});
+test('P0-14 M+ memory indicator appears on result',()=>{let s=K.createState();for(const k of ['3','MPLUS'])s=K.dispatchKey(s,k);if(!K.semanticScreen(s).indicators.includes('M'))throw Error('M indicator absent')});
+test('P0-14 negative memory is preserved',()=>{let s=K.createState();for(const k of ['2','SHIFT','MPLUS'])s=K.dispatchKey(s,k);eq(K.valueToString(s.memory.M),'-2')});
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
