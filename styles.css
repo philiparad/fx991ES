@@ -248,3 +248,42 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
     .solar-panel{height:19px;max-width:130px}
     .keypad-group .alt-alpha{font-size:8px}
 }
+
+
+/* Reference-inspired fx-991ES PLUS LCD: outer glass is taller than its
+ * logical 96:31 bitmap. Keep logical pixels square and centered rather
+ * than stretching characters to the physical housing proportions. */
+.calculator .lcd-housing {
+    width: 100%;
+    aspect-ratio: 2.64 / 1;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    padding: 7px;
+    border: 2px solid #050d16;
+    border-radius: 13px;
+    background: linear-gradient(145deg,#03080d,#273440 10%,#050a10 25%,#101c25 85%,#53616b);
+    box-shadow: inset 0 2px 3px #5b6870, inset 0 -3px 5px #000, 0 2px 2px #a1b1bf55;
+}
+.calculator .lcd-glass {
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 4px;
+    border: 2px solid #829789;
+    border-radius: 7px;
+    background: linear-gradient(175deg,#cedfcb,#d5e3d0 45%,#bfceb9);
+    box-shadow: inset 0 2px 5px #526b59b0, inset 0 -1px 2px #f4fff1, 0 0 0 2px #050d13;
+    overflow: hidden;
+}
+.calculator .lcd-glass canvas#lcd {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 96 / 31;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    background: #d0decc;
+}
