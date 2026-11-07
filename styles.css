@@ -287,3 +287,18 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
     image-rendering: crisp-edges;
     background: #d0decc;
 }
+
+/* REA: independently implemented pop-up LCD and opt-in KeyLog. */
+.emulator-tools-actions{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0}
+.calculator .emulator-tools-actions .button{font-size:11px;padding:7px 9px}
+.emulator-tools-dialog{width:min(94vw,880px);max-width:880px;max-height:90vh;overflow:auto;
+ border:2px solid #52677b;border-radius:12px;padding:18px;background:#f6f8f4;color:#203041;
+ box-shadow:0 16px 45px #101f3080}
+.emulator-tools-dialog::backdrop{background:#091521ac}
+.emulator-tools-header{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:14px}
+.emulator-popup-canvas{display:block;width:100%;height:auto;aspect-ratio:96 / 31;
+ image-rendering:pixelated;image-rendering:crisp-edges;background:#cfdbc9;border:8px solid #1c2934}
+.emulator-keylog-list{margin:12px 0;padding:10px 10px 10px 30px;background:white;border:1px solid #c5d1dc;
+ border-radius:7px;max-height:48vh;overflow:auto;font:12px/1.6 ui-monospace,Consolas,monospace;overflow-wrap:anywhere}
+.emulator-keylog-list li{padding:2px 0;border-bottom:1px solid #e6ecf1;list-style:none}
+.emulator-tools-dialog button:focus-visible{outline:3px solid #316ab5;outline-offset:2px}
