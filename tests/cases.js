@@ -192,13 +192,13 @@ test('M14 OFF and ON',()=>{let s=keys14('standard',['SHIFT','AC']);eq(s.power,fa
 test('M14 STO register prompt stores typed result',()=>{let s=keys14('standard',['8','=','SHIFT','RCL']);eq(s.view,'register-prompt');s=K.dispatchKey(s,'B');eq(K.valueToString(s.memory.B),'8')});
 test('M14 RCL prompt inserts variable',()=>{let s=keys14('standard',['ALPHA','RCL','C']);eq(s.expression,'C');eq(s.view,'edit')});
 test('M14 STO prompt cancel',()=>{let s=keys14('standard',['SHIFT','RCL','AC']);eq(s.view,'edit');eq(s.ui.pending,null)});
-test('M14 equation coefficient workflow',()=>{let s=keys14('standard',['MODE','5']);eq(s.mode,'EQN');eq(s.view,'workflow-menu');for(let k of ['1','1','=','NEG','3','=','2','='])s=K.dispatchKey(s,k);eq(s.view,'result');if(!s.result.includes('2')||!s.result.includes('1'))throw Error(s.result)});
+test('M14 equation coefficient workflow',()=>{let s=keys14('standard',['MODE','5']);eq(s.mode,'EQN');eq(s.view,'workflow-menu');for(let k of ['3','1','=','NEG','3','=','2','='])s=K.dispatchKey(s,k);eq(s.view,'result');if(!s.result.includes('2')||!s.result.includes('1'))throw Error(s.result)});
 test('M14 matrix coefficient workflow',()=>{let s=keys14('standard',['MODE','6','1']);for(let k of ['1','=','2','=','3','=','4','='])s=K.dispatchKey(s,k);eq(s.view,'result');if(!s.result.includes('-2'))throw Error(s.result)});
-test('M14 wizard rejects missing coefficient',()=>{let s=keys14('standard',['MODE','5','1','=']);eq(s.view,'error');eq(s.error,K.ERROR.ARGUMENT)});
+test('M14 wizard rejects missing coefficient',()=>{let s=keys14('standard',['MODE','5','3','=']);eq(s.view,'error');eq(s.error,K.ERROR.ARGUMENT)});
 test('M14 error recovers cursor',()=>{let s=keys14('standard',['1','DIV','0','=']);eq(s.view,'error');s=K.dispatchKey(s,'RIGHT');eq(s.view,'edit');eq(s.error,null)});
-test('M14 semantic screen indicates coefficient label',()=>{let s=keys14('standard',['MODE','5','1']);let screen=K.semanticScreen(s);if(!screen.expression.includes('a ='))throw Error(screen.expression)});
+test('M14 semantic screen indicates coefficient label',()=>{let s=keys14('standard',['MODE','5','3']);let screen=K.semanticScreen(s);if(!screen.expression.includes('a ='))throw Error(screen.expression)});
 test('M14 MODE select COMP remains edit',()=>{let s=keys14('standard',['MODE','1']);eq(s.mode,'COMP');eq(s.view,'edit')});
-test('M14 trace reproducible after workflow',()=>{let events=['MODE','5','1','1','=','NEG','3','=','2','='];let a=K.runTrace({events}),b=K.runTrace({events});eq(a.hash,b.hash)});
+test('M14 trace reproducible after workflow',()=>{let events=['MODE','5','3','1','=','NEG','3','=','2','='];let a=K.runTrace({events}),b=K.runTrace({events});eq(a.hash,b.hash)});
 
 // Milestone 15: structural LCD layout and raster acceptance tests.
 const L=global.FX991_DISPLAY;
@@ -1612,17 +1612,17 @@ test('P1-09 SHIFT BASE menu supports NOT command',()=>{
 });
 
 test('P1-10 EQN coefficients remain editable after calculation',()=>{
- let s=K.createState();for(const k of ['MODE','5','1','1','=','NEG','3','=','2','='])s=K.dispatchKey(s,k);
+ let s=K.createState();for(const k of ['MODE','5','3','1','=','NEG','3','=','2','='])s=K.dispatchKey(s,k);
  eq(s.view,'result');s=K.dispatchKey(s,'EDIT');eq(s.view,'coefficient');eq(s.ui.wizard.buffer,'1');
  for(const k of ['RIGHT','RIGHT','DEL','3','='])s=K.dispatchKey(s,k);
  eq(s.view,'result');eq(s.expression,'QUAD:1,-3,3');
 });
 test('P1-10 simultaneous equation row navigation UP',()=>{
- let s=K.createState();for(const k of ['MODE','5','3','2','=','1','=','5','=','1','UP'])s=K.dispatchKey(s,k);
+ let s=K.createState();for(const k of ['MODE','5','1','2','=','1','=','5','=','1','UP'])s=K.dispatchKey(s,k);
  eq(s.view,'coefficient');eq(s.ui.wizard.index,0);eq(s.ui.wizard.values[3],'1');
 });
 test('P1-10 complex quadratic roots can be paged',()=>{
- let s=K.createState();for(const k of ['MODE','5','1','1','=','0','=','1','='])s=K.dispatchKey(s,k);
+ let s=K.createState();for(const k of ['MODE','5','3','1','=','0','=','1','='])s=K.dispatchKey(s,k);
  eq(s.view,'result');eq(s.lastValue.data.roots.length,2);
  s=K.dispatchKey(s,'DOWN');eq(s.ui.lastWizard.resultPage,1);
  const screen=K.semanticScreen(s);eq(screen.result,'0-1i');
@@ -2001,6 +2001,23 @@ test('P2-09 repeated SHIFT AC does not reactivate power',()=>{
  eq(s.power,false);eq(s.view,'off');
 });
 
+
+test('CASIO EQN 1 selects simultaneous equations with 2 unknowns',()=>{
+ let s=K.createState();for(const key of ['MODE','5','1'])s=K.dispatchKey(s,key);
+ eq(s.view,'coefficient');eq(s.ui.wizard.kind,'LINEAR2');
+});
+test('CASIO EQN 2 selects simultaneous equations with 3 unknowns',()=>{
+ let s=K.createState();for(const key of ['MODE','5','2'])s=K.dispatchKey(s,key);
+ eq(s.view,'coefficient');eq(s.ui.wizard.kind,'LINEAR3');
+});
+test('CASIO EQN 3 selects quadratic equation',()=>{
+ let s=K.createState();for(const key of ['MODE','5','3'])s=K.dispatchKey(s,key);
+ eq(s.view,'coefficient');eq(s.ui.wizard.kind,'QUAD');
+});
+test('CASIO EQN 4 selects cubic equation',()=>{
+ let s=K.createState();for(const key of ['MODE','5','4'])s=K.dispatchKey(s,key);
+ eq(s.view,'coefficient');eq(s.ui.wizard.kind,'CUBIC');
+});
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
