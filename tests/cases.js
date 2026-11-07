@@ -1740,6 +1740,33 @@ test('P1-14 traditional Y at start of term remains available',()=>{
  let s=K.createState();for(const key of ['ALPHA','LP','ADD','ALPHA','RP'])s=K.dispatchKey(s,key);
  eq(s.expression,'X+Y');
 });
+
+test('P1-15 MathO fraction switches exact decimal exact without changing Ans',()=>{
+ let s=K.createState();
+ for(const k of ['7','DIV','6','='])s=K.dispatchKey(s,k);
+ eq(s.result,'7/6');s=K.dispatchKey(s,'S-D');eq(s.result,'1.166666667');
+ s=K.dispatchKey(s,'S-D');eq(s.result,'7/6');eq(K.valueToString(s.ans),'7/6');
+});
+test('P1-15 mixed setup restores mixed form after S-D cycle',()=>{
+ let s=K.createState();s.setup.fractionStyle='mixed';
+ for(const k of ['7','DIV','6','='])s=K.dispatchKey(s,k);
+ eq(s.result,'1 1/6');eq(s.mixedView,true);
+ s=K.dispatchKey(s,'S-D');eq(s.mixedView,false);
+ s=K.dispatchKey(s,'S-D');eq(s.result,'1 1/6');eq(s.mixedView,true);
+ eq(K.valueToString(s.ans),'7/6');
+});
+test('P1-15 LineIO S-D reverses default numeric fraction',()=>{
+ let s=K.createState();s.setup.displayStyle='LineIO';
+ for(const k of ['7','DIV','6','='])s=K.dispatchKey(s,k);
+ eq(s.result,'1.166666667');s=K.dispatchKey(s,'S-D');
+ eq(s.result,'7/6');s=K.dispatchKey(s,'S-D');eq(s.result,'1.166666667');
+});
+test('P1-15 irrational sqrt exact to decimal without overwriting value',()=>{
+ let s=K.createState();for(const k of ['SQRT','2','RIGHT','='])s=K.dispatchKey(s,k);
+ eq(K.valueToString(s.lastValue),'√2');const original=K.valueToString(s.ans);
+ s=K.dispatchKey(s,'S-D');if(s.result==='√2')throw Error('decimal conversion missing');
+ eq(K.valueToString(s.ans),original);
+});
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
