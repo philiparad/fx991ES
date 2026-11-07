@@ -1501,9 +1501,11 @@ test('P1-04 conversion cancellation does not overwrite X/Y',()=>{
  eq(s.view,'edit');eq(K.valueToString(s.memory.X),'8');
 });
 
-test('P1-05 SHIFT STAT menu leads to data editor',()=>{
+test('CASIO SHIFT STAT menu selects Type=1 and Data=2',()=>{
  let s=K.createState();s.mode='STAT';for(const k of ['SHIFT','1'])s=K.dispatchKey(s,k);
- eq(s.view,'secondary-menu');s=K.dispatchKey(s,'1');eq(s.view,'stat-grid');
+ eq(s.view,'secondary-menu');s=K.dispatchKey(s,'1');eq(s.view,'workflow-menu');
+ s=K.dispatchKey(s,'AC');for(const k of ['SHIFT','1','2'])s=K.dispatchKey(s,k);
+ eq(s.view,'stat-grid');
 });
 test('P1-05 SHIFT MATRIX opens native register menu',()=>{
  let s=K.createState();s.mode='MATRIX';for(const k of ['SHIFT','4','1'])s=K.dispatchKey(s,k);
@@ -2073,6 +2075,17 @@ test('CASIO STAT single variable FREQ supports frequency above 80',()=>{
  s.ui.modeMemory.stat.rows=[[2,200],[8,100]];
  s=K.dispatchKey(s,'DATA');s=K.dispatchKey(s,'STATS');
  eq(s.view,'result');eq(K.numeric(s.ans),4);
+});
+
+test('CASIO SHIFT STAT Sum menu evaluates sum of squares',()=>{
+ let s=K.createState();s.mode='STAT';s.ui.modeMemory.stat.rows=[[2],[3]];
+ for(const k of ['SHIFT','1','3','1'])s=K.dispatchKey(s,k);
+ eq(s.view,'result');eq(K.numeric(s.lastValue),13);
+});
+test('CASIO SHIFT STAT Var menu evaluates mean',()=>{
+ let s=K.createState();s.mode='STAT';s.ui.modeMemory.stat.rows=[[2],[4],[6]];
+ for(const k of ['SHIFT','1','4','2'])s=K.dispatchKey(s,k);
+ eq(s.view,'result');eq(K.numeric(s.lastValue),4);
 });
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
