@@ -636,7 +636,7 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
  if(key==='DIFF'&&s.mode==='COMP'&&(s.view==='edit'||s.view==='result')){
   const source=s.document?E.serialize(s.document):s.expression;
   try{if(source)base.tokenize(source)}catch(error){s.shift=false;s.alpha=false;return end()}
-  const operation=s.shift?'INTEGRAL':'DIFF';
+  const operation=s.shift?'DIFF':'INTEGRAL';
   const empty=!source;
   s.ui.numericalFlow={operation,source,fields:empty?(operation==='DIFF'?['expression','at']:['expression','lower','upper']):(operation==='DIFF'?['at']:['lower','upper']),
    index:0,buffer:'',buffers:{},values:{}};
