@@ -615,6 +615,39 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
   }
   return end();
  }
+ // P1-04: polar and rectangular coordinate conversion through SHIFT +/-.
+ if(s.view==='coordinate-input'){
+  const f=s.ui.coordinateFlow;
+  if(key==='AC'){s.ui.coordinateFlow=null;s.view='edit';s.result='';return end()}
+  if(key==='DEL'){f.buffer=f.buffer.slice(0,-1);return end()}
+  if(key==='NEG'||key==='SUB'&&!f.buffer){f.buffer=f.buffer.startsWith('-')?f.buffer.slice(1):'-'+f.buffer;return end()}
+  if(/^[0-9.]$/.test(key)){if(f.buffer.length<24&&!(key==='.'&&f.buffer.includes('.')))f.buffer+=key;return end()}
+  if(key==='='||key==='RIGHT'){
+   if(!/^-?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)$/.test(f.buffer)){
+    s.error=base.ERROR.ARGUMENT;s.result=s.error;s.view='error';s.ui.coordinateFlow=null;return end();
+   }
+   f.values[f.index]=Number(f.buffer);
+   if(!Number.isFinite(f.values[f.index])){s.error=base.ERROR.ARGUMENT;s.result=s.error;s.view='error';s.ui.coordinateFlow=null;return end()}
+   if(f.index===0){f.index=1;f.buffer='';return end()}
+   const [a,b]=f.values,angle=s.setup.angle==='DEG'?180/Math.PI:s.setup.angle==='GRAD'?200/Math.PI:1;
+   const x=f.kind==='POL'?Math.hypot(a,b):a*Math.cos(b/angle);
+   const y=f.kind==='POL'?Math.atan2(b,a)*angle:a*Math.sin(b/angle);
+   try{
+    const outX=base.dec(Math.abs(x)<1e-13?0:x),outY=base.dec(Math.abs(y)<1e-13?0:y);
+    s.memory.X=outX;s.memory.Y=outY;s.lastValue=outX;s.ans=outX;s.decimalView=true;
+    s.result=base.valueDisplay(outX,s.setup,true,'COMP')+', '+base.valueDisplay(outY,s.setup,true,'COMP');
+    s.ui.coordinateDisplay=f.kind+'('+a+','+b+')';
+    s.history=[{expression:s.ui.coordinateDisplay,display:s.result},...s.history].slice(0,50);
+    s.view='result';s.error=null;
+   }catch(error){s.error=error.code||base.ERROR.MATH;s.result=s.error;s.view='error'}
+   s.ui.coordinateFlow=null;return end();
+  }
+  return end();
+ }
+ if(s.shift&&['ADD','SUB'].includes(key)&&s.mode==='COMP'&&(s.view==='edit'||s.view==='result')){
+  s.ui.coordinateFlow={kind:key==='ADD'?'POL':'RECT',index:0,values:[],buffer:''};
+  s.view='coordinate-input';s.shift=false;s.alpha=false;return end();
+ }
  // P0-14: independent M memory handles M+ and SHIFT M−.
  if(key==='MPLUS'&&s.mode==='COMP'&&(s.view==='edit'||s.view==='result')){
   try{
@@ -793,6 +826,8 @@ function semanticScreen(s){if(!s.ui)return base.semanticScreen(s);let screen=bas
  }
  if(s.view==='hyp-menu'){screen.expression='HYP';screen.result='1:sinh 2:cosh 3:tanh 4:asinh 5:acosh 6:atanh';screen.menuItems=null}
  if(s.view==='register-prompt'){screen.expression=s.ui.pending+' REG';screen.result='A-F M X Y'}
+ if(s.view==='coordinate-input'){const f=s.ui.coordinateFlow;screen.expression=f.kind==='POL'?'Pol(X,Y)':'Rec(r,θ)';screen.result=(f.index===0?(f.kind==='POL'?'X':'r'):(f.kind==='POL'?'Y':'θ'))+'? '+(f.buffer||'_');screen.menuItems=null}
+ if(s.view==='result'&&s.ui.coordinateDisplay){screen.expression=s.ui.coordinateDisplay;screen.resultValue=null}
  if(s.view==='drg-menu'){screen.expression='DRG▶';screen.result='1:° 2:r 3:g';screen.menuItems=['1:Deg','2:Rad','3:Grad']}
  if(s.view==='result'&&s.ui.drgDisplay){screen.expression=s.ui.drgDisplay;screen.resultValue=null}
  if(s.view==='reference-code'){screen.expression=s.ui.referenceFlow.kind==='CONST'?'CONSTANT':'CONVERSION';screen.result='Number 01~40? '+(s.ui.referenceFlow.digits||'__');screen.menuItems=null}
