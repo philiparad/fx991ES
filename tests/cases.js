@@ -419,7 +419,7 @@ test('P4 SETUP 7 then 4 selects Sci 4',()=>{let s=K.createState();for(let k of [
 test('P4 SETUP 8 then 1 selects Norm 1',()=>{let s=K.createState();for(let k of ['SHIFT','MODE','8','1'])s=K.dispatchKey(s,k);eq(s.setup.format,'Norm1')});
 test('P4 SETUP 8 then 2 selects Norm 2',()=>{let s=K.createState();for(let k of ['SHIFT','MODE','8','2'])s=K.dispatchKey(s,k);eq(s.setup.format,'Norm2')});
 test('P4 SETUP MthIO preference selector does not claim output parity',()=>{let s=K.createState();for(let k of ['SHIFT','MODE','1','2'])s=K.dispatchKey(s,k);eq(s.ui.displayStyle,'LineO');eq(s.view,'edit')});
-test('P4 SETUP secondary page has visible options and no fake settings',()=>{let s=K.createState();for(let k of ['SHIFT','MODE','DOWN'])s=K.dispatchKey(s,k);let menu=K.semanticScreen(s);eq(menu.menuItems.length,6);for(let k of ['1','2','3'])s=K.dispatchKey(s,k);eq(s.view,'setup')});
+test('P4 SETUP secondary page exposes active fraction settings',()=>{let s=K.createState();for(let k of ['SHIFT','MODE','DOWN'])s=K.dispatchKey(s,k);let menu=K.semanticScreen(s);eq(menu.menuItems.length,6);s=K.dispatchKey(s,'1');eq(s.view,'edit');eq(s.setup.fractionStyle,'mixed');for(let k of ['SHIFT','MODE','DOWN','2'])s=K.dispatchKey(s,k);eq(s.setup.fractionStyle,'improper')});
 test('P4 SETUP cancels secondary page with AC',()=>{let s=K.createState();for(let k of ['SHIFT','MODE','DOWN','AC'])s=K.dispatchKey(s,k);eq(s.view,'edit')});
 test('P4 LCD MODE grid renders all eight standard choices',()=>{let s=K.createState();s=K.dispatchKey(s,'MODE');let sc=K.semanticScreen(s);eq(sc.menuItems.length,8);let frame=L.composeScreen(sc);eq(frame.pixels.length,96*31)});
 test('P4 LCD SETUP grid renders documented first page',()=>{let s=K.createState();for(let k of ['SHIFT','MODE'])s=K.dispatchKey(s,k);let sc=K.semanticScreen(s);eq(sc.menuItems.length,8);eq(sc.menuItems[0],'1:MthIO');eq(sc.menuItems[7],'8:Norm')});
@@ -882,7 +882,7 @@ test('CALC cancel after first variable preserves all register values',()=>{
 test('SHIFT CALC uses stored A in X-based equation',()=>{
  let s=K.createState('standard');s.memory.A=K.rat(2);
  s.expression='X-A';s.cursor=3;s.document=global.FX991_EDITOR.fromSource(s.expression);
- for(const key of ['SHIFT','CALC','1','='])s=K.dispatchKey(s,key);
+ for(const key of ['SHIFT','CALC','=','1','='])s=K.dispatchKey(s,key);
  eq(s.view,'result');close(K.numeric(s.lastValue),2,1e-8);close(K.numeric(s.memory.A),2);
 });
 test('SHIFT CALC only solves expressions containing X',()=>{
