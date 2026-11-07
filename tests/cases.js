@@ -906,7 +906,7 @@ test('DIFF keypad evaluates derivative of X squared at 3',()=>{
 test('SHIFT DIFF integrates X squared between 0 and 2',()=>{
  let s=K.createState('standard');s.expression='X^2';s.cursor=3;
  s.document=global.FX991_EDITOR.fromSource(s.expression);
- for(const key of ['SHIFT','DIFF'])s=K.dispatchKey(s,key);
+ for(const key of ['DIFF'])s=K.dispatchKey(s,key);
  eq(s.view,'numerical-input');eq(s.ui.numericalFlow.operation,'INTEGRAL');
  eq(K.semanticScreen(s).result.includes('Lower?'),true);
  for(const key of ['0','='])s=K.dispatchKey(s,key);
@@ -919,34 +919,34 @@ test('SHIFT DIFF integrates X squared between 0 and 2',()=>{
 test('SHIFT DIFF handles reversed bounds and negative limits',()=>{
  let s=K.createState('standard');s.expression='X';s.cursor=1;
  s.document=global.FX991_EDITOR.fromSource(s.expression);
- for(const key of ['SHIFT','DIFF','2','=','NEG','1','='])s=K.dispatchKey(s,key);
+ for(const key of ['DIFF','2','=','NEG','1','='])s=K.dispatchKey(s,key);
  eq(s.view,'result');close(K.numeric(s.lastValue),-1.5,1e-6);
 });
 test('DIFF AC cancels without changing equation or registers',()=>{
  let s=K.createState('standard');s.expression='X+1';s.cursor=3;
  s.document=global.FX991_EDITOR.fromSource(s.expression);
  s.memory.X=K.rat(9);
- for(const key of ['DIFF','2','AC'])s=K.dispatchKey(s,key);
+ for(const key of ['SHIFT','DIFF','2','AC'])s=K.dispatchKey(s,key);
  eq(s.view,'edit');eq(s.expression,'X+1');close(K.numeric(s.memory.X),9);
 });
 test('DIFF rejects malformed coordinate without changing ANS',()=>{
  let s=K.createState('standard');s.expression='X';s.cursor=1;
  s.document=global.FX991_EDITOR.fromSource(s.expression);
- for(const key of ['DIFF','NEG','='])s=K.dispatchKey(s,key);
+ for(const key of ['SHIFT','DIFF','NEG','='])s=K.dispatchKey(s,key);
  eq(s.view,'error');eq(s.error,K.ERROR.ARGUMENT);
  close(K.numeric(s.ans),0);eq(s.expression,'X');
 });
 test('INTEGRAL prompts do not commit partial bounds',()=>{
  let s=K.createState('standard');s.expression='X';s.cursor=1;
  s.document=global.FX991_EDITOR.fromSource(s.expression);
- s=K.dispatchKey(s,'SHIFT');s=K.dispatchKey(s,'DIFF');
+ s=K.dispatchKey(s,'SHIFT');s=K.dispatchKey(s,'SHIFT');s=K.dispatchKey(s,'DIFF');
  for(const key of ['3','=','AC'])s=K.dispatchKey(s,key);
  eq(s.view,'edit');eq(s.expression,'X');
  eq(s.ui.numericalFlow,null);close(K.numeric(s.ans),0);
 });
 test('DIFF key remains inactive outside COMP',()=>{
  let s=K.createState('standard');s.mode='CMPLX';
- s=K.dispatchKey(s,'DIFF');eq(s.view,'edit');
+ s=K.dispatchKey(s,'SHIFT');s=K.dispatchKey(s,'DIFF');eq(s.view,'edit');
  eq(s.ui.numericalFlow,undefined);
 });
 
@@ -954,20 +954,20 @@ test('DIFF key remains inactive outside COMP',()=>{
 test('DIFF keypad accepts scientific notation evaluation point',()=>{
  let s=K.createState('standard');s.expression='X^2';s.cursor=3;
  s.document=global.FX991_EDITOR.fromSource(s.expression);
- for(const key of ['DIFF','2','EXP10','NEG','3','='])s=K.dispatchKey(s,key);
+ for(const key of ['SHIFT','DIFF','2','EXP10','NEG','3','='])s=K.dispatchKey(s,key);
  eq(s.view,'result');close(K.numeric(s.lastValue),0.004,1e-7);
  eq(s.numericalDetails.operation,'DIFF');
 });
 test('INTEGRAL scientific-notation upper limit',()=>{
  let s=K.createState('standard');s.expression='X';s.cursor=1;
  s.document=global.FX991_EDITOR.fromSource(s.expression);
- for(const key of ['SHIFT','DIFF','0','=','2','EXP10','1','='])s=K.dispatchKey(s,key);
+ for(const key of ['DIFF','0','=','2','EXP10','1','='])s=K.dispatchKey(s,key);
  eq(s.view,'result');close(K.numeric(s.lastValue),200,1e-6);
 });
 test('INTEGRAL lets the user revisit and revise lower bound',()=>{
  let s=K.createState('standard');s.expression='X';s.cursor=1;
  s.document=global.FX991_EDITOR.fromSource(s.expression);
- for(const key of ['SHIFT','DIFF','1','RIGHT','2','LEFT'])s=K.dispatchKey(s,key);
+ for(const key of ['DIFF','1','RIGHT','2','LEFT'])s=K.dispatchKey(s,key);
  eq(s.view,'numerical-input');eq(s.ui.numericalFlow.index,0);eq(s.ui.numericalFlow.buffer,'1');
  for(const key of ['DEL','3','RIGHT'])s=K.dispatchKey(s,key);
  eq(s.ui.numericalFlow.index,1);eq(s.ui.numericalFlow.buffer,'2');
@@ -977,19 +977,19 @@ test('INTEGRAL lets the user revisit and revise lower bound',()=>{
 test('Incomplete scientific exponent is a typed argument error',()=>{
  let s=K.createState('standard');s.expression='X';s.cursor=1;
  s.document=global.FX991_EDITOR.fromSource(s.expression);
- for(const key of ['DIFF','2','EXP10','='])s=K.dispatchKey(s,key);
+ for(const key of ['SHIFT','DIFF','2','EXP10','='])s=K.dispatchKey(s,key);
  eq(s.view,'error');eq(s.error,K.ERROR.ARGUMENT);close(K.numeric(s.ans),0);
 });
 test('Nonfinite scientific exponent is rejected without updating ANS',()=>{
  let s=K.createState('standard');s.expression='X';s.cursor=1;
  s.document=global.FX991_EDITOR.fromSource(s.expression);
- for(const key of ['DIFF','2','EXP10','9','9','9','='])s=K.dispatchKey(s,key);
+ for(const key of ['SHIFT','DIFF','2','EXP10','9','9','9','='])s=K.dispatchKey(s,key);
  eq(s.view,'error');eq(s.error,K.ERROR.ARGUMENT);close(K.numeric(s.ans),0);
 });
 test('Scientific exponent sign is editable and not duplicated',()=>{
  let s=K.createState('standard');s.expression='X';s.cursor=1;
  s.document=global.FX991_EDITOR.fromSource(s.expression);
- for(const key of ['DIFF','2','EXP10','NEG','NEG'])s=K.dispatchKey(s,key);
+ for(const key of ['SHIFT','DIFF','2','EXP10','NEG','NEG'])s=K.dispatchKey(s,key);
  eq(s.ui.numericalFlow.buffer,'2e');
  for(const key of ['ADD','3'])s=K.dispatchKey(s,key);
  eq(s.ui.numericalFlow.buffer,'2e+3');
@@ -1045,7 +1045,7 @@ test('Numerical execute retains domain diagnostic without updating Ans',()=>{
 });
 test('DIFF keypad exposes reason for non-differentiable cusp',()=>{
  let s=K.createState('standard');s.expression='abs(X)';s.document=global.FX991_EDITOR.fromSource(s.expression);
- for(const key of ['DIFF','0','='])s=K.dispatchKey(s,key);
+ for(const key of ['SHIFT','DIFF','0','='])s=K.dispatchKey(s,key);
  eq(s.view,'error');eq(s.numericalDetails.reason,'non_differentiable');
 });
 
@@ -1461,19 +1461,19 @@ test('P1-02 SOLVE parameter cancellation keeps original registers',()=>{
 });
 
 test('P1-03 DIFF starts with editable function when expression empty',()=>{
- let s=K.createState();for(const k of ['DIFF'])s=K.dispatchKey(s,k);
+ let s=K.createState();for(const k of ['SHIFT','DIFF'])s=K.dispatchKey(s,k);
  eq(s.view,'numerical-input');eq(s.ui.numericalFlow.fields.join(','),'expression,at');
  for(const k of ['ALPHA','LP','POW','2','=','3','='])s=K.dispatchKey(s,k);
  eq(s.view,'result');close(K.numeric(s.lastValue),6,1e-6);
 });
 test('P1-03 integral accepts function then lower and upper bounds',()=>{
- let s=K.createState();for(const k of ['SHIFT','DIFF'])s=K.dispatchKey(s,k);
+ let s=K.createState();for(const k of ['DIFF'])s=K.dispatchKey(s,k);
  eq(s.ui.numericalFlow.fields.join(','),'expression,lower,upper');
  for(const k of ['ALPHA','LP','=','0','=','2','='])s=K.dispatchKey(s,k);
  eq(s.view,'result');close(K.numeric(s.lastValue),2,1e-5);
 });
 test('P1-03 empty expression field cannot calculate',()=>{
- let s=K.createState();for(const k of ['DIFF','='])s=K.dispatchKey(s,k);
+ let s=K.createState();for(const k of ['SHIFT','DIFF','='])s=K.dispatchKey(s,k);
  eq(s.view,'error');
 });
 
