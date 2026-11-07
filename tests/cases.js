@@ -683,7 +683,7 @@ test('M27 3D cross product',()=>{let s=t27keys(t27vector(),['SIZE','1','=','0','
 test('M27 invalid register entry does not execute JS',()=>{let s=t27keys(t27matrix(),['NEG','=']);eq(s.view,'error')});
 test('M27 STAT data editor initializes empty',()=>{let s=t27('standard',['MODE','3','DATA']);eq(s.view,'stat-grid');eq(s.ui.modeMemory.stat.rows.length,0)});
 test('M27 STAT editor accepts multiple rows and computes mean',()=>{let s=t27('standard',['MODE','3','DATA','1','=','2','=','3','STATS']);eq(s.view,'result');if(!s.result.includes('mean=2'))throw Error(s.result)});
-test('M27 STAT rows persist when mode changed',()=>{let s=t27('standard',['MODE','3','DATA','7','=','8','=','AC','MODE','1','MODE','3','DATA']);eq(s.ui.modeMemory.stat.rows.length,2);eq(s.ui.modeMemory.stat.rows[0][0],7)});
+test('M27 STAT rows clear when exiting STAT mode',()=>{let s=t27('standard',['MODE','3','DATA','7','=','8','=','AC','MODE','1','MODE','3','DATA']);eq(s.ui.modeMemory.stat.rows.length,0)});
 test('M27 STAT row deletion',()=>{let s=t27('standard',['MODE','3','DATA','1','=','2','=','UP','DELROW']);eq(s.ui.modeMemory.stat.rows.length,1)});
 test('M27 STAT pair mode linear regression',()=>{let s=t27('standard',['MODE','3','DATA','PAIR','1','=','3','=','2','=','5','=','3','=','7','STATS']);eq(s.view,'result');eq(s.expression,'LINEAR:1,3;2,5;3,7')});
 test('M27 dataset reset on PAIR changes',()=>{let s=t27('standard',['MODE','3','DATA','1','=','PAIR']);eq(s.ui.modeMemory.stat.rows.length,0);eq(s.ui.modeMemory.stat.kind,'LINEAR')});
