@@ -1901,10 +1901,10 @@ test('P1-20 matrix and vector register values survive MODE changes',()=>{
  eq(s.ui.modeMemory.matrix.A[1][1],4);
  eq(s.ui.modeMemory.vector.B.join(','),'5,6,7');
 });
-test('P1-20 STAT dataset remains available after returning from COMP',()=>{
- let s=K.createState();s.ui.modeMemory.stat.rows=[[2],[3],[4]];
- for(const k of ['MODE','3','MODE','1','MODE','3'])s=K.dispatchKey(s,k);
- eq(s.ui.modeMemory.stat.rows.length,3);
+test('CASIO STAT dataset is cleared when exiting STAT and returning',()=>{
+ let s=K.createState();s.mode='STAT';s.ui.modeMemory.stat.rows=[[2],[3],[4]];
+ for(const k of ['MODE','1','MODE','3'])s=K.dispatchKey(s,k);
+ eq(s.ui.modeMemory.stat.rows.length,0);
 });
 test('P1-20 mode transition clears stale multi-statement continuation',()=>{
  let s=K.createState();
@@ -2039,6 +2039,17 @@ test('CASIO EQN = cycles through roots then opens coefficient editor',()=>{
 test('CASIO EQN AC from any root returns to coefficient editor',()=>{
  let s=K.createState();for(const k of ['MODE','5','3','1','=','NEG','3','=','2','='])s=K.dispatchKey(s,k);
  s=K.dispatchKey(s,'AC');eq(s.view,'coefficient');eq(s.ui.wizard.index,0);
+});
+
+test('CASIO STAT frequency setup change clears stored dataset',()=>{
+ let s=K.createState();s.mode='STAT';s.ui.modeMemory.stat.rows=[[10],[20]];
+ for(const k of ['SHIFT','MODE','DOWN','4','1'])s=K.dispatchKey(s,k);
+ eq(s.setup.statFrequency,true);eq(s.ui.modeMemory.stat.rows.length,0);
+});
+test('CASIO STAT frequency unchanged preserves existing data',()=>{
+ let s=K.createState();s.mode='STAT';s.setup.statFrequency=true;s.ui.modeMemory.stat.rows=[[10,2],[20,3]];
+ for(const k of ['SHIFT','MODE','DOWN','4','1'])s=K.dispatchKey(s,k);
+ eq(s.ui.modeMemory.stat.rows.length,2);
 });
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
