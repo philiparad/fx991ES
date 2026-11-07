@@ -1681,6 +1681,37 @@ test('P1-12 VECTOR cross of 2D vectors rejects dimensions',()=>{
  for(const k of ['REGS','1','OP','4'])s=K.dispatchKey(s,k);
  eq(s.view,'error');eq(s.error,K.ERROR.DIMENSION);
 });
+
+test('P1-13 TABLE custom function with fractional step',()=>{
+ let s=K.createState();for(const k of ['MODE','7','2','ALPHA','LP','POW','2','=','0','=','1','=','0','.','5','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');eq(s.lastValue.data.rows.length,3);
+ eq(s.lastValue.data.rows[1][1],0.25);
+});
+test('P1-13 TABLE result navigation stays within rows',()=>{
+ let s=K.createState();for(const k of ['MODE','7','1','0','=','2','=','1','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');s=K.dispatchKey(s,'DOWN');s=K.dispatchKey(s,'DOWN');s=K.dispatchKey(s,'DOWN');
+ eq(s.ui.lastWizard.resultPage,2);
+ eq(K.semanticScreen(s).result,'2, 4');
+});
+test('P1-13 TABLE can reopen function fields and recompute',()=>{
+ let s=K.createState();for(const k of ['MODE','7','1','0','=','2','=','1','='])s=K.dispatchKey(s,k);
+ s=K.dispatchKey(s,'EDIT');eq(s.view,'coefficient');eq(s.ui.wizard.values[0],'0');
+ for(const k of ['DEL','1','=','2','=','1','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');eq(s.lastValue.data.rows.length,2);
+});
+test('P1-13 TABLE AC from empty field exits safely',()=>{
+ let s=K.createState();for(const k of ['MODE','7','2','AC'])s=K.dispatchKey(s,k);
+ eq(s.view,'edit');eq(s.ui.wizard,null);
+});
+test('P1-13 TABLE standard row limit is enforced',()=>{
+ let s=K.createState();for(const k of ['MODE','7','1','0','=','3','0','=','1','='])s=K.dispatchKey(s,k);
+ eq(s.view,'error');eq(s.error,K.ERROR.MEM);
+});
+test('P1-13 TABLE dual C mode stores both outputs',()=>{
+ let s=K.createState('c');for(const k of ['MODE','7','3','ALPHA','LP','=','ALPHA','LP','POW','2','=','0','=','2','=','1','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');eq(s.lastValue.data.rows.length,3);
+ eq(s.lastValue.data.rows[2][2],4);
+});
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
