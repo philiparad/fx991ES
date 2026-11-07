@@ -166,6 +166,36 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
   }
   return end();
  }
+ // P0-17: DRG▶ postfix conversion: 1 degrees, 2 radians, 3 grads.
+ if(s.view==='drg-menu'){
+  if(key==='AC'){s.view='edit';s.ui.angleConversion=null;return end()}
+  if(['1','2','3'].includes(key)){
+   s.ui.angleConversion={sourceUnit:{1:'DEG',2:'RAD',3:'GRAD'}[key],expression:s.ui.drgSource};
+   s.ui.drgSource=null;s.view='edit';s.result='';return end();
+  }
+  return end();
+ }
+ if(key==='ANS'&&s.shift&&s.mode==='COMP'&&(s.view==='edit'||s.view==='result')){
+  s.ui.drgSource=s.view==='result'?'Ans':(s.document?E.serialize(s.document):s.expression);
+  s.view='drg-menu';s.shift=false;s.alpha=false;return end();
+ }
+ if(key==='='&&s.ui.angleConversion&&s.view==='edit'&&s.mode==='COMP'){
+  const conversion=s.ui.angleConversion;
+  try{
+   if(!conversion.expression)throw new base.CalcError(base.ERROR.SYNTAX);
+   const value=base.calculateExpression('COMP',conversion.expression,s);
+   const unitRadians={DEG:Math.PI/180,RAD:1,GRAD:Math.PI/200};
+   const n=base.numeric(value)*unitRadians[conversion.sourceUnit]/unitRadians[s.setup.angle];
+   const result=base.dec(n);
+   s.lastValue=result;s.ans=result;s.decimalView=true;s.mixedView=false;s.resultScrollX=0;
+   s.result=base.valueDisplay(result,s.setup,true,s.mode);s.view='result';s.error=null;
+   s.ui.drgDisplay=conversion.expression+' '+conversion.sourceUnit+'→'+s.setup.angle;
+   s.history=[{expression:s.ui.drgDisplay,display:s.result},...s.history].slice(0,50);
+  }catch(error){s.error=error.code||base.ERROR.MATH;s.view='error';s.result=s.error}
+  s.ui.angleConversion=null;s.shift=false;s.alpha=false;return end();
+ }
+ if(key==='AC'){s.ui.angleConversion=null;s.ui.drgDisplay=null}
+ if(key==='='&&!s.ui.angleConversion)s.ui.drgDisplay=null;
  // P0-16: two-digit constants and conversion selection from physical SHIFT keys.
  if(s.view==='reference-code'){
   const f=s.ui.referenceFlow;
@@ -708,6 +738,8 @@ function semanticScreen(s){if(!s.ui)return base.semanticScreen(s);let screen=bas
  }
  if(s.view==='hyp-menu'){screen.expression='HYP';screen.result='1:sinh 2:cosh 3:tanh 4:asinh 5:acosh 6:atanh';screen.menuItems=null}
  if(s.view==='register-prompt'){screen.expression=s.ui.pending+' REG';screen.result='A-F M X Y'}
+ if(s.view==='drg-menu'){screen.expression='DRG▶';screen.result='1:° 2:r 3:g';screen.menuItems=['1:Deg','2:Rad','3:Grad']}
+ if(s.view==='result'&&s.ui.drgDisplay){screen.expression=s.ui.drgDisplay;screen.resultValue=null}
  if(s.view==='reference-code'){screen.expression=s.ui.referenceFlow.kind==='CONST'?'CONSTANT':'CONVERSION';screen.result='Number 01~40? '+(s.ui.referenceFlow.digits||'__');screen.menuItems=null}
  if(s.ui.pendingConversion&&s.view==='edit'){screen.result='CONV '+String(s.ui.pendingConversion).padStart(2,'0')+'  = to compute'}
  if(s.view==='result'&&s.ui.conversionDisplay){screen.expression=s.ui.conversionDisplay;screen.resultValue=null}
