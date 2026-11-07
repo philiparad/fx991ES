@@ -30,7 +30,7 @@ function saveRegValue(s){let flow=s.ui.registerFlow,v=flow.buffer;if(v==='')retu
  flow.buffer='';}
 function regExpression(s,op){let flow=s.ui.registerFlow,cat=flow.category,one=s.ui.modeMemory[cat][flow.name],two=s.ui.modeMemory[cat][flow.other];
  const matrixText=a=>a.map(row=>row.join(',')).join(';'),vectorText=a=>a.join(',');
- let unary=cat==='matrix'?['DET','INV','TRANS']:['ABS'];let binary=cat==='matrix'?['ADD','MUL']:['DOT','ADD','CROSS','ANGLE'];
+ let unary=cat==='matrix'?['DET','INV','TRANS','ABS','POW2','POW3']:['ABS'];let binary=cat==='matrix'?['ADD','MUL','SUB']:['DOT','ADD','CROSS','ANGLE'];
  if(!unary.includes(op)&&!binary.includes(op))throw new base.CalcError(base.ERROR.ARGUMENT);
  if(!one||((!unary.includes(op))&&!two))throw new base.CalcError(base.ERROR.ARGUMENT);
  let encode=cat==='matrix'?matrixText:vectorText;
@@ -134,10 +134,10 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
   return end();
  }
  if(s.view==='register-operation'){
-  let f=s.ui.registerFlow,ops=f.category==='matrix'?['DET','INV','TRANS','ADD','MUL']:['ABS','DOT','ADD','CROSS','ANGLE'];
+  let f=s.ui.registerFlow,ops=f.category==='matrix'?['DET','INV','TRANS','ADD','MUL','SUB','ABS','POW2','POW3']:['ABS','DOT','ADD','CROSS','ANGLE'];
   if(key==='AC'){s.view='register-summary';return end()}
   if(key==='OTHER'){f.other=f.other==='B'?'C':'B';return end()}
-  if(/^[1-5]$/.test(key)){regResult(s,ops[Number(key)-1]);return end()}
+  if(/^[1-9]$/.test(key)&&ops[Number(key)-1]){regResult(s,ops[Number(key)-1]);return end()}
   return end();
  }
  if(s.view==='stat-grid'){
@@ -903,7 +903,7 @@ function semanticScreen(s){if(!s.ui)return base.semanticScreen(s);let screen=bas
   let f=s.ui.registerFlow,reg=s.ui.modeMemory[f.category][f.name],count=f.category==='matrix'?reg.length*reg.length:reg.length;
   if(s.view==='register-editor'){screen.expression=(f.category==='matrix'?'Mat':'Vct')+f.name+' '+(f.field+1)+'/'+count;screen.result=f.buffer||String(regValues(f,s)[f.field]);}
   else if(s.view==='register-summary'){screen.expression=(f.category==='matrix'?'Mat':'Vct')+f.name+' SAVED';screen.result='OP EDIT REGS';}
-  else{screen.expression=(f.category==='matrix'?'MATRIX':'VECTOR')+' OP';screen.result=f.category==='matrix'?'1:DET 2:INV 3:T 4:+ 5:*':'1:ABS 2:DOT 3:+ 4:X 5:ANGLE';}
+  else{screen.expression=(f.category==='matrix'?'MATRIX':'VECTOR')+' OP';screen.result=f.category==='matrix'?'1:DET 2:INV 3:T 4:+ 5:* 6:- 7:ABS 8:^2 9:^3':'1:ABS 2:DOT 3:+ 4:X 5:ANGLE';}
  }
  if(s.view==='stat-grid'){let f=s.ui.statFlow,stat=s.ui.modeMemory.stat;screen.expression=stat.kind+' '+(stat.kind==='1VAR'&&s.setup.statFrequency?'X/FREQ':'DATA')+' '+(f.field+1);screen.result=f.buffer||'0';}
  if(s.view==='calc-input'&&s.ui.calcFlow){const f=s.ui.calcFlow,n=f.variables[f.index];screen.expression=f.operation+' '+f.source;screen.result=n+'? '+(f.buffer||'['+base.valueToString(s.memory[n]||base.rat(0))+']')+' ('+(f.index+1)+'/'+f.variables.length+')';screen.menuItems=null}
