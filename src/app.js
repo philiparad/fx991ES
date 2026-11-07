@@ -13,12 +13,16 @@ for(const [groupName,items] of Object.entries(keypadLayout)){
   const cell=document.createElement('div');cell.className='key-cell';
   if(!item.key){cell.classList.add('key-spacer');cell.setAttribute('aria-hidden','true');group.append(cell);continue}
   const alternative=document.createElement('div');alternative.className='alt';alternative.textContent=item.legend||' ';
+  const alpha=document.createElement('div');alpha.className='alt-alpha';
+  const alphaName=window.FX991_KEYS.keyLegend('standard',item.key).alpha;
+  alpha.textContent=alphaName&&/^[A-FMXY]$/.test(alphaName)?alphaName:alphaName==='EQUALITY'?'=':alphaName==='EULER'?'e':alphaName==='RANINT'?'RanInt':'';
+  alpha.setAttribute('aria-hidden','true');
   const button=document.createElement('button');button.type='button';button.className='key '+item.tone;
   button.textContent=labels[item.key]||item.key;
   button.setAttribute('aria-label',item.key+' calculator key'+(item.enabled?'':' (not implemented)'));
   if(!item.enabled){button.disabled=true;button.title='Not implemented — teaching panel may provide a separate operation';}
   else button.addEventListener('click',()=>keyEvent(item.key==='RCL'&&!state.shift?'RCL_MENU':item.key));
-  cell.append(alternative,button);group.append(cell);
+  cell.append(alternative,alpha,button);group.append(cell);
  }
  $('keypad').append(group);
 }
