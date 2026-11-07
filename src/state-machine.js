@@ -355,16 +355,20 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
      const n=Number(f.buffer);if(!Number.isFinite(n))throw new base.CalcError(base.ERROR.ARGUMENT);
      given=base.dec(n);
     }
-    if(f.operation==='CALC'&&f.index+1<f.variables.length){
+    if(f.index+1<f.variables.length){
      f.values[name]=given;f.buffers=f.buffers||{};f.buffers[name]=f.buffer;
      f.index++;f.buffer=f.buffers[f.variables[f.index]]||'';return end();
     }
     let value;
     if(f.operation==='SOLVE'){
      const num=global.FX991_NUM;if(!num)throw new base.CalcError(base.ERROR.UNSUPPORTED);
-     const source=f.source.includes('=')?('('+f.source.split('=')[0]+')-('+f.source.split('=')[1]+')'):f.source;
-     const output=num.run({...s,memory:{...s.memory,X:given}},'SOLVE',source,{guess:base.numeric(given)});
-     value=output.value;s.memory.X=value;s.numericalDetails=output.metadata;s.decimalView=true;
+     const equation=f.source.includes('=')?('('+f.source.split('=')[0]+')-('+f.source.split('=')[1]+')'):f.source;
+     const source=f.target==='Y'?equation.replace(/Y/g,'X'):equation;
+     const withParameters={...s.memory,...f.values,X:f.target==='X'?given:s.memory.X};
+     const output=num.run({...s,memory:withParameters},'SOLVE',source,{guess:base.numeric(given)});
+     value=output.value;Object.assign(s.memory,f.values);s.memory[f.target]=value;
+     s.numericalDetails={...output.metadata,variable:f.target,originalEquation:f.source,parameters:Object.fromEntries(Object.entries(f.values).map(([k,v])=>[k,base.numeric(v)])),leftMinusRight:output.metadata.residual};
+     s.decimalView=true;
     }else{
      const inputs={...f.values,[name]:given};
      value=base.evaluate(base.parse(f.source),{setup:s.setup,ans:s.ans,memory:{...s.memory,...inputs}});
@@ -386,9 +390,10 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
   try{variables=[...new Set(base.tokenize(source).map(t=>t.value).filter(v=>/^[A-FMXY]$/.test(v)))]}
   catch(error){s.shift=false;s.alpha=false;return end()}
   const operation=s.shift?'SOLVE':'CALC';
-  if(!variables.length||(operation==='SOLVE'&&!variables.includes('X'))){s.shift=false;s.alpha=false;return end()}
+  const target=variables.includes('X')?'X':variables.includes('Y')?'Y':null;
+  if(!variables.length||(operation==='SOLVE'&&!target)){s.shift=false;s.alpha=false;return end()}
   if(source.includes('=')&&(operation!=='SOLVE'||source.split('=').length!==2||source.startsWith('=')||source.endsWith('='))){s.shift=false;s.alpha=false;s.error=base.ERROR.SYNTAX;s.result=s.error;s.view='error';return end()}
-  s.ui.calcFlow={operation,source,variables:operation==='SOLVE'?['X']:variables,index:0,buffer:'',buffers:{},values:{}};
+  s.ui.calcFlow={operation,source,target:operation==='SOLVE'?target:null,variables:operation==='SOLVE'?[...variables.filter(v=>v!==target),target]:variables,index:0,buffer:'',buffers:{},values:{}};
   s.shift=false;s.alpha=false;s.view='calc-input';s.error=null;return end();
  }
 
