@@ -28,4 +28,8 @@ assert.ok(html.indexOf('src/emulator-tools.js')<html.indexOf('src/app.js'),'load
 assert.ok(app.includes("emulatorTools?.record(key,prior,state)"),'key event capture');
 assert.ok(app.includes('emulatorTools?.refresh()'),'live LCD sync');
 assert.ok(css.includes('.emulator-popup-canvas'),'popup display styles available');
+const stateMachine=fs.readFileSync(path.join(root,'src/state-machine.js'),'utf8');
+assert.ok(app.includes("const labels={DIFF:'∫'"),'primary DIFF key displays integral symbol');
+assert.ok(stateMachine.includes("const operation=s.shift?'DIFF':'INTEGRAL'"),
+ 'shift+integral switches to derivative without altering engine mapping');
 console.log('REA emulator tools: metadata and source integration checks passed.');
