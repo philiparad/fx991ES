@@ -201,10 +201,12 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
   if(key==='='&&!s.expression.includes(':')){
    try{
     const Z=global.FX991_COMPLEX_INPUT;
-    const z=Z.parse(s.expression,s.setup.angle);
+    const command=s.expression.endsWith('►r∠θ')?'polar':s.expression.endsWith('►a+bi')?'rectangular':null;
+    const source=command?s.expression.slice(0,s.expression.lastIndexOf('►')):s.expression;
+    const z=Z.parse(source,s.setup.angle);
     const value={kind:'complex',re:base.dec(z.re),im:base.dec(z.im)};
     s.lastValue=value;s.ans=value.re;s.decimalView=true;s.mixedView=false;s.resultScrollX=0;
-    s.result=Z.display(z,s.setup.complexFormat||'rectangular',s.setup.angle);
+    s.result=Z.display(z,command||s.setup.complexFormat||'rectangular',s.setup.angle);
     s.history=[{expression:s.expression,display:s.result},...s.history].slice(0,50);
     s.view='result';s.error=null;
    }catch(error){s.error=error.code||base.ERROR.SYNTAX;s.result=s.error;s.view='error'}
@@ -305,6 +307,13 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
  if(s.view==='secondary-menu'){
   const parent=s.ui.secondaryMode;
   if(key==='AC'){s.view='edit';s.ui.secondaryMode=null;return end()}
+  if(parent==='CMPLX'&&['1','2','3','4'].includes(key)){
+   const wasResult=s.ui.secondaryPreviousView==='result';s.ui.secondaryMode=null;
+   if(wasResult){s.expression='';s.cursor=0}
+   const part={1:'arg(',2:'Conjg(',3:'►r∠θ',4:'►a+bi'}[key];
+   s.expression=s.expression.slice(0,s.cursor)+part+s.expression.slice(s.cursor);
+   s.cursor+=part.length;s.result='';s.view='edit';return end();
+  }
   if(parent==='STAT'&&key==='1'){s.ui.secondaryMode=null;s.ui.statFlow=null;enterWizard(s,'STAT');return end()}
   if(parent==='STAT'&&key==='2'){s.ui.secondaryMode=null;editStat(s);return end()}
   if(parent==='STAT'&&['3','4','5','6'].includes(key)){
@@ -327,9 +336,9 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
  }
  if(s.shift&&(s.view==='edit'||s.view==='result')){
   const mapped=KEYS.resolve(s.model,key,'shift',s.mode);
-  const active={STAT:'STAT_MENU','BASE-N':'BASE_MENU',MATRIX:'MATRIX_MENU',VECTOR:'VECTOR_MENU'}[s.mode];
+  const active={STAT:'STAT_MENU',CMPLX:'CMPLX_MENU','BASE-N':'BASE_MENU',MATRIX:'MATRIX_MENU',VECTOR:'VECTOR_MENU'}[s.mode];
   if(active&&mapped===active){
-   s.ui.secondaryMode=s.mode;s.shift=false;s.alpha=false;s.view='secondary-menu';return end();
+   s.ui.secondaryMode=s.mode;s.ui.secondaryPreviousView=s.view;s.shift=false;s.alpha=false;s.view='secondary-menu';return end();
   }
  }
  // P0-15: SHIFT 9 CLR with explicit Memory/Setup/All confirmation.
@@ -1108,7 +1117,7 @@ function semanticScreen(s){if(!s.ui)return base.semanticScreen(s);let screen=bas
  if(s.view==='coordinate-input'){const f=s.ui.coordinateFlow;screen.expression=f.kind==='POL'?'Pol(X,Y)':'Rec(r,θ)';screen.result=(f.index===0?(f.kind==='POL'?'X':'r'):(f.kind==='POL'?'Y':'θ'))+'? '+(f.buffer||'_');screen.menuItems=null}
  if(s.view==='result'&&s.ui.coordinateDisplay){screen.expression=s.ui.coordinateDisplay;screen.resultValue=null}
  if(s.view==='secondary-menu'){
-  const m=s.ui.secondaryMode;screen.expression=m+' MENU';screen.result=m==='STAT'?'1:Type 2:Data 3:Sum 4:Var 5:'+(s.ui.modeMemory.stat.kind==='1VAR'?'Distr':'Reg')+' 6:MinMax':m==='BASE-N'?'1:AND 2:OR 3:XOR 4:XNOR 5:NOT 6:NEG':'1:Registers';screen.menuItems=screen.result.split(' ')
+  const m=s.ui.secondaryMode;screen.expression=m+' MENU';screen.result=m==='STAT'?'1:Type 2:Data 3:Sum 4:Var 5:'+(s.ui.modeMemory.stat.kind==='1VAR'?'Distr':'Reg')+' 6:MinMax':m==='CMPLX'?'1:arg 2:Conjg 3:►r∠θ 4:►a+bi':m==='BASE-N'?'1:AND 2:OR 3:XOR 4:XNOR 5:NOT 6:NEG':'1:Registers';screen.menuItems=screen.result.split(' ')
  }
  if(s.view==='stat-command-menu'){
   const part=s.ui.statSubMenu.section;screen.expression='STAT '+part;
