@@ -397,6 +397,7 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
  if(s.view==='result'&&s.ui.lastWizard&&['UP','DOWN'].includes(key)){let w=s.ui.lastWizard;let pages=s.lastValue?.data?.rows||s.lastValue?.data?.roots;if(Array.isArray(pages)&&pages.length){w.resultPage=Math.max(0,Math.min(pages.length-1,w.resultPage+(key==='DOWN'?1:-1)));return end()}}
  if(s.view==='register-prompt'){
   if(key==='AC'){s.ui.pending=null;s.view='edit';return end()}
+  if(s.alpha){const letter=KEYS.resolve(s.model,key,'alpha');if(letter){key=letter;s.alpha=false}}
   if(/^[A-FMXY]$/.test(key)){
    if(s.ui.pending==='STO')s.memory[key]=s.lastValue||s.ans;
    else {s.expression=s.expression.slice(0,s.cursor)+key+s.expression.slice(s.cursor);s.cursor++;syncInput(s)}
@@ -456,6 +457,23 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
    s.view='edit';s.result='';s.error=null;s.shift=false;s.alpha=false;
   }
   return end();
+ }
+ // P0-14: independent M memory handles M+ and SHIFT M−.
+ if(key==='MPLUS'&&s.mode==='COMP'&&(s.view==='edit'||s.view==='result')){
+  try{
+   let value;
+   if(s.view==='result'&&s.lastValue)value=s.lastValue;
+   else{
+    const expression=s.document?E.serialize(s.document):s.expression;
+    if(!expression||E.invalidSlots(s.document).length)throw new base.CalcError(base.ERROR.SYNTAX);
+    value=base.calculateExpression('COMP',expression,s);
+   }
+   s.memory.M=s.shift?base.sub(s.memory.M||base.rat(0n),value):base.add(s.memory.M||base.rat(0n),value);
+   s.ans=value;s.lastValue=value;s.mixedView=false;s.decimalView=false;s.result=base.valueDisplay(value,s.setup,false,s.mode);s.resultScrollX=0;
+   s.view='result';s.error=null;s.ui.engExponent=null;
+   s.history=[{expression:s.expression,display:s.result},...s.history].slice(0,50);
+  }catch(error){s.error=error.code||base.ERROR.MATH;s.view='error';s.result=s.error;s.errorPos=s.cursor}
+  s.shift=false;s.alpha=false;return end();
  }
  // P0-13: ENG shifts only the displayed notation, never the stored value.
  if(key==='ENG'&&s.mode==='COMP'&&s.view==='result'&&s.lastValue){
