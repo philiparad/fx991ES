@@ -45,3 +45,15 @@ Do not bundle the emulator EXE, DLLs, embedded firmware, copyrighted CASIO face 
 - Wired both tools into the existing calculator event/render lifecycle and included source-level regression checks in the Node test runner.
 - Confirmed from the current COMP state-machine branch that primary DIFF triggers integration, with SHIFT triggering differentiation; kept main and alternate legends consistent.
 - Verification still pending: visual browser inspection, CI test outcome, native CASIO screen geometry, complete key coordinate mapping, mathematical result parity.
+
+## Button layout REA increment — 2026-11-07
+
+The REA extracted model-face bitmap measures 644 × 1250 px. Shell bounds estimated at (65,49) to (605,1184) are used to normalize CSS percentages. These bounds and key centers were **visually measured from the resource bitmap**, not obtained through emulator `GetKeyPosition` calls.
+
+The browser now uses a face-relative keypad overlay:
+- Top controls: SHIFT and ALPHA at the left, distinct four-way navigation cluster centrally, MODE and ON at the right.
+- Scientific zone: four rows of six slots, with only four active keys in the first row and preserved blanks in the middle.
+- Numeric zone: four rows of five keys, with wider rectangular keys and highlighted DEL/AC.
+- Face-relative keypad proportions and regression assertions ensure responsive layout preserves the ordering.
+
+No model-proprietary bitmap was included in the repository. Rendering, typography, geometry and functionality are independently authored. Pixel-accurate key sizes, labels, and hit regions still require calibration with native `GetKeyPosition` and interactive emulator observation.
