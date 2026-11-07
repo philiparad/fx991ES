@@ -1363,6 +1363,48 @@ test('P0-18 CALC equation without solve returns syntax error',()=>{let s=K.creat
 test('P0-18 equality cannot repeat in same editor',()=>{let s=K.createState();for(const k of ['1','ALPHA','CALC','2','ALPHA','CALC'])s=K.dispatchKey(s,k);eq(s.expression,'1=2')});
 
 test('P0-20 keymap P0 routes remain present',()=>{const KM=global.FX991_KEYS;for(const [key,action] of [['7','CONST'],['8','CONV'],['9','CLR'],['ANS','DRG'],['CALC','EQUALITY'],['MPLUS','MMINUS']])eq(KM.resolve('standard',key,'shift'),action)});
+
+// P0-19: prevent silent state changes being lost for routed physical shortcuts.
+// Context-specific unsupported combinations are not certified by this fixture.
+test('P0-19 physical shortcuts are never silent in their supported context',()=>{
+ const fixture=[
+  {before:['2'],sequence:['RECIP']},
+  {before:['5'],sequence:['SHIFT','RECIP']},
+  {before:['1','0'],sequence:['SHIFT','MUL']},
+  {before:['1','0'],sequence:['SHIFT','DIV']},
+  {before:['2'],sequence:['SHIFT','POW']},
+  {before:[],sequence:['SHIFT','HYP']},
+  {before:[],sequence:['HYP']},
+  {before:[],sequence:['LOGBASE']},
+  {before:[],sequence:['SHIFT','LOGBASE']},
+  {before:[],sequence:['SHIFT','7']},
+  {before:['5'],sequence:['SHIFT','8']},
+  {before:[],sequence:['SHIFT','9']},
+  {before:['5'],sequence:['SHIFT','ANS']},
+  {before:['5'],sequence:['SHIFT','0']},
+  {before:[],sequence:['SHIFT','.']},
+  {before:[],sequence:['ALPHA','CALC']},
+  {before:['1'],sequence:['MPLUS']},
+  {before:['1'],sequence:['SHIFT','MPLUS']},
+  {before:['1','='],sequence:['ENG']},
+  {before:['1','='],sequence:['SHIFT','ENG']}
+ ];
+ const stateDigest=s=>JSON.stringify({view:s.view,expression:s.expression,result:s.result,shift:s.shift,alpha:s.alpha,
+  memoryM:K.valueToString(s.memory.M),document:s.document?E.serialize(s.document):null,ui:s.ui?{
+  referenceFlow:s.ui.referenceFlow,angleConversion:s.ui.angleConversion,drgSource:s.ui.drgSource,
+  hypMenu:s.ui.hypMenu,engExponent:s.ui.engExponent,clearChoice:s.ui.clearChoice}:null});
+ for(const item of fixture){
+  let s=K.createState();
+  for(const key of item.before)s=K.dispatchKey(s,key);
+  // Modifier setup itself is not evidence of the action; compare after any modifier.
+  const sequence=item.sequence;
+  for(const key of sequence.slice(0,-1))s=K.dispatchKey(s,key);
+  const before=stateDigest(s);
+  s=K.dispatchKey(s,sequence[sequence.length-1]);
+  if(stateDigest(s)===before)throw Error('Silent shortcut '+item.sequence.join(' ')+' after '+item.before.join(' '));
+ }
+});
+
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
