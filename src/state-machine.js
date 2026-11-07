@@ -405,6 +405,16 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
  if(key==='SHIFT'){s.shift=!s.shift;s.alpha=false;return end()}
  if(key==='ALPHA'){s.alpha=!s.alpha;s.shift=false;return end()}
  if(key==='AC'&&s.shift){s.power=false;s.view='off';s.shift=false;return end()}
+ // The physical SHIFT S⇔D key toggles mixed/improper fractions without
+ // changing Ans or the current exact/decimal display selection.
+ if(key==='S-D'&&s.shift&&s.mode==='COMP'){
+  s.shift=false;s.alpha=false;
+  if(s.view!=='result'||!s.lastValue)return end();
+  const exact=base.effectiveDisplayStyle(s.setup,s.mode)==='MathO'?!s.decimalView:s.decimalView;
+  const mixed=exact&&s.setup.format!=='Fix'&&s.setup.format!=='Sci'?base.mixedFractionText(s.lastValue):null;
+  if(mixed){s.mixedView=!s.mixedView;s.result=s.mixedView?mixed:base.valueDisplay(s.lastValue,s.setup,s.decimalView,s.mode);s.resultScrollX=0}
+  return end();
+ }
  // Printed INS alternate: SHIFT+DEL toggles between insert and overwrite.
  // The state is independent of the structural cursor position.
  if((key==='DEL'&&s.shift)||key==='INS'){
@@ -436,6 +446,7 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
   }
   if(s.shift){
    let action=KEYS.resolve(s.model,key,'shift',s.mode);
+   if(action==='MIXINPUT'){key='MIXIN';s.shift=false;s.alpha=false}
    if(action==='MIX'){key=s.view==='edit'?'MIXIN':'MIX';s.shift=false;s.alpha=false}
    if(action==='NROOT'){key='NROOT';s.shift=false;s.alpha=false}
    if(action==='CUBE'||action==='POW10'||action==='EXP'){
