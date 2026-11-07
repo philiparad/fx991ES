@@ -1573,6 +1573,22 @@ test('P1-07 division by zero gives Math ERROR',()=>{
  let s=K.createState();s.mode='CMPLX';for(const k of ['1','DIV','0','='])s=K.dispatchKey(s,k);
  eq(s.view,'error');eq(s.error,K.ERROR.MATH);
 });
+
+test('P1-08 frequency-enabled 1VAR data editor uses two columns',()=>{
+ let s=K.createState();s.mode='STAT';s.setup.statFrequency=true;
+ s=K.dispatchKey(s,'DATA');for(const k of ['2','=','3'])s=K.dispatchKey(s,k);
+ eq(s.ui.statFlow.field,1);eq(s.ui.statFlow.buffer,'3');
+});
+test('P1-08 weighted mean from frequency rows',()=>{
+ let s=K.createState();s.mode='STAT';s.setup.statFrequency=true;s.ui.modeMemory.stat.rows=[[2,3],[8,1]];
+ s=K.dispatchKey(s,'DATA');s=K.dispatchKey(s,'STATS');
+ eq(s.view,'result');close(K.numeric(s.ans),3.5,1e-12);
+});
+test('P1-08 rejects invalid zero FREQ',()=>{
+ let s=K.createState();s.mode='STAT';s.setup.statFrequency=true;
+ for(const k of ['DATA','2','=','0','STATS'])s=K.dispatchKey(s,k);
+ eq(s.view,'error');eq(s.error,K.ERROR.ARGUMENT);
+});
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
