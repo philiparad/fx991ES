@@ -1341,6 +1341,15 @@ test('P0-15 CLR cancel retains memory',()=>{let s=K.createState();for(const k of
 test('P0-15 CLR confirmation requires equals',()=>{let s=K.createState();for(const k of ['8','MPLUS','SHIFT','9','3','1'])s=K.dispatchKey(s,k);eq(s.view,'clr-confirm');eq(K.valueToString(s.memory.M),'8')});
 test('P0-15 CLR Memory preserves setup',()=>{let s=K.createState();s.setup.angle='RAD';for(const k of ['8','MPLUS','SHIFT','9','2','='])s=K.dispatchKey(s,k);eq(K.valueToString(s.memory.M),'0');eq(s.setup.angle,'RAD')});
 test('P0-15 CLR Setup preserves independent memory',()=>{let s=K.createState();s.setup.angle='RAD';for(const k of ['8','MPLUS','SHIFT','9','1','='])s=K.dispatchKey(s,k);eq(K.valueToString(s.memory.M),'8');eq(s.setup.angle,'DEG')});
+
+test('P0-16 reference module contains 40 constants and 40 conversion codes',()=>{const t=global.FX991_REFERENCE_TABLES;eq(t.constants.length,41);eq(t.conversions.length,41)});
+test('P0-16 SHIFT 7 opens CONST code prompt',()=>{let s=K.createState();for(const k of ['SHIFT','7'])s=K.dispatchKey(s,k);eq(s.view,'reference-code');eq(K.semanticScreen(s).expression,'CONSTANT')});
+test('P0-16 constant 28 speed of light',()=>{let s=K.createState();for(const k of ['SHIFT','7','2','8','='])s=K.dispatchKey(s,k);eq(K.valueToString(s.lastValue),'299792458')});
+test('P0-16 5 cm to inches',()=>{let s=K.createState();for(const k of ['5','SHIFT','8','0','2','='])s=K.dispatchKey(s,k);close(K.numeric(s.lastValue),5/2.54,1e-9)});
+test('P0-16 100 grams to ounces',()=>{let s=K.createState();for(const k of ['1','0','0','SHIFT','8','2','2','='])s=K.dispatchKey(s,k);close(K.numeric(s.lastValue),100/28.349523125,1e-9)});
+test('P0-16 negative Celsius to Fahrenheit',()=>{let s=K.createState();for(const k of ['NEG','3','1','SHIFT','8','3','8','='])s=K.dispatchKey(s,k);close(K.numeric(s.lastValue),-23.8,1e-9)});
+test('P0-16 invalid code yields error',()=>{let s=K.createState();for(const k of ['SHIFT','8','0','0'])s=K.dispatchKey(s,k);eq(s.view,'error')});
+test('P0-16 prompt cancellation retains expression',()=>{let s=K.createState();for(const k of ['5','SHIFT','8','AC'])s=K.dispatchKey(s,k);eq(s.expression,'5');eq(s.view,'edit')});
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
