@@ -1405,6 +1405,36 @@ test('P0-19 physical shortcuts are never silent in their supported context',()=>
  }
 });
 
+
+// P1-01: CALC keyboard workflow and repeat substitution.
+test('P1-01 CALC 3A+B then repeat with stored inputs',()=>{
+ let s=K.createState();
+ for(const key of ['3','ALPHA','NEG','ADD','ALPHA','DMS','CALC','2','=','5','='])s=K.dispatchKey(s,key);
+ eq(s.view,'result');eq(K.valueToString(s.lastValue),'11');
+ eq(K.valueToString(s.memory.A),'2');eq(K.valueToString(s.memory.B),'5');
+ s=K.dispatchKey(s,'CALC');eq(s.view,'calc-input');
+ eq(s.ui.calcFlow.source,'3A+B');eq(s.ui.calcFlow.variables.join(','),'A,B');
+ for(const key of ['=','='])s=K.dispatchKey(s,key);
+ eq(s.view,'result');eq(K.valueToString(s.lastValue),'11');
+});
+test('P1-01 CALC LEFT revisits first variable then advances',()=>{
+ let s=K.createState();
+ for(const key of ['ALPHA','NEG','ADD','ALPHA','DMS','CALC','2','RIGHT','3','LEFT'])s=K.dispatchKey(s,key);
+ eq(s.view,'calc-input');eq(s.ui.calcFlow.index,0);eq(s.ui.calcFlow.buffer,'2');
+ for(const key of ['DEL','5','RIGHT'])s=K.dispatchKey(s,key);
+ eq(s.ui.calcFlow.index,1);eq(s.ui.calcFlow.buffer,'3');
+ s=K.dispatchKey(s,'=');eq(K.valueToString(s.lastValue),'8');
+});
+test('P1-01 CALC AC cancels without overwriting memory',()=>{
+ let s=K.createState();s.memory.A=K.rat(17);
+ for(const key of ['ALPHA','NEG','CALC','4','AC'])s=K.dispatchKey(s,key);
+ eq(s.view,'edit');eq(s.expression,'A');eq(K.valueToString(s.memory.A),'17');
+});
+test('P1-01 CALC rejects malformed prompt instead of silently accepting',()=>{
+ let s=K.createState();
+ for(const key of ['ALPHA','NEG','ADD','ALPHA','DMS','CALC','.','.','RIGHT'])s=K.dispatchKey(s,key);
+ eq(s.view,'error');eq(s.error,K.ERROR.ARGUMENT);
+});
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
