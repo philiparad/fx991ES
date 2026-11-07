@@ -322,6 +322,27 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
   const f=s.ui.calcFlow;
   if(key==='AC'){s.ui.calcFlow=null;s.view='edit';s.error=null;s.result='';return end()}
   if(key==='DEL'){f.buffer=f.buffer.slice(0,-1);return end()}
+  // P1-01: allow editing earlier variables and resuming a multi-variable run.
+  // Moving right accepts the present field; '=' retains its original
+  // confirmation behavior, including final evaluation.
+  if(key==='LEFT'&&f.index>0){
+   f.buffers=f.buffers||{};
+   f.buffers[f.variables[f.index]]=f.buffer;
+   f.index--;f.buffer=f.buffers[f.variables[f.index]]||'';
+   return end();
+  }
+  if(key==='RIGHT'&&f.index+1<f.variables.length){
+   f.buffers=f.buffers||{};
+   const name=f.variables[f.index];
+   if(f.buffer&&!/^-?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)$/.test(f.buffer)){
+    s.error=base.ERROR.ARGUMENT;s.result=s.error;s.view='error';s.ui.calcFlow=null;return end();
+   }
+   const n=f.buffer?Number(f.buffer):null;
+   if(n!==null&&!Number.isFinite(n)){s.error=base.ERROR.ARGUMENT;s.result=s.error;s.view='error';s.ui.calcFlow=null;return end()}
+   f.values[name]=n===null?(s.memory[name]||base.rat(0n)):base.dec(n);
+   f.buffers[name]=f.buffer;f.index++;f.buffer=f.buffers[f.variables[f.index]]||'';
+   return end();
+  }
   if(key==='NEG'||(key==='SUB'&&!f.buffer)){f.buffer=f.buffer.startsWith('-')?f.buffer.slice(1):'-'+f.buffer;return end()}
   if(/^[0-9.]$/.test(key)){if(f.buffer.length<24&&!(key==='.'&&f.buffer.includes('.')))f.buffer+=key;return end()}
   if(key==='='){
@@ -335,7 +356,8 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
      given=base.dec(n);
     }
     if(f.operation==='CALC'&&f.index+1<f.variables.length){
-     f.values[name]=given;f.index++;f.buffer='';return end();
+     f.values[name]=given;f.buffers=f.buffers||{};f.buffers[name]=f.buffer;
+     f.index++;f.buffer=f.buffers[f.variables[f.index]]||'';return end();
     }
     let value;
     if(f.operation==='SOLVE'){
@@ -366,7 +388,7 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
   const operation=s.shift?'SOLVE':'CALC';
   if(!variables.length||(operation==='SOLVE'&&!variables.includes('X'))){s.shift=false;s.alpha=false;return end()}
   if(source.includes('=')&&(operation!=='SOLVE'||source.split('=').length!==2||source.startsWith('=')||source.endsWith('='))){s.shift=false;s.alpha=false;s.error=base.ERROR.SYNTAX;s.result=s.error;s.view='error';return end()}
-  s.ui.calcFlow={operation,source,variables:operation==='SOLVE'?['X']:variables,index:0,buffer:'',values:{}};
+  s.ui.calcFlow={operation,source,variables:operation==='SOLVE'?['X']:variables,index:0,buffer:'',buffers:{},values:{}};
   s.shift=false;s.alpha=false;s.view='calc-input';s.error=null;return end();
  }
 
