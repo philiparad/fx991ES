@@ -42,15 +42,26 @@ function regResult(s,op){try{let expression=regExpression(s,op),value=base.calcu
  catch(e){s.error=e.code||base.ERROR.ARGUMENT;s.view='error';s.result=s.error}return s}
 function editStat(s){let data=s.ui.modeMemory.stat;s.ui.statFlow={field:0,buffer:data.rows[0]?.[0]===undefined?'':String(data.rows[0][0])};s.view='stat-grid';return s}
 function statFields(s){return s.ui.modeMemory.stat.rows.flat()}
+function statColumns(s){const stat=s.ui.modeMemory.stat;return stat.kind==='LINEAR'||s.setup.statFrequency?2:1}
 function statAccept(s){let f=s.ui.statFlow,stat=s.ui.modeMemory.stat,v=f.buffer;if(v==='')return;
  if(!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(v)||!Number.isFinite(Number(v)))throw new base.CalcError(base.ERROR.ARGUMENT);
- let cols=stat.kind==='LINEAR'?2:1,row=Math.floor(f.field/cols),col=f.field%cols;
+ let cols=statColumns(s),row=Math.floor(f.field/cols),col=f.field%cols;
+ if(stat.kind==='1VAR'&&col===1&&(!Number.isSafeInteger(Number(v))||Number(v)<=0))throw new base.CalcError(base.ERROR.ARGUMENT);
  while(stat.rows.length<=row)stat.rows.push(Array(cols).fill(0));stat.rows[row][col]=Number(v);f.buffer='';}
-function statNavigate(s,step){let f=s.ui.statFlow,stat=s.ui.modeMemory.stat,cols=stat.kind==='LINEAR'?2:1;
+function statNavigate(s,step){let f=s.ui.statFlow,stat=s.ui.modeMemory.stat,cols=statColumns(s);
  statAccept(s);f.field=Math.max(0,Math.min((stat.rows.length+1)*cols-1,f.field+step));let row=Math.floor(f.field/cols),col=f.field%cols;f.buffer=stat.rows[row]?.[col]===undefined?'':String(stat.rows[row][col])}
 function statResult(s){try{statAccept(s);let stat=s.ui.modeMemory.stat,rows=stat.rows;
  if(!rows.length||(stat.kind==='LINEAR'&&rows.length<2))throw new base.CalcError(base.ERROR.ARGUMENT);
- let expression=stat.kind+':'+(stat.kind==='LINEAR'?rows.map(row=>row.join(',')).join(';'):rows.map(r=>r[0]).join(','));
+ let samples=rows.map(r=>r[0]);
+  if(stat.kind==='1VAR'&&s.setup.statFrequency){
+   samples=[];
+   for(const row of rows){
+    const freq=row[1]===undefined?1:row[1];
+    if(!Number.isSafeInteger(freq)||freq<=0||samples.length+freq>80)throw new base.CalcError(base.ERROR.MEM);
+    for(let n=0;n<freq;n++)samples.push(row[0]);
+   }
+  }
+  let expression=stat.kind+':'+(stat.kind==='LINEAR'?rows.map(row=>row.join(',')).join(';'):samples.join(','));
  let value=base.calculateExpression('STAT',expression,s);s.expression=expression;s.cursor=expression.length;s.resultScrollX=0;s.mixedView=false;s.lastValue=value;s.ans=value.ans;s.result=value.text;s.view='result';s.error=null;
  s.history=[{expression,display:s.result},...s.history].slice(0,50);s.ui.statFlow=null;}
  catch(e){s.error=e.code||base.ERROR.ARGUMENT;s.view='error';s.result=s.error}return s}
@@ -133,8 +144,8 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
   let f=s.ui.statFlow,stat=s.ui.modeMemory.stat;
   if(key==='AC'){s.view='edit';s.ui.statFlow=null;return end()}
   if(key==='PAIR'){stat.kind=stat.kind==='1VAR'?'LINEAR':'1VAR';stat.rows=[];f.field=0;f.buffer='';return end()}
-  if(key==='DELROW'){stat.rows.splice(Math.floor(f.field/(stat.kind==='LINEAR'?2:1)),1);f.field=0;f.buffer=stat.rows[0]?.[0]===undefined?'':String(stat.rows[0][0]);return end()}
-  if(key==='ADDROW'){try{statAccept(s);if(stat.rows.length>=80)throw new base.CalcError(base.ERROR.MEM);stat.rows.push(Array(stat.kind==='LINEAR'?2:1).fill(0));f.field=(stat.rows.length-1)*(stat.kind==='LINEAR'?2:1);f.buffer=''}catch(e){s.error=e.code||base.ERROR.ARGUMENT;s.view='error'}return end()}
+  if(key==='DELROW'){stat.rows.splice(Math.floor(f.field/statColumns(s)),1);f.field=0;f.buffer=stat.rows[0]?.[0]===undefined?'':String(stat.rows[0][0]);return end()}
+  if(key==='ADDROW'){try{statAccept(s);if(stat.rows.length>=80)throw new base.CalcError(base.ERROR.MEM);stat.rows.push(stat.kind==='1VAR'&&s.setup.statFrequency?[0,1]:Array(statColumns(s)).fill(0));f.field=(stat.rows.length-1)*statColumns(s);f.buffer=''}catch(e){s.error=e.code||base.ERROR.ARGUMENT;s.view='error'}return end()}
   if(key==='STATS'){statResult(s);return end()}
   if(key==='DEL'){f.buffer=f.buffer.slice(0,-1);return end()}
   if(key==='NEG'){f.buffer=f.buffer.startsWith('-')?f.buffer.slice(1):'-'+f.buffer;return end()}
@@ -879,7 +890,7 @@ function semanticScreen(s){if(!s.ui)return base.semanticScreen(s);let screen=bas
   else if(s.view==='register-summary'){screen.expression=(f.category==='matrix'?'Mat':'Vct')+f.name+' SAVED';screen.result='OP EDIT REGS';}
   else{screen.expression=(f.category==='matrix'?'MATRIX':'VECTOR')+' OP';screen.result=f.category==='matrix'?'1:DET 2:INV 3:T 4:+ 5:*':'1:ABS 2:DOT 3:+ 4:X 5:ANGLE';}
  }
- if(s.view==='stat-grid'){let f=s.ui.statFlow,stat=s.ui.modeMemory.stat;screen.expression=stat.kind+' DATA '+(f.field+1);screen.result=f.buffer||'0';}
+ if(s.view==='stat-grid'){let f=s.ui.statFlow,stat=s.ui.modeMemory.stat;screen.expression=stat.kind+' '+(stat.kind==='1VAR'&&s.setup.statFrequency?'X/FREQ':'DATA')+' '+(f.field+1);screen.result=f.buffer||'0';}
  if(s.view==='calc-input'&&s.ui.calcFlow){const f=s.ui.calcFlow,n=f.variables[f.index];screen.expression=f.operation+' '+f.source;screen.result=n+'? '+(f.buffer||'['+base.valueToString(s.memory[n]||base.rat(0))+']')+' ('+(f.index+1)+'/'+f.variables.length+')';screen.menuItems=null}
  if(s.view==='numerical-input'&&s.ui.numericalFlow){
   const f=s.ui.numericalFlow,parameter=f.fields[f.index],label=parameter==='expression'?'f(X)':parameter==='at'?'X':parameter==='lower'?'Lower':'Upper';
