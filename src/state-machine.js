@@ -633,6 +633,7 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
 }
 function endAfter(s,key){return s} // finishWizard records current dispatch event exactly once
 function semanticScreen(s){if(!s.ui)return base.semanticScreen(s);let screen=base.semanticScreen(s);
+ if(s.view==='result'&&Number.isInteger(s.ui.engExponent))screen.resultValue=null;
  if(s.view==='mode'){
   let modes=base.modeList(s);
   screen.menuItems=s.menuPage===0?modes.slice(0,8).map((name,i)=>(i+1)+':'+name):modes.slice(8).map((name,i)=>(i+1)+':'+name);
