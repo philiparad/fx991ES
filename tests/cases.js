@@ -1767,6 +1767,39 @@ test('P1-15 irrational sqrt exact to decimal without overwriting value',()=>{
  s=K.dispatchKey(s,'S-D');if(s.result==='√2')throw Error('decimal conversion missing');
  eq(K.valueToString(s.ans),original);
 });
+
+test('P1-16 replay of prior COMP expressions preserves calculation order',()=>{
+ let s=K.createState();
+ for(const k of ['1','ADD','1','=','AC','3','ADD','3','='])s=K.dispatchKey(s,k);
+ eq(s.history.length,2);
+ s=K.dispatchKey(s,'UP');eq(s.view,'edit');eq(s.expression,'3+3');
+ s=K.dispatchKey(s,'UP');eq(s.expression,'1+1');
+ s=K.dispatchKey(s,'=');eq(s.result,'2');
+});
+test('P1-16 error LEFT resumes editable expression',()=>{
+ let s=K.createState();for(const k of ['1','DIV','0','='])s=K.dispatchKey(s,k);
+ eq(s.view,'error');
+ s=K.dispatchKey(s,'LEFT');eq(s.view,'edit');eq(s.error,null);
+ eq(s.expression,'1/0');
+});
+test('P1-16 SHIFT DEL toggles overwrite state',()=>{
+ let s=K.createState();for(const k of ['SHIFT','DEL'])s=K.dispatchKey(s,k);
+ eq(s.ui.insertMode,false);
+ for(const k of ['SHIFT','DEL'])s=K.dispatchKey(s,k);
+ eq(s.ui.insertMode,true);
+});
+test('P1-16 ON recovers after SHIFT AC shutdown',()=>{
+ let s=K.createState();for(const k of ['SHIFT','AC'])s=K.dispatchKey(s,k);
+ eq(s.power,false);eq(s.view,'off');
+ s=K.dispatchKey(s,'ON');eq(s.power,true);eq(s.view,'edit');
+});
+test('P1-16 AC interrupts multi-statement without stale replay',()=>{
+ let s=K.createState();
+ for(const k of ['3','ADD','3','ALPHA','RP','3','MUL','3','='])s=K.dispatchKey(s,k);
+ eq(s.ui.multiFlow.index,0);
+ s=K.dispatchKey(s,'AC');eq(s.ui.multiFlow,null);
+ for(const k of ['2','='])s=K.dispatchKey(s,k);eq(s.result,'2');
+});
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
