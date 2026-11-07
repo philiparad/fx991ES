@@ -2029,6 +2029,17 @@ test('CASIO unshifted S-D still toggles decimal',()=>{
  let s=K.createState();for(const key of ['FRAC','7','RIGHT','6','=','S-D'])s=K.dispatchKey(s,key);
  if(s.result==='7/6')throw Error('decimal toggle not invoked');
 });
+
+test('CASIO EQN = cycles through roots then opens coefficient editor',()=>{
+ let s=K.createState();for(const k of ['MODE','5','3','1','=','NEG','3','=','2','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');eq(s.ui.lastWizard.resultPage,0);
+ s=K.dispatchKey(s,'=');eq(s.view,'result');eq(s.ui.lastWizard.resultPage,1);
+ s=K.dispatchKey(s,'=');eq(s.view,'coefficient');eq(s.ui.wizard.kind,'QUAD');
+});
+test('CASIO EQN AC from any root returns to coefficient editor',()=>{
+ let s=K.createState();for(const k of ['MODE','5','3','1','=','NEG','3','=','2','='])s=K.dispatchKey(s,k);
+ s=K.dispatchKey(s,'AC');eq(s.view,'coefficient');eq(s.ui.wizard.index,0);
+});
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
