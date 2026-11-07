@@ -35,4 +35,6 @@ assert.ok(app.includes("item.key==='RCL'&&!state.shift?'RCL_MENU':item.key"),'SH
 const css=fs.readFileSync(path.join(root,'styles.css'),'utf8');
 assert.ok(css.includes('aspect-ratio: 77 / 161.5'),'device proportions must remain manufacturer-grounded');
 assert.ok(css.includes('P2-01: manufacturer case proportions'),'physical design approximation explicitly qualified');
+assert.ok(css.includes('.keypad-top .key-cell:nth-child(4){grid-column:5;grid-row:1}'),'UP must be in upper cross arm');
+assert.ok(css.includes('.keypad-top .key-cell:nth-child(5){grid-column:5;grid-row:3}'),'DOWN must be in lower cross arm');
 console.log('Layout checks passed; physical-key and LCD equivalence NOT verified.');
