@@ -10,7 +10,7 @@ const wizardConfigs={
  EQN:{menu:['LINEAR2','LINEAR3','QUAD','CUBIC'],fields:{QUAD:['a','b','c'],CUBIC:['a','b','c','d'],LINEAR2:['a11','a12','b1','a21','a22','b2'],LINEAR3:['a11','a12','a13','b1','a21','a22','a23','b2','a31','a32','a33','b3']}},
  MATRIX:{menu:['DET2','DET3','INV2','TRANS2','MUL2'],fields:{DET2:['a11','a12','a21','a22'],DET3:['a11','a12','a13','a21','a22','a23','a31','a32','a33'],INV2:['a11','a12','a21','a22'],TRANS2:['a11','a12','a21','a22'],MUL2:['a11','a12','a21','a22','b11','b12','b21','b22']}},
  VECTOR:{menu:['DOT2','DOT3','CROSS3','ADD2','ANGLE2'],fields:{DOT2:['ax','ay','bx','by'],DOT3:['ax','ay','az','bx','by','bz'],CROSS3:['ax','ay','az','bx','by','bz'],ADD2:['ax','ay','bx','by'],ANGLE2:['ax','ay','bx','by']}},
- STAT:{menu:['1VAR','1VAR5','LINEAR3'],fields:{'1VAR':['x1','x2','x3'],'1VAR5':['x1','x2','x3','x4','x5'],LINEAR3:['x1','y1','x2','y2','x3','y3']}},
+ STAT:{menu:['1VAR','LINEAR','QUAD','LOG','EEXP','ABEXP','POWER','INVERSE'],fields:{}},
  TABLE:{menu:['SINGLE','FUNCTION','DUAL'],fields:{SINGLE:['start','end','step'],FUNCTION:['f(X)','start','end','step'],DUAL:['f(X)','g(X)','start','end','step']}}
 };
 function decorate(s){if(!s.ui)s.ui={page:0,pending:null,setupSection:null,wizard:null,insertMode:true};if(s.ui.insertMode===undefined)s.ui.insertMode=true;if(!base.DISPLAY_STYLES.includes(s.setup.displayStyle))s.setup.displayStyle=base.DISPLAY_STYLES.includes(s.ui.displayStyle)?s.ui.displayStyle:'MathO';s.ui.displayStyle=s.setup.displayStyle;
@@ -42,26 +42,34 @@ function regResult(s,op){try{let expression=regExpression(s,op),value=base.calcu
  catch(e){s.error=e.code||base.ERROR.ARGUMENT;s.view='error';s.result=s.error}return s}
 function editStat(s){let data=s.ui.modeMemory.stat;s.ui.statFlow={field:0,buffer:data.rows[0]?.[0]===undefined?'':String(data.rows[0][0])};s.view='stat-grid';return s}
 function statFields(s){return s.ui.modeMemory.stat.rows.flat()}
-function statColumns(s){const stat=s.ui.modeMemory.stat;return stat.kind==='LINEAR'||s.setup.statFrequency?2:1}
+function statColumns(s){const stat=s.ui.modeMemory.stat;return (stat.kind==='1VAR'?1:2)+(s.setup.statFrequency?1:0)}
+function statRowLimit(s){const cols=statColumns(s);return cols===1?80:cols===2?40:26}
 function statAccept(s){let f=s.ui.statFlow,stat=s.ui.modeMemory.stat,v=f.buffer;if(v==='')return;
  if(!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(v)||!Number.isFinite(Number(v)))throw new base.CalcError(base.ERROR.ARGUMENT);
  let cols=statColumns(s),row=Math.floor(f.field/cols),col=f.field%cols;
- if(stat.kind==='1VAR'&&col===1&&(!Number.isSafeInteger(Number(v))||Number(v)<=0))throw new base.CalcError(base.ERROR.ARGUMENT);
- while(stat.rows.length<=row)stat.rows.push(stat.kind==='1VAR'&&s.setup.statFrequency?[0,1]:Array(cols).fill(0));stat.rows[row][col]=Number(v);f.buffer='';}
+ if(s.setup.statFrequency&&col===cols-1&&(!Number.isSafeInteger(Number(v))||Number(v)<=0))throw new base.CalcError(base.ERROR.ARGUMENT);
+ while(stat.rows.length<=row)stat.rows.push(s.setup.statFrequency?[...Array(cols-1).fill(0),1]:Array(cols).fill(0));stat.rows[row][col]=Number(v);f.buffer='';}
 function statNavigate(s,step){let f=s.ui.statFlow,stat=s.ui.modeMemory.stat,cols=statColumns(s);
  statAccept(s);f.field=Math.max(0,Math.min((stat.rows.length+1)*cols-1,f.field+step));let row=Math.floor(f.field/cols),col=f.field%cols;f.buffer=stat.rows[row]?.[col]===undefined?'':String(stat.rows[row][col]);f.replaceOnInput=true}
 function statResult(s){try{statAccept(s);let stat=s.ui.modeMemory.stat,rows=stat.rows;
- if(!rows.length||(stat.kind==='LINEAR'&&rows.length<2))throw new base.CalcError(base.ERROR.ARGUMENT);
- let samples=rows.map(r=>r[0]);
+ if(!rows.length||(stat.kind!=='1VAR'&&rows.length<2))throw new base.CalcError(base.ERROR.ARGUMENT);
+ if(rows.length>statRowLimit(s))throw new base.CalcError(base.ERROR.MEM);
   if(stat.kind==='1VAR'&&s.setup.statFrequency){
-   samples=[];
-   for(const row of rows){
-    const freq=row[1]===undefined?1:row[1];
-    if(!Number.isSafeInteger(freq)||freq<=0||samples.length+freq>80)throw new base.CalcError(base.ERROR.MEM);
-    for(let n=0;n<freq;n++)samples.push(row[0]);
+   let n=0,sum=0,weightedSquare=0;
+   for(const row of rows){const freq=row[1]===undefined?1:row[1];
+    if(!Number.isSafeInteger(freq)||freq<=0)throw new base.CalcError(base.ERROR.ARGUMENT);
+    n+=freq;sum+=row[0]*freq;weightedSquare+=row[0]*row[0]*freq;
    }
+   if(!n||!Number.isFinite(sum)||!Number.isFinite(weightedSquare))throw new base.CalcError(base.ERROR.MATH);
+   const mean=sum/n,variance=Math.max(0,weightedSquare/n-mean*mean);
+   const sd=Math.sqrt(variance),sampleSd=n>1?Math.sqrt(Math.max(0,(weightedSquare-n*mean*mean)/(n-1))):NaN;
+   const fmt=x=>Number(x.toPrecision(11)).toString();
+   const value={kind:'mode-result',text:'n='+n+'  mean='+fmt(mean)+'  σ='+fmt(sd)+'  s='+(n>1?fmt(sampleSd):'undefined'),ans:base.dec(mean),data:{n,mean,sum,populationStd:sd}};
+   s.expression='1VAR:FREQ';s.cursor=s.expression.length;s.lastValue=value;s.ans=value.ans;s.result=value.text;s.view='result';s.error=null;
+   s.history=[{expression:s.expression,display:s.result},...s.history].slice(0,50);s.ui.statFlow=null;return s;
   }
-  let expression=stat.kind+':'+(stat.kind==='LINEAR'?rows.map(row=>row.join(',')).join(';'):samples.join(','));
+  const samples=rows.map(r=>r[0]);
+  const expression=stat.kind+':'+(stat.kind==='1VAR'?samples.join(','):rows.map(row=>row.slice(0,2).join(',')).join(';'));
  let value=base.calculateExpression('STAT',expression,s);s.expression=expression;s.cursor=expression.length;s.resultScrollX=0;s.mixedView=false;s.lastValue=value;s.ans=value.ans;s.result=value.text;s.view='result';s.error=null;
  s.history=[{expression,display:s.result},...s.history].slice(0,50);s.ui.statFlow=null;}
  catch(e){s.error=e.code||base.ERROR.ARGUMENT;s.view='error';s.result=s.error}return s}
@@ -168,7 +176,7 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
   if(key==='AC'){s.view='edit';s.ui.statFlow=null;return end()}
   if(key==='PAIR'){stat.kind=stat.kind==='1VAR'?'LINEAR':'1VAR';stat.rows=[];f.field=0;f.buffer='';return end()}
   if(key==='DELROW'){stat.rows.splice(Math.floor(f.field/statColumns(s)),1);f.field=0;f.buffer=stat.rows[0]?.[0]===undefined?'':String(stat.rows[0][0]);return end()}
-  if(key==='ADDROW'){try{statAccept(s);if(stat.rows.length>=80)throw new base.CalcError(base.ERROR.MEM);stat.rows.push(stat.kind==='1VAR'&&s.setup.statFrequency?[0,1]:Array(statColumns(s)).fill(0));f.field=(stat.rows.length-1)*statColumns(s);f.buffer=''}catch(e){s.error=e.code||base.ERROR.ARGUMENT;s.view='error'}return end()}
+  if(key==='ADDROW'){try{statAccept(s);if(stat.rows.length>=statRowLimit(s))throw new base.CalcError(base.ERROR.MEM);stat.rows.push(s.setup.statFrequency?[...Array(statColumns(s)-1).fill(0),1]:Array(statColumns(s)).fill(0));f.field=(stat.rows.length-1)*statColumns(s);f.buffer=''}catch(e){s.error=e.code||base.ERROR.ARGUMENT;s.view='error'}return end()}
   if(key==='STATS'){statResult(s);return end()}
   if(key==='DEL'){f.buffer=f.buffer.slice(0,-1);f.replaceOnInput=false;return end()}
   if(key==='NEG'){f.buffer=f.buffer.startsWith('-')?f.buffer.slice(1):'-'+f.buffer;f.replaceOnInput=false;return end()}
@@ -720,7 +728,13 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
  if(s.view==='workflow-menu'){
   if(key==='AC'){s.ui.wizard=null;s.view='edit';return end()}
   if(key==='UP'||key==='DOWN'){s.menuPage=Math.max(0,Math.min(2,s.menuPage+(key==='DOWN'?1:-1)));return end()}
-  if(/^[1-9]$/.test(key)){selectWizard(s,s.menuPage*4+Number(key)-1);return end()}
+  if(/^[1-9]$/.test(key)){
+   if(s.ui.wizard.mode==='STAT'){
+    const next=wizardConfigs.STAT.menu[s.menuPage*4+Number(key)-1];
+    if(next){s.ui.modeMemory.stat.kind=next;s.ui.modeMemory.stat.rows=[];s.ui.wizard=null;editStat(s)}
+   }else selectWizard(s,s.menuPage*4+Number(key)-1);
+   return end();
+  }
   return end();
  }
  if(s.view==='coefficient'){
