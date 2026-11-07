@@ -1884,6 +1884,41 @@ test('P1-19 zero conversion and temperature offset are consistent',()=>{
  close(t.conversion(38).apply(0),32,1e-12);
  close(t.conversion(22).apply(100),3.52739658378696,1e-9);
 });
+
+test('P1-20 MODE transitions preserve M and stored scalar variables',()=>{
+ let s=K.createState();
+ for(const k of ['4','MPLUS'])s=K.dispatchKey(s,k);
+ s.memory.A=K.rat(7n);
+ for(const k of ['MODE','2','MODE','1'])s=K.dispatchKey(s,k);
+ eq(s.mode,'COMP');eq(s.view,'edit');
+ eq(K.valueToString(s.memory.M),'4');eq(K.valueToString(s.memory.A),'7');
+});
+test('P1-20 matrix and vector register values survive MODE changes',()=>{
+ let s=K.createState();
+ s.ui.modeMemory.matrix.A=[[1,2],[3,4]];
+ s.ui.modeMemory.vector.B=[5,6,7];
+ for(const k of ['MODE','6','MODE','8','MODE','1'])s=K.dispatchKey(s,k);
+ eq(s.ui.modeMemory.matrix.A[1][1],4);
+ eq(s.ui.modeMemory.vector.B.join(','),'5,6,7');
+});
+test('P1-20 STAT dataset remains available after returning from COMP',()=>{
+ let s=K.createState();s.ui.modeMemory.stat.rows=[[2],[3],[4]];
+ for(const k of ['MODE','3','MODE','1','MODE','3'])s=K.dispatchKey(s,k);
+ eq(s.ui.modeMemory.stat.rows.length,3);
+});
+test('P1-20 mode transition clears stale multi-statement continuation',()=>{
+ let s=K.createState();
+ for(const k of ['2','ALPHA','RP','3','='])s=K.dispatchKey(s,k);
+ eq(s.ui.multiFlow.index,0);
+ for(const k of ['MODE','2','MODE','1'])s=K.dispatchKey(s,k);
+ eq(s.ui.multiFlow,null);
+ eq(s.lastValue&&K.valueToString(s.ans),'2');
+});
+test('P1-20 MODE retains angle and numeric format settings',()=>{
+ let s=K.createState();s.setup.angle='RAD';s.setup.format='Fix';s.setup.digits=4;
+ for(const k of ['MODE','2','MODE','1'])s=K.dispatchKey(s,k);
+ eq(s.setup.angle,'RAD');eq(s.setup.format,'Fix');eq(s.setup.digits,4);
+});
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
