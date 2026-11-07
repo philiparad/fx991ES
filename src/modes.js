@@ -98,7 +98,7 @@ function matrix(s){
  }
  return outcome(result.map(line).join(' ; '),result[0][0],{matrix:result});
 }
-function vector(s){
+function vector(s,ctx={setup:{angle:'DEG'}}){
  let m=String(s).trim().match(/^(DOT|CROSS|ADD|SUB|ABS|ANGLE|MUL)\s*:\s*(.*)$/i);if(!m)bad(E.SYNTAX);
  let op=m[1].toUpperCase(),src=m[2],parts=src.split('|'),a=nums(parts[0]);if(a.length<2||a.length>3)bad(E.DIMENSION);
  if(op==='ABS')return outcome(display(Math.hypot(...a)),Math.hypot(...a));
