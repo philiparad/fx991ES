@@ -146,6 +146,29 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
 
  if(key==='ON'){s.power=true;if(s.view==='off')s.view='edit';return end()}
  if(!s.power)return end();
+ // P1-05: mode-aware secondary menus, accessible using the yellow SHIFT legends.
+ if(s.view==='secondary-menu'){
+  const parent=s.ui.secondaryMode;
+  if(key==='AC'){s.view='edit';s.ui.secondaryMode=null;return end()}
+  if(parent==='STAT'&&key==='1'){s.view='edit';s.ui.secondaryMode=null;editStat(s);return end()}
+  if(parent==='STAT'&&key==='2'){s.view='edit';s.ui.secondaryMode=null;statResult(s);return end()}
+  if((parent==='MATRIX'||parent==='VECTOR')&&key==='1'){
+   s.view='edit';s.ui.secondaryMode=null;startRegister(s);return end();
+  }
+  if(parent==='BASE-N'&&['1','2','3','4'].includes(key)){
+   const op={1:'AND',2:'OR',3:'XOR',4:'XNOR'}[key];
+   s.expression=s.expression.slice(0,s.cursor)+' '+op+' '+s.expression.slice(s.cursor);
+   s.cursor=s.expression.length;s.view='edit';s.ui.secondaryMode=null;return end();
+  }
+  return end();
+ }
+ if(s.shift&&(s.view==='edit'||s.view==='result')){
+  const mapped=KEYS.resolve(s.model,key,'shift',s.mode);
+  const active={STAT:'STAT_MENU','BASE-N':'BASE_MENU',MATRIX:'MATRIX_MENU',VECTOR:'VECTOR_MENU'}[s.mode];
+  if(active&&mapped===active){
+   s.ui.secondaryMode=s.mode;s.shift=false;s.alpha=false;s.view='secondary-menu';return end();
+  }
+ }
  // P0-15: SHIFT 9 CLR with explicit Memory/Setup/All confirmation.
  if(s.view==='clr-menu'){
   if(key==='AC'){s.view='edit';s.ui.clearChoice=null;return end()}
@@ -828,6 +851,9 @@ function semanticScreen(s){if(!s.ui)return base.semanticScreen(s);let screen=bas
  if(s.view==='register-prompt'){screen.expression=s.ui.pending+' REG';screen.result='A-F M X Y'}
  if(s.view==='coordinate-input'){const f=s.ui.coordinateFlow;screen.expression=f.kind==='POL'?'Pol(X,Y)':'Rec(r,θ)';screen.result=(f.index===0?(f.kind==='POL'?'X':'r'):(f.kind==='POL'?'Y':'θ'))+'? '+(f.buffer||'_');screen.menuItems=null}
  if(s.view==='result'&&s.ui.coordinateDisplay){screen.expression=s.ui.coordinateDisplay;screen.resultValue=null}
+ if(s.view==='secondary-menu'){
+  const m=s.ui.secondaryMode;screen.expression=m+' MENU';screen.result=m==='STAT'?'1:Data 2:Calc':m==='BASE-N'?'1:AND 2:OR 3:XOR 4:XNOR':'1:Registers';screen.menuItems=screen.result.split(' ')
+ }
  if(s.view==='drg-menu'){screen.expression='DRG▶';screen.result='1:° 2:r 3:g';screen.menuItems=['1:Deg','2:Rad','3:Grad']}
  if(s.view==='result'&&s.ui.drgDisplay){screen.expression=s.ui.drgDisplay;screen.resultValue=null}
  if(s.view==='reference-code'){screen.expression=s.ui.referenceFlow.kind==='CONST'?'CONSTANT':'CONVERSION';screen.result='Number 01~40? '+(s.ui.referenceFlow.digits||'__');screen.menuItems=null}
