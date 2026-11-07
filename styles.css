@@ -137,3 +137,33 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .calc-error-help[hidden]{display:none}
 .calc-error-help strong{display:block;font-size:14px;margin-bottom:3px}
 .calc-error-help p{margin:0;overflow-wrap:anywhere}
+
+
+/* P2-01: manufacturer case proportions (161.5 × 77 × 11.1 mm).
+ * Original browser artwork: proportions are a design baseline, not a
+ * millimetre-calibrated capture or certification of physical key geometry. */
+.calculator {
+    aspect-ratio: 77 / 161.5;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+.calculator .keys {
+    flex: 1 0 auto;
+    justify-content: space-evenly;
+}
+.calculator .keypad-scientific .key,
+.calculator .keypad-numeric .key {
+    transition: filter 90ms ease;
+}
+.calculator .keypad-group .key:focus-visible {
+    outline: 3px solid #aee2ff;
+    outline-offset: 2px;
+}
+@media (max-width: 420px) {
+    .calculator { aspect-ratio: auto; min-height: 0; }
+    .calculator .keys { flex: 0 0 auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .calculator .keypad-group .key { transition: none; }
+}
