@@ -196,7 +196,11 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
   if((parent==='MATRIX'||parent==='VECTOR')&&key==='1'){
    s.view='edit';s.ui.secondaryMode=null;startRegister(s);return end();
   }
-  if(parent==='BASE-N'&&['1','2','3','4'].includes(key)){
+  if(parent==='BASE-N'&&['1','2','3','4','5','6'].includes(key)){
+   if(key==='5'||key==='6'){
+    const op=key==='5'?'NOT':'NEG',idx=s.expression.indexOf(':'),radix=idx>=0?s.expression.slice(0,idx+1):'DEC:',value=idx>=0?s.expression.slice(idx+1).trim():s.expression;
+    s.expression=radix+op+'('+value+')';s.cursor=s.expression.length;s.view='edit';s.ui.secondaryMode=null;return end();
+   }
    const op={1:'AND',2:'OR',3:'XOR',4:'XNOR'}[key];
    s.expression=s.expression.slice(0,s.cursor)+' '+op+' '+s.expression.slice(s.cursor);
    s.cursor=s.expression.length;s.view='edit';s.ui.secondaryMode=null;return end();
@@ -903,7 +907,7 @@ function semanticScreen(s){if(!s.ui)return base.semanticScreen(s);let screen=bas
  if(s.view==='coordinate-input'){const f=s.ui.coordinateFlow;screen.expression=f.kind==='POL'?'Pol(X,Y)':'Rec(r,θ)';screen.result=(f.index===0?(f.kind==='POL'?'X':'r'):(f.kind==='POL'?'Y':'θ'))+'? '+(f.buffer||'_');screen.menuItems=null}
  if(s.view==='result'&&s.ui.coordinateDisplay){screen.expression=s.ui.coordinateDisplay;screen.resultValue=null}
  if(s.view==='secondary-menu'){
-  const m=s.ui.secondaryMode;screen.expression=m+' MENU';screen.result=m==='STAT'?'1:Data 2:Calc':m==='BASE-N'?'1:AND 2:OR 3:XOR 4:XNOR':'1:Registers';screen.menuItems=screen.result.split(' ')
+  const m=s.ui.secondaryMode;screen.expression=m+' MENU';screen.result=m==='STAT'?'1:Data 2:Calc':m==='BASE-N'?'1:AND 2:OR 3:XOR 4:XNOR 5:NOT 6:NEG':'1:Registers';screen.menuItems=screen.result.split(' ')
  }
  if(s.view==='drg-menu'){screen.expression='DRG▶';screen.result='1:° 2:r 3:g';screen.menuItems=['1:Deg','2:Rad','3:Grad']}
  if(s.view==='result'&&s.ui.drgDisplay){screen.expression=s.ui.drgDisplay;screen.resultValue=null}
