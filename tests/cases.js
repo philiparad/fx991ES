@@ -1610,6 +1610,23 @@ test('P1-09 SHIFT BASE menu supports NOT command',()=>{
  for(const k of ['SHIFT','3','5'])s=K.dispatchKey(s,k);
  eq(s.expression,'BIN:NOT(1010)');
 });
+
+test('P1-10 EQN coefficients remain editable after calculation',()=>{
+ let s=K.createState();for(const k of ['MODE','5','1','1','=','NEG','3','=','2','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');s=K.dispatchKey(s,'EDIT');eq(s.view,'coefficient');eq(s.ui.wizard.buffer,'1');
+ for(const k of ['RIGHT','RIGHT','DEL','3','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');eq(s.expression,'QUAD:1,-3,3');
+});
+test('P1-10 simultaneous equation row navigation UP',()=>{
+ let s=K.createState();for(const k of ['MODE','5','3','2','=','1','=','5','=','1','UP'])s=K.dispatchKey(s,k);
+ eq(s.view,'coefficient');eq(s.ui.wizard.index,0);eq(s.ui.wizard.values[3],'1');
+});
+test('P1-10 complex quadratic roots can be paged',()=>{
+ let s=K.createState();for(const k of ['MODE','5','1','1','=','0','=','1','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');eq(s.lastValue.data.roots.length,2);
+ s=K.dispatchKey(s,'DOWN');eq(s.ui.lastWizard.resultPage,1);
+ const screen=K.semanticScreen(s);eq(screen.result,'0-1i');
+});
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
