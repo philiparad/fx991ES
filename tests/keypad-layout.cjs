@@ -37,4 +37,19 @@ assert.ok(css.includes('aspect-ratio: 77 / 161.5'),'device proportions must rema
 assert.ok(css.includes('P2-01: manufacturer case proportions'),'physical design approximation explicitly qualified');
 assert.ok(css.includes('.keypad-top .key-cell:nth-child(4){grid-column:5;grid-row:1}'),'UP must be in upper cross arm');
 assert.ok(css.includes('.keypad-top .key-cell:nth-child(5){grid-column:5;grid-row:3}'),'DOWN must be in lower cross arm');
+// REA bitmap layout: case-normalized positions and four physical rows.
+assert.ok(css.includes('REA physical-key geometry v2'),'emulator bitmap geometry patch loaded');
+assert.ok(css.includes('aspect-ratio:540 / 1135'),'bitmap face proportions retained');
+assert.ok(css.includes('.calculator .keys{'),'physical keypad uses a face-relative overlay');
+assert.ok(css.includes('top:16%;height:37%;display:grid'),'four-row scientific region present');
+assert.ok(css.includes('top:56%;height:44%;display:grid'),'four-row numeric region present');
+assert.ok(css.includes('grid-template-rows:repeat(4,minmax(0,1fr))'),'four-key-row structure present');
+for(const [index,property] of [
+ [3,'left:38%;top:40%'],[4,'left:50%;top:8%'],
+ [5,'left:50%;top:70%'],[6,'left:62%;top:40%']]){
+ assert.ok(css.includes('.calculator .keypad-top .key-cell:nth-child('+index+'){'+property+'}'),
+  'direction-pad reference coordinate for key '+index);
+}
+assert.ok(css.includes('.calculator .keypad-group .key-spacer{visibility:hidden}'),
+ 'empty scientific cells preserve grid position');
 console.log('Layout checks passed; physical-key and LCD equivalence NOT verified.');
