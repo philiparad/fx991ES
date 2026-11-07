@@ -15,6 +15,7 @@ require('./key-inventory.cjs');
 
 // P0-20: prevent structural keypad tests from drifting out of CI.
 require('./keypad-layout.cjs');
+require('./emulator-tools.cjs');
 
 require('./lcd-raster-audit.cjs');
 
