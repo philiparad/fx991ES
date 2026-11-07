@@ -1657,6 +1657,30 @@ test('P1-11 matrix singular inverse yields Math ERROR',()=>{
  for(const k of ['REGS','1','OP','2'])s=K.dispatchKey(s,k);
  eq(s.view,'error');eq(s.error,K.ERROR.MATH);
 });
+
+test('P1-12 VECTOR subtraction of stored 3D registers',()=>{
+ let s=K.createState();s.mode='VECTOR';s.ui.modeMemory.vector.A=[4,3,2];s.ui.modeMemory.vector.B=[1,1,1];
+ for(const k of ['REGS','1','OP','6'])s=K.dispatchKey(s,k);
+ eq(s.view,'result');eq(s.expression,'SUB:4,3,2|1,1,1');
+ eq(s.lastValue.data.vector.join(','),'3,2,1');
+});
+test('P1-12 VECTOR scalar multiplication from register',()=>{
+ let s=K.createState();s.mode='VECTOR';s.ui.modeMemory.vector.A=[2,-3,4];
+ for(const k of ['REGS','1','OP','7','NEG','2','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');eq(s.expression,'MUL:2,-3,4|-2');
+ eq(s.lastValue.data.vector.join(','),'-4,6,-8');
+});
+test('P1-12 VECTOR angle respects RAD setup',()=>{
+ let s=K.createState();s.mode='VECTOR';s.setup.angle='RAD';
+ s.ui.modeMemory.vector.A=[1,0];s.ui.modeMemory.vector.B=[0,1];
+ for(const k of ['REGS','1','OP','5'])s=K.dispatchKey(s,k);
+ eq(s.view,'result');close(K.numeric(s.lastValue.ans),Math.PI/2,1e-9);
+});
+test('P1-12 VECTOR cross of 2D vectors rejects dimensions',()=>{
+ let s=K.createState();s.mode='VECTOR';s.ui.modeMemory.vector.A=[1,0];s.ui.modeMemory.vector.B=[0,1];
+ for(const k of ['REGS','1','OP','4'])s=K.dispatchKey(s,k);
+ eq(s.view,'error');eq(s.error,K.ERROR.DIMENSION);
+});
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
