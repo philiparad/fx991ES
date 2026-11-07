@@ -29,7 +29,7 @@ Date: 2026-11-07. Source: user-supplied installed CASIO fx-991ES PLUS C 2nd edit
 
 ## Change in this integration
 
-- Corrected the misleading primary `DIFF` legend from `∫` to `d/dx`.
+- Corrected a subsequent regression: the primary `DIFF` key displays `∫` (integration), while its SHIFT legend displays `d/dx` (differentiation), matching the existing COMP key dispatcher.
 - Refined the scaled monochrome cell raster with bounded contrast and explicit RGB clamping. Logical 96 × 31 pixels and calculation state are unchanged.
 
 ## Do not ship
@@ -37,3 +37,11 @@ Date: 2026-11-07. Source: user-supplied installed CASIO fx-991ES PLUS C 2nd edit
 Do not bundle the emulator EXE, DLLs, embedded firmware, copyrighted CASIO face bitmap, or activation assets in this public repository without permission. Re-create code, icons and graphics independently.
 
 **Status: partial improvements only.** Exact replica parity has *not* been established by static reverse engineering.
+
+## Next implementation increment — emulator reference tools
+
+- Added optional Pop-up Display with live magnified LCD pixels; uses independent, existing 96 × 31 logical raster rather than claiming original emulator LCD hardware size.
+- Added opt-in KeyLog for a bounded set of 300 key events with modifier, mode, view and resulting display string; supports JSON export and clear. Data is ephemeral in this tab.
+- Wired both tools into the existing calculator event/render lifecycle and included source-level regression checks in the Node test runner.
+- Confirmed from the current COMP state-machine branch that primary DIFF triggers integration, with SHIFT triggering differentiation; kept main and alternate legends consistent.
+- Verification still pending: visual browser inspection, CI test outcome, native CASIO screen geometry, complete key coordinate mapping, mathematical result parity.
