@@ -6,7 +6,7 @@
 (function(global){'use strict';
 const button=(key,legend='',tone='dark',enabled=true)=>Object.freeze({key,legend,tone,enabled});
 const top=Object.freeze([
- button('SHIFT','','gold'),button('ALPHA','','gold'),button('LEFT'),button('UP'),
+ button('SHIFT','','gold'),button('ALPHA','','alpha'),button('LEFT'),button('UP'),
  button('DOWN'),button('RIGHT'),button('MODE','SETUP'),button('ON','','orange')
 ]);
 const scientific=Object.freeze([
