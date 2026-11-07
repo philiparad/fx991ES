@@ -1500,6 +1500,29 @@ test('P1-04 conversion cancellation does not overwrite X/Y',()=>{
  for(const k of ['SHIFT','ADD','3','AC'])s=K.dispatchKey(s,k);
  eq(s.view,'edit');eq(K.valueToString(s.memory.X),'8');
 });
+
+test('P1-05 SHIFT STAT menu leads to data editor',()=>{
+ let s=K.createState();s.mode='STAT';for(const k of ['SHIFT','1'])s=K.dispatchKey(s,k);
+ eq(s.view,'secondary-menu');s=K.dispatchKey(s,'1');eq(s.view,'stat-grid');
+});
+test('P1-05 SHIFT MATRIX opens native register menu',()=>{
+ let s=K.createState();s.mode='MATRIX';for(const k of ['SHIFT','4','1'])s=K.dispatchKey(s,k);
+ eq(s.view,'register-menu');
+});
+test('P1-05 SHIFT VECTOR opens register menu',()=>{
+ let s=K.createState();s.mode='VECTOR';for(const k of ['SHIFT','5','1'])s=K.dispatchKey(s,k);
+ eq(s.view,'register-menu');
+});
+test('P1-05 BASE shift menu exposes XOR command',()=>{
+ let s=K.createState();s.mode='BASE-N';s.expression='BIN:1010';s.cursor=s.expression.length;
+ for(const k of ['SHIFT','3','3'])s=K.dispatchKey(s,k);
+ eq(s.view,'edit');eq(s.expression,'BIN:1010 XOR ');
+});
+test('P1-05 secondary menu cancels without modifying expression',()=>{
+ let s=K.createState();s.mode='BASE-N';s.expression='BIN:1010';s.cursor=s.expression.length;
+ for(const k of ['SHIFT','3','AC'])s=K.dispatchKey(s,k);
+ eq(s.view,'edit');eq(s.expression,'BIN:1010');
+});
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
