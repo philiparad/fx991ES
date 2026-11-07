@@ -1589,6 +1589,27 @@ test('P1-08 rejects invalid zero FREQ',()=>{
  for(const k of ['DATA','2','=','0','STATS'])s=K.dispatchKey(s,k);
  eq(s.view,'error');eq(s.error,K.ERROR.ARGUMENT);
 });
+
+test('P1-09 DEC minimum signed 32-bit number supported',()=>{
+ let s=K.createState();s.mode='BASE-N';const v=K.calculateExpression('BASE-N','DEC:-2147483648',s);
+ eq(v.text,'-2147483648');
+});
+test('P1-09 DEC outside signed 32-bit rejected',()=>{
+ let s=K.createState();s.mode='BASE-N';
+ for(const text of ['DEC:2147483648','DEC:-2147483649']){
+  try{K.calculateExpression('BASE-N',text,s);throw Error('accepted')}catch(e){eq(e.code,K.ERROR.MATH)}
+ }
+});
+test('P1-09 BIN high bit is signed negative',()=>{
+ let s=K.createState();s.mode='BASE-N';
+ const v=K.calculateExpression('BASE-N','BIN:1000000000000000',s);
+ eq(v.data.signed,'-32768');
+});
+test('P1-09 SHIFT BASE menu supports NOT command',()=>{
+ let s=K.createState();s.mode='BASE-N';s.expression='BIN:1010';s.cursor=s.expression.length;
+ for(const k of ['SHIFT','3','5'])s=K.dispatchKey(s,k);
+ eq(s.expression,'BIN:NOT(1010)');
+});
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
