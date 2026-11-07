@@ -22,7 +22,9 @@ for(const [groupName,items] of Object.entries(keypadLayout)){
  }
  $('keypad').append(group);
 }
-function drawLCD(pixels){const ctx=$('lcd').getContext('2d'),data=ctx.createImageData(96,31);for(let i=0;i<pixels.length;i++){const pos=i*4,on=pixels[i];data.data[pos]=on?32:203;data.data[pos+1]=on?45:213;data.data[pos+2]=on?31:189;data.data[pos+3]=255}ctx.putImageData(data,0,0)}
+function drawLCD(pixels){const ctx=$('lcd').getContext('2d'),data=ctx.createImageData(96,31);for(let i=0;i<pixels.length;i++){const pos=i*4,on=pixels[i];const contrast=Number.isInteger(state.setup.contrast)?state.setup.contrast:5;
+const adj=(contrast-5)*8;
+data.data[pos]=on?Math.max(0,32-adj):203;data.data[pos+1]=on?Math.max(0,45-adj):213;data.data[pos+2]=on?Math.max(0,31-adj):189;data.data[pos+3]=255}ctx.putImageData(data,0,0)}
 function renderNatural(){
  const el=$('natural-preview'),info=$('natural-info');
  if(state.mode!=='COMP'){el.textContent='Available in COMP mode';info.textContent='';return}if(K.effectiveDisplayStyle(state.setup,state.mode)==='LineIO'){el.textContent=state.expression||' ';info.textContent='Linear input mode';el.setAttribute('aria-label','Linear expression '+(state.expression||'empty'));return}
