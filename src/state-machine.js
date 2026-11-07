@@ -615,6 +615,12 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
  }
  if(s.view==='coefficient'){
   let w=s.ui.wizard;
+  // EQN: move back to the first coefficient of the preceding equation row.
+  if(key==='UP'&&w.mode==='EQN'&&w.index>0){
+   if(w.buffer){try{acceptField(w)}catch(e){s.error=e.code||base.ERROR.ARGUMENT;s.view='error';return end()}}
+   const width=w.kind==='LINEAR3'?4:w.kind==='LINEAR2'?3:1;
+   w.index=Math.max(0,w.index-width);w.buffer=w.values[w.index]||'';return end();
+  }
   if(key==='AC'){w.buffer='';return end()}
   if(key==='DEL'){w.buffer=w.buffer.slice(0,-1);return end()}
   if(key==='LEFT'&&w.index>0){if(w.buffer){try{acceptField(w)}catch(e){s.error=e.code||base.ERROR.ARGUMENT;s.view='error';return end()}}w.index--;w.buffer=w.values[w.index]||'';return end()}
@@ -624,6 +630,11 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
   }
   pushBuffer(w,key);
   return end();
+ }
+ if(s.view==='result'&&s.ui.lastWizard?.mode==='EQN'&&key==='EDIT'){
+  const last=s.ui.lastWizard;
+  s.ui.wizard={mode:'EQN',kind:last.kind,fields:[...last.fields],values:[...last.values],index:0,buffer:last.values[0]||'',resultPage:0};
+  s.ui.lastWizard=null;s.view='coefficient';s.result='';s.error=null;return end();
  }
  if(s.view==='result'&&s.ui.lastWizard&&['UP','DOWN'].includes(key)){let w=s.ui.lastWizard;let pages=s.lastValue?.data?.rows||s.lastValue?.data?.roots;if(Array.isArray(pages)&&pages.length){w.resultPage=Math.max(0,Math.min(pages.length-1,w.resultPage+(key==='DOWN'?1:-1)));return end()}}
  if(s.view==='register-prompt'){
@@ -885,7 +896,7 @@ function semanticScreen(s){if(!s.ui)return base.semanticScreen(s);let screen=bas
   screen.menuPage=s.menuPage;
   screen.hasMore=s.menuPage===0&&modes.length>8;
  }if(s.view==='workflow-menu'){let w=s.ui.wizard,choices=wizardConfigs[w.mode].menu;screen.result=choices.slice(s.menuPage*4,s.menuPage*4+4).map((c,i)=>(i+s.menuPage*4+1)+':'+c).join(' ');screen.expression='SELECT '+w.mode}
- if(s.view==='coefficient'){let w=s.ui.wizard;screen.expression=w.fields[w.index]+' = '+w.buffer;screen.result=(w.index+1)+'/'+w.fields.length}
+ if(s.view==='coefficient'){let w=s.ui.wizard;screen.expression=(w.mode==='EQN'?w.kind+' ':'')+w.fields[w.index]+' = '+w.buffer;screen.result=(w.index+1)+'/'+w.fields.length+(w.mode==='EQN'?'  LEFT/RIGHT: fields':'')}
  if(s.view==='result'&&s.ui.lastWizard){let w=s.ui.lastWizard,rows=s.lastValue?.data?.rows||s.lastValue?.data?.roots;if(Array.isArray(rows)&&rows.length){let index=w.resultPage||0;screen.expression=w.mode+' '+(index+1)+'/'+rows.length;screen.result=Array.isArray(rows[index])?rows[index].join(', '):String(rows[index])}}
  if(s.view==='register-menu'){screen.expression=s.mode+' REGISTERS';screen.result='1:A 2:B 3:C'}
  if(['register-editor','register-summary','register-operation'].includes(s.view)){
