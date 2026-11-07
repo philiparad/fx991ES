@@ -457,6 +457,14 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
   }
   return end();
  }
+ // P0-12: log-base and finite summation use multi-slot natural input.
+ if(key==='LOGBASE'&&s.mode==='COMP'&&(s.view==='edit'||s.view==='result')){
+  const name=s.shift?'Sigma':'logbase';
+  if(s.view==='result'){s.document=E.create();s.expression='';s.cursor=0}
+  s.document=E.template(s.document,'MultiFunction',name);
+  s.expression=E.serialize(s.document);s.cursor=E.sourceCursor(s.document);
+  s.view='edit';s.result='';s.error=null;s.shift=false;s.alpha=false;return end();
+ }
  // P0-03: °′″ enters sexagesimal fields; on a result it toggles DMS/decimal.
  // P0-05: SHIFT+hyp inserts absolute value, not the hyperbolic menu.
  if(key==='HYP'&&s.shift&&s.mode==='COMP'&&(s.view==='edit'||s.view==='result')){
