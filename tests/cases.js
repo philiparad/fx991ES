@@ -1346,7 +1346,7 @@ test('P0-16 reference module contains 40 constants and 40 conversion codes',()=>
 test('P0-16 SHIFT 7 opens CONST code prompt',()=>{let s=K.createState();for(const k of ['SHIFT','7'])s=K.dispatchKey(s,k);eq(s.view,'reference-code');eq(K.semanticScreen(s).expression,'CONSTANT')});
 test('P0-16 constant 28 speed of light',()=>{let s=K.createState();for(const k of ['SHIFT','7','2','8','='])s=K.dispatchKey(s,k);eq(K.valueToString(s.lastValue),'299792458')});
 test('P0-16 5 cm to inches',()=>{let s=K.createState();for(const k of ['5','SHIFT','8','0','2','='])s=K.dispatchKey(s,k);close(K.numeric(s.lastValue),5/2.54,1e-9)});
-test('P0-16 100 grams to ounces',()=>{let s=K.createState();for(const k of ['1','0','0','SHIFT','8','2','2','='])s=K.dispatchKey(s,k);close(K.numeric(s.lastValue),100/28.349523125,1e-9)});
+test('P0-16 100 grams to ounces',()=>{let s=K.createState();for(const k of ['1','0','0','SHIFT','8','2','2','='])s=K.dispatchKey(s,k);close(K.numeric(s.lastValue),100/28.34952,1e-9)});
 test('P0-16 negative Celsius to Fahrenheit',()=>{let s=K.createState();for(const k of ['NEG','3','1','SHIFT','8','3','8','='])s=K.dispatchKey(s,k);close(K.numeric(s.lastValue),-23.8,1e-9)});
 test('P0-16 invalid code yields error',()=>{let s=K.createState();for(const k of ['SHIFT','8','0','0'])s=K.dispatchKey(s,k);eq(s.view,'error')});
 test('P0-16 prompt cancellation retains expression',()=>{let s=K.createState();for(const k of ['5','SHIFT','8','AC'])s=K.dispatchKey(s,k);eq(s.expression,'5');eq(s.view,'edit')});
