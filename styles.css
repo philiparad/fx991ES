@@ -607,3 +607,345 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
     .calculator .keypad-scientific .key{height:64%;min-height:0}
     .calculator .keypad-numeric .key{height:74%;min-height:0}
 }
+/* ======================================================================
+   fx-991ES screenshot calibration — 2026-11-07
+   Reference: user-provided 316 × 628 PNG, calculator body approximately
+   x=22..295, y=22..601 (274 × 580 reference pixels).
+
+   INSTALL: Append this entire block to the END of the existing styles.css.
+   It overrides previous P2 / REA / screenshot rules without replacing CSS
+   used by the panels, test screens or educational controls.
+
+   Coordinates are normalized to the calculator body and are visual-only.
+   The calculator logic, key IDs, and native 96 × 31 framebuffer are intact.
+   All graphics below are CSS-authored; no proprietary bitmap is embedded.
+   ====================================================================== */
+
+/* 1. Reference-size shell; cqw units scale every key with the shell width. */
+.calculator {
+    container-type: inline-size;
+    position: relative;
+    display: block;
+    flex: none;
+    width: min(100%, 274px);
+    max-width: 274px;
+    min-height: 0;
+    aspect-ratio: 274 / 580;
+    padding: 0;
+    margin-inline: auto;
+    border: 1px solid #444;
+    border-radius: 12.8% 12.8% 10.7% 10.7% / 6.6% 6.6% 5.1% 5.1%;
+    background: #4d4d4d;
+    box-shadow: 0 4px 8px #1515156e, inset 1px 1px 1px #8885;
+    overflow: visible;
+}
+.calculator .branding {
+    position: absolute;
+    inset: 4.2% 9.9% auto;
+    display: block;
+    padding: 0;
+    margin: 0;
+    color: #f8f8f8;
+    font: 900 6.0cqw / 1 Arial, Helvetica, sans-serif;
+    letter-spacing: -.055em;
+    text-align: left;
+    text-shadow: 0 1px #222;
+}
+.calculator .branding small,
+.calculator .model,
+.calculator .solar-panel { display: none; }
+
+/* 2. LCD bezel and green glass, measured from the reference crop. */
+.calculator .lcd-housing {
+    position: absolute;
+    left: 7.66%;
+    top: 13.79%;
+    width: 84.31%;
+    height: 17.59%;
+    min-height: 0;
+    aspect-ratio: auto;
+    margin: 0;
+    padding: 2.8%;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    border: 0;
+    border-radius: 10px;
+    background: #050505;
+    box-shadow: none;
+}
+.calculator .lcd-glass {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 2px;
+    padding: 0;
+    background: #d7e4d7;
+    box-shadow: none;
+    overflow: hidden;
+}
+.calculator .lcd-glass canvas#lcd {
+    display: block;
+    width: 100%;
+    height: 100%;
+    aspect-ratio: auto;
+    background: #d7e4d7;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+/* 3. All 50 key faces use measured centers, not evenly spaced rows. */
+.calculator .keys {
+    position: absolute;
+    top: 35%;
+    left: 8%;
+    width: 84%;
+    height: 60%;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    display: block;
+    flex: none;
+}
+.calculator .keypad-group {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+}
+.calculator .keypad-group .key-cell {
+    position: absolute;
+    display: block;
+    flex: none;
+    padding: 0;
+    margin: 0;
+    min-width: 0;
+    min-height: 0;
+    transform: translate(-50%, -50%);
+    grid-column: auto !important;
+    grid-row: auto !important;
+}
+.calculator .keypad-group .key-spacer {
+    visibility: hidden;
+    pointer-events: none;
+}
+.calculator .keypad-group .key {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    transition: filter 90ms ease;
+    -webkit-tap-highlight-color: transparent;
+}
+.calculator .keypad-group .key:active {
+    transform: translateY(1px);
+    box-shadow: none;
+}
+.calculator .keypad-group .key:focus-visible {
+    outline: 2px solid #ffe77a;
+    outline-offset: 2px;
+}
+
+/* 4. Reference arrow cluster plus SHIFT, ALPHA, MODE, ON circles. */
+.calculator .keypad-top .key-cell {
+    width: 8.0%;
+    height: 6.32%; /* 22px of a 348px keypad region */
+}
+.calculator .keypad-top .key-cell:nth-child(1) { left: 7.78%; top: 5.08%; }
+.calculator .keypad-top .key-cell:nth-child(2) { left: 23.32%; top: 5.06%; }
+.calculator .keypad-top .key-cell:nth-child(3) { left: 37.49%; top: 10.23%; width: 13.03%; height: 5.75%; }
+.calculator .keypad-top .key-cell:nth-child(4) { left: 49.73%; top: 4.78%; width: 8.69%; height: 8.05%; }
+.calculator .keypad-top .key-cell:nth-child(5) { left: 49.77%; top: 15.67%; width: 8.69%; height: 8.05%; }
+.calculator .keypad-top .key-cell:nth-child(6) { left: 61.94%; top: 10.21%; width: 13.03%; height: 5.75%; }
+.calculator .keypad-top .key-cell:nth-child(7) { left: 75.99%; top: 5.08%; }
+.calculator .keypad-top .key-cell:nth-child(8) { left: 91.54%; top: 5.06%; }
+.calculator .keypad-top .key {
+    border: 1.4px solid #121212;
+    border-radius: 50%;
+    background: #99999a;
+    color: transparent;
+    font-size: 0;
+    box-shadow: 0 1px 1px #1117;
+}
+.calculator .keypad-top .key-cell:nth-child(n+3):nth-child(-n+6) .key {
+    border-radius: 29%;
+    background: #969698;
+    color: transparent;
+    border-color: #171717;
+}
+.calculator .keypad-top .key-cell:nth-child(7)::before,
+.calculator .keypad-top .key-cell:nth-child(8)::before { display: none; }
+.calculator .keypad-top .key-cell::after {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 2px);
+    transform: translateX(-50%);
+    color: #fff;
+    font: 700 2.25cqw / 1 Arial, Helvetica, sans-serif;
+    white-space: nowrap;
+    pointer-events: none;
+}
+.calculator .keypad-top .key-cell:nth-child(1)::after { content: 'SHIFT'; color: #ffe06b; }
+.calculator .keypad-top .key-cell:nth-child(2)::after { content: 'ALPHA'; color: #e79bbb; }
+.calculator .keypad-top .key-cell:nth-child(7)::after { content: 'MODE SETUP'; font-size: 2cqw; }
+.calculator .keypad-top .key-cell:nth-child(8)::after { content: 'ON'; }
+.calculator .keypad-top .alt,
+.calculator .keypad-top .alt-alpha { display: none; }
+
+/* 5. Four rows of scientific keys.  One visual cell per key position. */
+.calculator .keypad-scientific .key-cell {
+    width: 13.9%;  /* measured approx 32px / 230px */
+    height: 5.75%; /* measured approx 20px / 348px */
+}
+.calculator .keypad-scientific .key-cell:nth-child(6n+1) { left: 8.12%; }
+.calculator .keypad-scientific .key-cell:nth-child(6n+2) { left: 24.71%; }
+.calculator .keypad-scientific .key-cell:nth-child(6n+3) { left: 41.31%; }
+.calculator .keypad-scientific .key-cell:nth-child(6n+4) { left: 57.99%; }
+.calculator .keypad-scientific .key-cell:nth-child(6n+5) { left: 74.55%; }
+.calculator .keypad-scientific .key-cell:nth-child(6n)   { left: 91.10%; }
+.calculator .keypad-scientific .key-cell:nth-child(-n+6) { top: 17.99%; }
+.calculator .keypad-scientific .key-cell:nth-child(n+7):nth-child(-n+12) { top: 27.44%; }
+.calculator .keypad-scientific .key-cell:nth-child(n+13):nth-child(-n+18) { top: 36.93%; }
+.calculator .keypad-scientific .key-cell:nth-child(n+19) { top: 46.35%; }
+.calculator .keypad-scientific .key {
+    border: 1px solid #0b0b0c;
+    border-radius: 4px;
+    background: #0b0b0e;
+    color: #fff;
+    font: 700 4.3cqw / 1 Arial, Helvetica, sans-serif;
+    box-shadow: 0 1px 1px #1117;
+}
+.calculator .keypad-scientific .key.dark,
+.calculator .keypad-scientific .key.gold,
+.calculator .keypad-scientific .key.orange { background: #0b0b0e; color: #fff; }
+
+/* 6. Four numeric rows including bright green DEL and AC. */
+.calculator .keypad-numeric .key-cell {
+    width: 16.94%; /* 39px / 230px */
+    height: 8.33%; /* 29px / 348px */
+}
+.calculator .keypad-numeric .key-cell:nth-child(5n+1) { left: 9.59%; }
+.calculator .keypad-numeric .key-cell:nth-child(5n+2) { left: 29.58%; }
+.calculator .keypad-numeric .key-cell:nth-child(5n+3) { left: 49.57%; }
+.calculator .keypad-numeric .key-cell:nth-child(5n+4) { left: 69.60%; }
+.calculator .keypad-numeric .key-cell:nth-child(5n)   { left: 89.71%; }
+.calculator .keypad-numeric .key-cell:nth-child(-n+5) { top: 58.51%; }
+.calculator .keypad-numeric .key-cell:nth-child(n+6):nth-child(-n+10) { top: 69.83%; }
+.calculator .keypad-numeric .key-cell:nth-child(n+11):nth-child(-n+15) { top: 81.32%; }
+.calculator .keypad-numeric .key-cell:nth-child(n+16) { top: 92.64%; }
+.calculator .keypad-numeric .key {
+    border: 0;
+    border-radius: 7px;
+    background: #99999b;
+    color: #fff;
+    box-shadow: inset 0 1px #eee4, 0 1px 1px #1117;
+    font: 400 8.0cqw / 1 Arial, Helvetica, sans-serif;
+}
+.calculator .keypad-numeric .key.number,
+.calculator .keypad-numeric .key.orange { background: #99999b; color: #fff; border: 0; }
+.calculator .keypad-numeric .key.green {
+    background: #7fb729;
+    color: #fff;
+    border: 0;
+    font-size: 6.2cqw;
+    font-weight: 500;
+}
+.calculator .keypad-numeric .key-cell:nth-child(20) .key { background: #88888c; }
+.calculator .keypad-numeric .key-cell:nth-child(3) .key { font-size: 7.5cqw; }
+.calculator .keypad-numeric .key-cell:nth-child(18) .key { font-size: 5.7cqw; }
+.calculator .keypad-numeric .key-cell:nth-child(19) .key { font-size: 6.2cqw; }
+
+/* 7. Carefully positioned yellow SHIFT and pink ALPHA legends. */
+.calculator .keypad-scientific .alt,
+.calculator .keypad-numeric .alt {
+    display: block;
+    position: absolute;
+    left: -1%;
+    right: -1%;
+    top: auto;
+    bottom: calc(100% + .6cqw);
+    width: 102%;
+    height: auto;
+    min-height: 0;
+    line-height: 1;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+    text-overflow: clip;
+    text-align: center;
+    white-space: nowrap;
+    pointer-events: none;
+    color: #ffe26b;
+    font: 700 2.65cqw / 1 Arial, Helvetica, sans-serif;
+}
+.calculator .keypad-scientific .alt-alpha,
+.calculator .keypad-numeric .alt-alpha {
+    display: block;
+    position: absolute;
+    top: auto;
+    bottom: calc(100% + .6cqw);
+    right: 0;
+    width: auto;
+    height: auto;
+    min-height: 0;
+    line-height: 1;
+    color: #e7a4cd;
+    text-align: right;
+    white-space: nowrap;
+    pointer-events: none;
+    font: 700 2.25cqw / 1 Arial, Helvetica, sans-serif;
+}
+
+/* 8. Tool panels intentionally sit outside the photographed face. */
+.calculator > .emulator-tools-actions {
+    position: absolute;
+    inset: 100% 0 auto;
+    justify-content: center;
+    padding-top: 12px;
+    margin: 0;
+}
+.calculator .calc-error-help {
+    position: absolute;
+    top: calc(100% + 55px);
+    left: 0;
+    right: 0;
+    z-index: 3;
+    margin: 0;
+}
+@media (max-width: 740px) {
+    .calculator { width: min(100%, 274px); max-width: 274px; margin: 0 auto 65px; }
+    .calculator .branding { font-size: 6cqw; }
+    .calculator .keypad-group .alt { font-size: 2.65cqw; }
+    .calculator .keypad-scientific .key { font-size: 4.3cqw; }
+    .calculator .keypad-numeric .key { font-size: 8cqw; }
+}
+@media (max-width: 420px) {
+    .calculator { aspect-ratio: 274 / 580; min-height: 0; }
+    .calculator .keys { flex: none; }
+    .calculator .keypad-top .key,
+    .calculator .keypad-scientific .key,
+    .calculator .keypad-numeric .key { height: 100%; min-height: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .calculator .keypad-group .key { transition: none; }
+}
+
+/* 9. Logo width corrected by aligned screenshot comparison. */
+.calculator .branding {
+    font-size: 6.65cqw;
+    transform: scaleX(1.13);
+    transform-origin: left center;
+}
+@media (max-width:740px) { .calculator .branding { font-size:6.65cqw; } }
