@@ -1627,6 +1627,36 @@ test('P1-10 complex quadratic roots can be paged',()=>{
  s=K.dispatchKey(s,'DOWN');eq(s.ui.lastWizard.resultPage,1);
  const screen=K.semanticScreen(s);eq(screen.result,'0-1i');
 });
+
+test('P1-11 persistent 3x3 MatA entry and determinant',()=>{
+ let s=K.createState();s.mode='MATRIX';
+ for(const k of ['REGS','1','SIZE'])s=K.dispatchKey(s,k);
+ eq(s.ui.registerFlow.size,3);
+ for(const v of [1,0,0,0,2,0,0,0,3]){for(const k of String(v))s=K.dispatchKey(s,k);s=K.dispatchKey(s,'=')}
+ eq(s.view,'register-summary');
+ s=K.dispatchKey(s,'OP');s=K.dispatchKey(s,'1');
+ eq(s.view,'result');eq(s.result,'6');
+ eq(s.ui.modeMemory.matrix.A[2][2],3);
+});
+test('P1-11 matrix subtraction of stored MatA and MatB',()=>{
+ let s=K.createState();s.mode='MATRIX';
+ s.ui.modeMemory.matrix.A=[[4,3],[2,1]];
+ s.ui.modeMemory.matrix.B=[[1,1],[1,1]];
+ s=K.dispatchKey(s,'REGS');s=K.dispatchKey(s,'1');s=K.dispatchKey(s,'OP');s=K.dispatchKey(s,'6');
+ eq(s.view,'result');eq(s.expression,'SUB:4,3;2,1|1,1;1,1');
+ eq(s.lastValue.data.matrix[0][0],3);
+});
+test('P1-11 matrix square uses existing matrix register',()=>{
+ let s=K.createState();s.mode='MATRIX';s.ui.modeMemory.matrix.A=[[1,2],[3,4]];
+ for(const k of ['REGS','1','OP','8'])s=K.dispatchKey(s,k);
+ eq(s.view,'result');eq(s.lastValue.data.matrix[0][0],7);
+ eq(s.lastValue.data.matrix[1][1],22);
+});
+test('P1-11 matrix singular inverse yields Math ERROR',()=>{
+ let s=K.createState();s.mode='MATRIX';s.ui.modeMemory.matrix.A=[[1,2],[2,4]];
+ for(const k of ['REGS','1','OP','2'])s=K.dispatchKey(s,k);
+ eq(s.view,'error');eq(s.error,K.ERROR.MATH);
+});
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
