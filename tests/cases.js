@@ -1953,6 +1953,34 @@ test('P2-06 switching model rebuilds mode inventory without sharing registers',(
  if(K.modeList(c).length<=K.modeList(standard).length)throw Error('C mode inventory not expanded');
 });
 
+
+test('P2-08 repeatable fraction arithmetic property corpus',()=>{
+ let seed=9912026;
+ const next=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed};
+ for(let i=0;i<180;i++){
+  const a=1+next()%300,b=1+next()%300,c=1+next()%300,d=1+next()%300;
+  const sum=K.evaluate(K.parse('('+a+'/'+b+')+('+c+'/'+d+')'),{ans:K.rat(0n),memory:K.createState().memory,setup:{angle:'DEG'}});
+  const expected=K.add(K.rat(BigInt(a),BigInt(b)),K.rat(BigInt(c),BigInt(d)));
+  eq(K.valueToString(sum),K.valueToString(expected));
+ }
+});
+test('P2-08 repeatable power identity corpus',()=>{
+ let seed=123456789;
+ const next=()=>{seed=(Math.imul(seed,1103515245)+12345)>>>0;return seed};
+ for(let i=0;i<120;i++){
+  const a=1+next()%25,b=1+next()%25;
+  const x=K.evaluate(K.parse(a+'^2+'+b+'^2'),{ans:K.rat(0n),memory:K.createState().memory,setup:{angle:'DEG'}});
+  eq(K.valueToString(x),String(BigInt(a)*BigInt(a)+BigInt(b)*BigInt(b)));
+ }
+});
+test('P2-08 exact overflow boundary rejects div by zero and negative factorial',()=>{
+ const context={ans:K.rat(0n),memory:K.createState().memory,setup:{angle:'DEG'}};
+ for(const expression of ['1/0','(-1)!']){
+  try{K.evaluate(K.parse(expression),context);throw Error('accepted '+expression)}
+  catch(error){eq(error.code,K.ERROR.MATH)}
+ }
+});
+
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
