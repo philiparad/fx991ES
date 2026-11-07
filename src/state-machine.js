@@ -216,7 +216,7 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
  }
  // P1-14: sequential colon statements. Preserve the original source for replay,
  // but only evaluate one verified expression when '=' is pressed.
- if(key==='AC')s.ui.multiFlow=null;
+ if(key==='AC'){s.ui.multiFlow=null;s.ui.constantExpression=false}
  if(['UP','DOWN','LEFT','RIGHT','DEL','FDEL','INS'].includes(key))s.ui.multiFlow=null;
  if(s.ui.multiFlow&&s.view==='result'&&key==='='){
   const f=s.ui.multiFlow;
@@ -360,6 +360,7 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
      const entry=table.scientific(number);
      if(f.previousView==='result'){s.document=E.create();s.expression='';s.cursor=0}
      s.document=E.insertToken(s.document,table.asExpression(entry.value));
+     s.ui.constantExpression=true;
      s.expression=E.serialize(s.document);s.cursor=E.sourceCursor(s.document);
      s.ui.referenceFlow=null;s.view='edit';s.result='';
     }else{
@@ -964,6 +965,14 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
  // Support explicit RCL/STO keys for existing prototypes and tests.
  // A physical layout can use SHIFT+RCL for STO standby.
  s=decorate(base.dispatchKey(s,key));
+ // Constants are physical floating-point quantities, not intended as giant
+ // exact rational fractions from the evaluator's internal representation.
+ if(key==='='&&s.mode==='COMP'&&s.view==='result'&&s.ui.constantExpression&&s.lastValue){
+  s.decimalView=true;s.mixedView=false;
+  s.result=base.valueDisplay(s.lastValue,s.setup,true,s.mode);
+  s.resultScrollX=0;
+  if(s.history.length)s.history[0].display=s.result;
+ }
  // P1-15: restoring exact display through S⇔D also restores the configured
  // mixed-fraction preference, without changing the typed Answer value.
  if(key==='S-D'&&s.view==='result'&&s.mode==='COMP'&&s.setup.fractionStyle==='mixed'){
