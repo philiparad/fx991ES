@@ -20,6 +20,9 @@ CHECK_NAMES = (
     'File chooser restores a matrix-backed session',
     '375px viewport has no document-level horizontal overflow',
     'Native Tab navigation reaches a calculator key',
+    'Real keypad SHIFT percent calculates 150 times 20 percent',
+    'Real keypad ALPHA colon advances sequential statements',
+    'Real keypad SHIFT CONST selects speed of light',
 )
 
 
@@ -176,6 +179,31 @@ def perform_check(name, page):
             reached = page.evaluate("document.activeElement && document.activeElement.matches('#keypad button')")
             if reached: break
         assert reached, 'native Tab never reached keypad'
+    elif name == CHECK_NAMES[6]:
+        def key(value):
+            page.get_by_role('button', name=value+' calculator key', exact=True).first.click()
+        for value in ('1', '5', '0', 'MUL', '2', '0', 'SHIFT', 'LP', '='):
+            key(value)
+        semantic = page.locator('#semantic').inner_text()
+        assert 'Result: 30' in semantic, 'real keypad percent result mismatch: ' + semantic
+        assert 'Expression: 150*20%' in semantic, 'real keypad percent expression mismatch: ' + semantic
+    elif name == CHECK_NAMES[7]:
+        def key(value):
+            page.get_by_role('button', name=value+' calculator key', exact=True).first.click()
+        for value in ('3', 'ADD', '3', 'ALPHA', 'RP', '3', 'MUL', '3', '='):
+            key(value)
+        assert 'Result: 6' in page.locator('#semantic').inner_text(), 'first colon result not 6'
+        key('=')
+        semantic = page.locator('#semantic').inner_text()
+        assert 'Result: 9' in semantic, 'second colon result not 9'
+        assert 'Expression: 3+3:3*3' in semantic, 'colon source not preserved'
+    elif name == CHECK_NAMES[8]:
+        def key(value):
+            page.get_by_role('button', name=value+' calculator key', exact=True).first.click()
+        for value in ('SHIFT', '7', '2', '8', '='):
+            key(value)
+        semantic = page.locator('#semantic').inner_text()
+        assert 'Result: 299792458' in semantic, 'constant result mismatch: ' + semantic
     else:
         raise AssertionError('unregistered check')
 
@@ -215,7 +243,7 @@ def run_browser(pw, name, url, out, executable=None):
             finally:
                 if context:context.close()
         if len(record['checks']) == len(CHECK_NAMES) and all(r['status']=='PASS' for r in record['checks']):
-            record.update(status='PASS',detail='All six native browser interactions passed',stage='complete')
+            record.update(status='PASS',detail='All {len(CHECK_NAMES)} native browser interactions passed',stage='complete')
     except (PlaywrightError, TimeoutError, OSError) as exc:
         record.update(status=classify_failure(stage,exc),detail=str(exc)[:600])
     finally:
