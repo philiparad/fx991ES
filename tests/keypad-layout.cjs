@@ -21,8 +21,13 @@ assert.equal(keys.filter(x=>x.enabled).length>=40,true,'enough enabled keys for 
 for(const item of keys)assert.equal(typeof item.enabled,'boolean','explicit capability status');
 for(const name of ['CALC','DIFF','LOGBASE','ENG','MPLUS','EXP10']){
  const item=keys.find(x=>x.key===name);
- assert.ok(item&&!item.enabled,name+' must stay disabled until mapped');
+ assert.ok(item&&item.enabled,name+' must stay enabled with a routed implementation');
 }
+assert.equal(keys.length,50,'physical key identity inventory');
+assert.equal(keys.filter(item=>item.enabled).length,50,'all 50 visible keys currently enabled');
+const keymapText=fs.readFileSync(path.join(root,'src/keymap.js'),'utf8');
+for(const legend of ["9:'CLR'","7:'CONST'","8:'CONV'","ANS:'DRG'","CALC:'EQUALITY'","LOGBASE:'SIGMA'","MPLUS:'MMINUS'"])
+ assert.ok(keymapText.includes(legend),'modifier map must route '+legend);
 const app=fs.readFileSync(path.join(root,'src/app.js'),'utf8');
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 assert.ok(html.indexOf('src/keypad-layout.js')>=0&&html.indexOf('src/keypad-layout.js')<html.indexOf('src/app.js'),'layout loaded before app');
