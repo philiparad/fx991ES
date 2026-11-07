@@ -1356,6 +1356,11 @@ test('P0-17 50 grads converts to 45 degrees',()=>{let s=K.createState();for(cons
 test('P0-17 radians pi half converts to 90 degrees',()=>{let s=K.createState();for(const k of ['SHIFT','EXP10','DIV','2','SHIFT','ANS','2','='])s=K.dispatchKey(s,k);close(K.numeric(s.lastValue),90,1e-8)});
 test('P0-17 degrees convert to radians under RAD setup',()=>{let s=K.createState();s.setup.angle='RAD';for(const k of ['1','8','0','SHIFT','ANS','1','='])s=K.dispatchKey(s,k);close(K.numeric(s.lastValue),Math.PI,1e-12)});
 test('P0-17 cancelled DRG does not evaluate',()=>{let s=K.createState();for(const k of ['5','0','SHIFT','ANS','AC'])s=K.dispatchKey(s,k);eq(s.view,'edit');eq(s.expression,'50');eq(s.ui.angleConversion,null)});
+
+test('P0-18 ALPHA CALC inserts equation equality',()=>{let s=K.createState();for(const k of ['ALPHA','LP','POW','2','RIGHT','ALPHA','CALC','4'])s=K.dispatchKey(s,k);eq(s.expression,'X^(2)=4');eq(s.alpha,false)});
+test('P0-18 SOLVE equation X squared equals 4',()=>{let s=K.createState();for(const k of ['ALPHA','LP','POW','2','RIGHT','ALPHA','CALC','4','SHIFT','CALC','2','='])s=K.dispatchKey(s,k);eq(s.view,'result');close(K.numeric(s.lastValue),2,1e-6)});
+test('P0-18 CALC equation without solve returns syntax error',()=>{let s=K.createState();for(const k of ['ALPHA','LP','ALPHA','CALC','2','CALC'])s=K.dispatchKey(s,k);eq(s.view,'error');eq(s.error,K.ERROR.SYNTAX)});
+test('P0-18 equality cannot repeat in same editor',()=>{let s=K.createState();for(const k of ['1','ALPHA','CALC','2','ALPHA','CALC'])s=K.dispatchKey(s,k);eq(s.expression,'1=2')});
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
