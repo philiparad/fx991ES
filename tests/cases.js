@@ -1313,6 +1313,14 @@ test('P0-11 SHIFT POW maps to nth root',()=>eq(KM.resolve('standard','POW','shif
 test('P0-11 fifth root of 32 from keypad',()=>{let s=K.createState();for(const key of ['SHIFT','POW','5','RIGHT','3','2','='])s=K.dispatchKey(s,key);close(K.numeric(s.lastValue),2,1e-12)});
 test('P0-11 indexed root template consumes SHIFT',()=>{let s=K.createState();for(const key of ['SHIFT','POW'])s=K.dispatchKey(s,key);eq(s.shift,false);eq(s.alpha,false);if(!s.document.root.children.some(n=>n.kind==='Root'&&n.degree))throw Error('missing indexed root')});
 
+
+test('P0-12 LOGBASE key is mapped for Sigma with SHIFT',()=>eq(KM.resolve('standard','LOGBASE','shift'),'SIGMA'));
+test('P0-12 logarithm base 2 of 16',()=>{let s=K.createState();for(const k of ['LOGBASE','2','RIGHT','1','6','='])s=K.dispatchKey(s,k);close(K.numeric(s.lastValue),4,1e-12)});
+test('P0-12 Sigma X plus one over 1 through 5',()=>{let s=K.createState();for(const k of ['SHIFT','LOGBASE','ALPHA','LP','ADD','1','RIGHT','1','RIGHT','5','='])s=K.dispatchKey(s,k);eq(K.valueToString(s.lastValue),'20');eq(s.shift,false)});
+test('P0-12 base 1 rejected',()=>{let s=K.createState();for(const k of ['LOGBASE','1','RIGHT','5','='])s=K.dispatchKey(s,k);eq(s.view,'error');eq(s.error,K.ERROR.MATH)});
+test('P0-12 inverted Sigma bounds rejected',()=>{let s=K.createState();for(const k of ['SHIFT','LOGBASE','ALPHA','LP','RIGHT','5','RIGHT','1','='])s=K.dispatchKey(s,k);eq(s.view,'error');eq(s.error,K.ERROR.MATH)});
+test('P0-12 Sigma X scope does not alter stored X',()=>{let s=K.createState();s.memory.X=K.rat(9n);let a=K.evaluate(K.parse('Sigma(X,1,3)'),{setup:s.setup,memory:s.memory,ans:s.ans});eq(K.valueToString(a),'6');eq(K.valueToString(s.memory.X),'9')});
+
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
