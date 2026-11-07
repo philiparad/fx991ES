@@ -1919,6 +1919,40 @@ test('P1-20 MODE retains angle and numeric format settings',()=>{
  for(const k of ['MODE','2','MODE','1'])s=K.dispatchKey(s,k);
  eq(s.setup.angle,'RAD');eq(s.setup.format,'Fix');eq(s.setup.digits,4);
 });
+
+test('P2-06 standard edition excludes C-exclusive INEQ VERIF DIST modes',()=>{
+ let standard=K.createState('standard'),c=K.createState('c');
+ for(const mode of ['INEQ','VERIF','DIST']){
+  if(K.modeList(standard).includes(mode))throw Error('standard advertises '+mode);
+  if(!K.modeList(c).includes(mode))throw Error('C missing '+mode);
+ }
+});
+test('P2-06 MODE selector reaches C INEQ without enabling standard',()=>{
+ let s=K.createState('c');
+ for(const key of ['MODE','DOWN','DOWN','1'])s=K.dispatchKey(s,key);
+ eq(s.mode,'INEQ');
+ let b=K.createState('standard');
+ for(const key of ['MODE','DOWN','DOWN','1'])b=K.dispatchKey(b,key);
+ if(b.mode==='INEQ')throw Error('standard entered C-only INEQ');
+});
+test('P2-06 standard TABLE rejects dual function menu',()=>{
+ let s=K.createState('standard');
+ for(const key of ['MODE','7','3'])s=K.dispatchKey(s,key);
+ eq(s.view,'workflow-menu');
+});
+test('P2-06 C edition permits dual TABLE function',()=>{
+ let s=K.createState('c');
+ for(const key of ['MODE','7','3'])s=K.dispatchKey(s,key);
+ eq(s.view,'coefficient');
+ eq(s.ui.wizard.kind,'DUAL');
+});
+test('P2-06 switching model rebuilds mode inventory without sharing registers',()=>{
+ let standard=K.createState('standard');standard.memory.A=K.rat(7n);
+ const c=K.createState('c');
+ eq(K.valueToString(c.memory.A),'0');
+ if(K.modeList(c).length<=K.modeList(standard).length)throw Error('C mode inventory not expanded');
+});
+
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
