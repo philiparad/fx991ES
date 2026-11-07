@@ -17,3 +17,5 @@ require('./key-inventory.cjs');
 require('./keypad-layout.cjs');
 
 require('./lcd-raster-audit.cjs');
+
+require('./key-context-audit.cjs');
