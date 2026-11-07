@@ -32,4 +32,7 @@ const app=fs.readFileSync(path.join(root,'src/app.js'),'utf8');
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 assert.ok(html.indexOf('src/keypad-layout.js')>=0&&html.indexOf('src/keypad-layout.js')<html.indexOf('src/app.js'),'layout loaded before app');
 assert.ok(app.includes("item.key==='RCL'&&!state.shift?'RCL_MENU':item.key"),'SHIFT+RCL preserved');
+const css=fs.readFileSync(path.join(root,'styles.css'),'utf8');
+assert.ok(css.includes('aspect-ratio: 77 / 161.5'),'device proportions must remain manufacturer-grounded');
+assert.ok(css.includes('P2-01: manufacturer case proportions'),'physical design approximation explicitly qualified');
 console.log('Layout checks passed; physical-key and LCD equivalence NOT verified.');
