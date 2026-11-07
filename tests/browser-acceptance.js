@@ -88,7 +88,7 @@ const tests=[
    expect(!mixed.classList.contains('invalid'),'filled mixed-fraction template marked incomplete');
    clickKey(x.doc,'=');
    expect(x.doc.querySelector('#semantic').textContent.includes('Result: 11/4'),'mixed-fraction keypad input failed');
-   clickKey(x.doc,'SHIFT');clickKey(x.doc,'FRAC');
+   clickKey(x.doc,'SHIFT');clickKey(x.doc,'S-D');
    expect(x.doc.querySelector('#semantic').textContent.includes('Result: 2 3/4'),'result presentation toggle failed');
  }],
  ['Session v2 serializes structured cursor and imports safely',async x=>{
