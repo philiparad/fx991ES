@@ -26,9 +26,35 @@ for(const [groupName,items] of Object.entries(keypadLayout)){
  }
  $('keypad').append(group);
 }
-function drawLCD(pixels){const ctx=$('lcd').getContext('2d'),data=ctx.createImageData(96,31);for(let i=0;i<pixels.length;i++){const pos=i*4,on=pixels[i];const contrast=Number.isInteger(state.setup.contrast)?state.setup.contrast:5;
-const adj=(contrast-5)*8;
-data.data[pos]=on?Math.max(0,32-adj):203;data.data[pos+1]=on?Math.max(0,45-adj):213;data.data[pos+2]=on?Math.max(0,31-adj):189;data.data[pos+3]=255}ctx.putImageData(data,0,0)}
+function drawLCD(pixels){
+ // The engine remains a 96 x 31 independent monochrome framebuffer.
+ // Each logical pixel is drawn into an 8 x 8 device-pixel cell for crisp
+ // high-density browser output without changing menu/scroll semantics.
+ const canvas=$('lcd'),scale=8,w=96,h=31;
+ if(canvas.width!==w*scale||canvas.height!==h*scale){
+  canvas.width=w*scale;canvas.height=h*scale;
+ }
+ const ctx=canvas.getContext('2d'),data=ctx.createImageData(w*scale,h*scale);
+ const contrast=Number.isInteger(state.setup.contrast)?state.setup.contrast:5;
+ const adj=(contrast-5)*8;
+ const dark=[Math.max(0,29-adj),Math.max(0,42-adj),Math.max(0,42-adj)];
+ const light=[208,222,204];
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+  const on=!!pixels[y*w+x];
+  for(let sy=0;sy<scale;sy++)for(let sx=0;sx<scale;sx++){
+   const i=((y*scale+sy)*w*scale+x*scale+sx)*4;
+   // A faint isolated subpixel boundary gives a physical LCD cell texture.
+   const edge=(sx===scale-1||sy===scale-1);
+   const color=on?dark:light;
+   const delta=edge?(on?14:-2):0;
+   data.data[i]=color[0]+delta;
+   data.data[i+1]=color[1]+delta;
+   data.data[i+2]=color[2]+delta;
+   data.data[i+3]=255;
+  }
+ }
+ ctx.putImageData(data,0,0);
+}
 function renderNatural(){
  const el=$('natural-preview'),info=$('natural-info');
  if(state.mode!=='COMP'){el.textContent='Available in COMP mode';info.textContent='';return}if(K.effectiveDisplayStyle(state.setup,state.mode)==='LineIO'){el.textContent=state.expression||' ';info.textContent='Linear input mode';el.setAttribute('aria-label','Linear expression '+(state.expression||'empty'));return}
