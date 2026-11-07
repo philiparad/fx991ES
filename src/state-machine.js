@@ -212,7 +212,9 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
   }catch(error){s.error=error.code||base.ERROR.MATH;s.view='error';s.result=s.error}
   s.ui.pendingConversion=null;s.ui.conversionSource=null;s.shift=false;s.alpha=false;return end();
  }
- if(key==='AC'&&s.ui.pendingConversion){s.ui.pendingConversion=null;s.ui.conversionSource=null;s.ui.conversionDisplay=null}
+ if(key==='AC'){s.ui.pendingConversion=null;s.ui.conversionSource=null;s.ui.conversionDisplay=null}
+ if(s.ui.conversionDisplay&&key!=='ENG'&&key!=='S-D'&&key!=='='&&s.view==='result')s.ui.conversionDisplay=null;
+ if(key==='='&&!s.ui.pendingConversion)s.ui.conversionDisplay=null;
  if(key==='9'&&s.shift&&(s.view==='edit'||s.view==='result')){
   s.view='clr-menu';s.ui.clearChoice=null;s.shift=false;s.alpha=false;return end();
  }
