@@ -16,7 +16,7 @@ class InteractionProbeTests(unittest.TestCase):
             'targetUrl':'http://127.0.0.1:8100/index.html','results':[
             {'browser':b,'status':'PASS','stage':'complete','checks':[{'name':n,'status':'PASS'} for n in probe.CHECK_NAMES]}
             for b in ('chromium','firefox','webkit')]}
-    def test_six_distinct_scenarios(self):self.assertEqual(len(set(probe.CHECK_NAMES)),9)
+    def test_six_distinct_scenarios(self):self.assertEqual(len(set(probe.CHECK_NAMES)),10)
     def test_fully_successful_matrix(self):self.assertTrue(probe.validate_probe_report(self.good()))
     def test_missing_browser(self):self.assertFalse(probe.validate_probe_report({'schema':'fx991-interaction-probe','results':self.good()['results'][:2]}))
     def test_duplicate_browser(self):
