@@ -146,6 +146,15 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
 
  if(key==='ON'){s.power=true;if(s.view==='off')s.view='edit';return end()}
  if(!s.power)return end();
+ // P1-06: LCD contrast editor.
+ if(s.view==='contrast'){
+  if(key==='AC'){s.view='edit';s.ui.setupSection=null;return end()}
+  if(key==='LEFT'||key==='RIGHT'){
+   const value=Number.isInteger(s.setup.contrast)?s.setup.contrast:5;
+   s.setup.contrast=Math.max(0,Math.min(10,value+(key==='RIGHT'?1:-1)));
+  }
+  return end();
+ }
  // P1-05: mode-aware secondary menus, accessible using the yellow SHIFT legends.
  if(s.view==='secondary-menu'){
   const parent=s.ui.secondaryMode;
@@ -523,6 +532,12 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
  if(s.view==='setup'){
   if(key==='AC'){s.view='edit';s.ui.setupSection=null;s.ui.setupPage=0;return end()}
   if(s.ui.setupSection){
+   if(['CMPLX','STAT','Disp'].includes(s.ui.setupSection)&&['1','2'].includes(key)){
+    if(s.ui.setupSection==='CMPLX')s.setup.complexFormat=key==='1'?'rectangular':'polar';
+    if(s.ui.setupSection==='STAT')s.setup.statFrequency=key==='1';
+    if(s.ui.setupSection==='Disp')s.setup.decimalPoint=key==='1'?'Dot':'Comma';
+    s.ui.setupSection=null;s.view='edit';return end();
+   }
    if(s.ui.setupSection==='Fix'||s.ui.setupSection==='Sci'){
     if(/^[0-9]$/.test(key)){s.setup.format=s.ui.setupSection;s.setup.digits=Number(key);s.ui.setupSection=null;s.view='edit'}return end()
    }
@@ -537,9 +552,9 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
   }
   if(key==='UP'||key==='DOWN'){s.ui.setupPage=key==='DOWN'?1:0;return end()}
   if(s.ui.setupPage===1){
-   // Secondary firmware choices are visible for reference; do not claim a
-   // working capability when fraction, complex, STAT and contrast policies
-   // have not yet been independently verified against device observations.
+   if(key==='1'||key==='2'){s.setup.fractionStyle=key==='1'?'mixed':'improper';s.view='edit';return end()}
+   if(['3','4','5'].includes(key)){s.ui.setupSection={3:'CMPLX',4:'STAT',5:'Disp'}[key];return end()}
+   if(key==='6'){s.ui.setupSection='Contrast';s.view='contrast';return end()}
    return end();
   }
   if(key==='1'){s.ui.setupSection='MthIO';return end()}
@@ -812,6 +827,10 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
  // Support explicit RCL/STO keys for existing prototypes and tests.
  // A physical layout can use SHIFT+RCL for STO standby.
  s=decorate(base.dispatchKey(s,key));
+ if(key==='='&&s.mode==='COMP'&&s.view==='result'&&s.setup.fractionStyle==='mixed'){
+  const mixed=s.lastValue?base.mixedFractionText(s.lastValue):null;
+  if(mixed){s.result=mixed;s.mixedView=true}
+ }
  if(key==='='&&s.mode==='COMP'&&s.view==='result'){
   s.ui.dmsResult=s.expression.includes('°');
   if(s.ui.dmsResult){
@@ -862,10 +881,12 @@ function semanticScreen(s){if(!s.ui)return base.semanticScreen(s);let screen=bas
  if(s.view==='clr-menu'){screen.expression='CLR';screen.result='1:Setup 2:Memory 3:All';screen.menuItems=['1:Setup','2:Memory','3:All']}
  if(s.view==='clr-confirm'){screen.expression='CLR '+({1:'Setup',2:'Memory',3:'All'}[s.ui.clearChoice]||'');screen.result='Reset? =:Yes AC:No';screen.menuItems=null}
  if(s.ui.insertMode===false)screen.indicators=[...screen.indicators,'OVR'];
+ if(s.view==='contrast'){screen.expression='CONTRAST';screen.result='LIGHT ◀ '+(s.setup.contrast??5)+'/10 ▶ DARK';screen.menuItems=null}
+ if(s.view==='result'&&s.setup.decimalPoint==='Comma')screen.result=screen.result.replace(/, /g,'; ').replace(/(\d)\.(\d)/g,'$1,$2');
  if(s.view==='setup'){
   const section=s.ui.setupSection;
   screen.expression='SETUP';
-  screen.result=section==='MthIO'?'1:MathO 2:LineO':section==='Norm'?'1:Norm1 2:Norm2':section==='Fix'||section==='Sci'?section+' 0-9':s.ui.setupPage===1?'SECONDARY OPTIONS (not active)':'1:MthIO 2:LineIO 3:Deg 4:Rad 5:Gra 6:Fix 7:Sci 8:Norm';
+  screen.result=section==='MthIO'?'1:MathO 2:LineO':section==='Norm'?'1:Norm1 2:Norm2':section==='CMPLX'?'1:a+bi 2:r∠θ':section==='STAT'?'1:FREQ ON 2:OFF':section==='Disp'?'1:Dot 2:Comma':section==='Fix'||section==='Sci'?section+' 0-9':s.ui.setupPage===1?'1:ab/c 2:d/c 3:CMPLX 4:STAT 5:Disp 6:CONT':'1:MthIO 2:LineIO 3:Deg 4:Rad 5:Gra 6:Fix 7:Sci 8:Norm';
   screen.menuItems=section?null:s.ui.setupPage===1?['1:ab/c','2:d/c','3:CMPLX','4:STAT','5:Disp','6:CONT']:['1:MthIO','2:LineIO','3:Deg','4:Rad','5:Gra','6:Fix','7:Sci','8:Norm'];
   screen.menuPage=s.ui.setupPage||0;
  }
