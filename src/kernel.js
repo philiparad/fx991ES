@@ -77,7 +77,7 @@ function format(v,setup={},decimalView=false){
  if(global.FX991_DECIMAL){let r=decimalRational(v);return global.FX991_DECIMAL.format(r.n,r.d,setup)}
  return displayNumber(numeric(v),setup);
 }
-const TOKEN_RE=/(?:\d+(?:\.\d*)?|\.\d+|asinh|acosh|atanh|sinh|cosh|tanh|asin|acos|atan|sin|cos|tan|sqrt|abs|logbase|Sigma|log|ln|exp|RanInt#|Ran#|Rnd|Ans|pi|e|nPr|nCr|[A-FMXY]|[(),=+\-*/^!])/iy;
+const TOKEN_RE=/(?:\d+(?:\.\d*)?|\.\d+|asinh|acosh|atanh|sinh|cosh|tanh|asin|acos|atan|sin|cos|tan|sqrt|abs|logbase|Sigma|log|ln|exp|RanInt#|Ran#|Rnd|Ans|pi|e|nPr|nCr|[A-FMXY]|[(),=+\-*/^!%])/iy;
 // P0-03 sexagesimal input is represented as exact degree + minute/60 +
 // second/3600 arithmetic, preserving source text for edit and replay.
 function normalizeSexagesimal(src){
@@ -99,7 +99,7 @@ function parse(src){const t=tokenize(src);let i=0;let peek=()=>t[i]?.value;let t
   if(v==='Ran#'){i++;return {type:'random'}}
  if(v==='RanInt#'){i++;required('(');const lower=sum();required(',');const upper=sum();required(')');return {type:'randomInt',lower,upper}}
  if(['sinh','cosh','tanh','asinh','acosh','atanh','sin','cos','tan','asin','acos','atan','sqrt','abs','log','ln','exp','Rnd'].includes(v)){i++;required('(');let a=sum();required(')');return {type:'fn',name:v,arg:a}}i++;if(v==='pi'||v==='e'||v==='Ans'||/^[A-FMXY]$/.test(v))return {type:'symbol',name:v};if(/^\d/.test(v)||/^\./.test(v))return {type:'number',raw:v,pos:token.pos};throw new CalcError(ERROR.SYNTAX,token.pos)}
- function power(){let a=atom();while(take('!'))a={type:'fact',arg:a};if(take('^'))a={type:'binary',op:'^',left:a,right:unary()};return a}
+ function power(){let a=atom();while(peek()==='!'||peek()==='%'){if(take('!'))a={type:'fact',arg:a};else if(take('%'))a={type:'percent',arg:a}}if(take('^'))a={type:'binary',op:'^',left:a,right:unary()};return a}
  function unary(){if(take('-'))return {type:'neg',arg:unary()};if(take('+'))return unary();return power()}
  // Juxtaposition binds more tightly than explicit multiplication/division in the
  // documented ES-style Natural Display calculation order. Examples:
@@ -134,7 +134,8 @@ function evaluate(ast,context){let sigmaX=null;const angle=context.setup?.angle|
   if(!Number.isSafeInteger(lo)||!Number.isSafeInteger(hi)||lo>hi||hi-lo>1e9)throw new CalcError(ERROR.MATH);
   return rat(BigInt(lo+Math.floor(x*(hi-lo+1))));
  }
- if(a.type==='group')return walk(a.arg);if(a.type==='number'){if(!a.raw.includes('.'))return rat(BigInt(a.raw));let [left,right]=a.raw.split('.');return rat(BigInt((left||'0')+(right||'')),10n**BigInt(right?.length||0))}
+ if(a.type==='percent')return div(walk(a.arg),rat(100n));
+  if(a.type==='group')return walk(a.arg);if(a.type==='number'){if(!a.raw.includes('.'))return rat(BigInt(a.raw));let [left,right]=a.raw.split('.');return rat(BigInt((left||'0')+(right||'')),10n**BigInt(right?.length||0))}
  if(a.type==='symbol')return a.name==='pi'?pi():a.name==='e'?dec(Math.E):a.name==='Ans'?context.ans:a.name==='X'&&sigmaX!==null?sigmaX:(context.memory[a.name]||rat(0n));if(a.type==='neg')return neg(walk(a.arg));if(a.type==='binary'){let l=walk(a.left),r=walk(a.right);
  if(a.op==='nPr'||a.op==='nCr'){
   const n=numeric(l),k=numeric(r);
