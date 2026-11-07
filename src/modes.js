@@ -76,7 +76,7 @@ function equation(s){
   return outcome(x.map((v,i)=>'x'+(i+1)+'='+display(v)).join(' ; '),x[0],{roots:x});
  }
  let c=nums(src),count=cmd==='QUAD'?3:4;if(c.length!==count)bad();let roots=cmd==='QUAD'?quadratic(c):cubic(c);
- if(!roots){let [a,b,d]=c,im=Math.sqrt(-(b*b-4*a*d))/(2*Math.abs(a));return outcome('x1='+display(-b/(2*a))+'+'+display(im)+'i ; x2='+display(-b/(2*a))+'-'+display(im)+'i',-b/(2*a))}
+ if(!roots){let [a,b,d]=c,im=Math.sqrt(-(b*b-4*a*d))/(2*Math.abs(a)),real=-b/(2*a),z1=display(real)+'+'+display(im)+'i',z2=display(real)+'-'+display(im)+'i';return outcome('x1='+z1+' ; x2='+z2,real,{roots:[z1,z2]})}
  return outcome(roots.map((v,i)=>'x'+(i+1)+'='+display(v)).join(' ; '),roots[0],{roots});
 }
 function parseMatrix(s){let rows=String(s).trim().split(';').map(nums);if(!rows.length||rows.length>3||rows[0].length>3||rows.some(r=>r.length!==rows[0].length))bad(E.DIMENSION);return rows}
