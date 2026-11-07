@@ -1321,6 +1321,12 @@ test('P0-12 base 1 rejected',()=>{let s=K.createState();for(const k of ['LOGBASE
 test('P0-12 inverted Sigma bounds rejected',()=>{let s=K.createState();for(const k of ['SHIFT','LOGBASE','ALPHA','LP','RIGHT','5','RIGHT','1','='])s=K.dispatchKey(s,k);eq(s.view,'error');eq(s.error,K.ERROR.MATH)});
 test('P0-12 Sigma X scope does not alter stored X',()=>{let s=K.createState();s.memory.X=K.rat(9n);let a=K.evaluate(K.parse('Sigma(X,1,3)'),{setup:s.setup,memory:s.memory,ans:s.ans});eq(K.valueToString(a),'6');eq(K.valueToString(s.memory.X),'9')});
 
+
+test('P0-13 ENG key enabled in physical layout',()=>{const layout=global.FX991_KEYPAD_LAYOUT; if(layout){eq(layout.scientific.find(x=>x.key==='ENG').enabled,true)}});
+test('P0-13 1234 cycles 1.234e3 then 1234e0',()=>{let s=K.createState();for(const k of ['1','2','3','4','=','ENG'])s=K.dispatchKey(s,k);eq(s.result,'1.234×10^3');s=K.dispatchKey(s,'ENG');eq(s.result,'1234×10^0');eq(K.valueToString(s.lastValue),'1234')});
+test('P0-13 SHIFT ENG from 123 shifts left',()=>{let s=K.createState();for(const k of ['1','2','3','=','SHIFT','ENG'])s=K.dispatchKey(s,k);eq(s.result,'0.123×10^3');eq(s.shift,false);s=K.dispatchKey(s,'SHIFT');s=K.dispatchKey(s,'ENG');eq(s.result,'0.000123×10^6')});
+test('P0-13 ENG zero has stable value',()=>{let s=K.createState();for(const k of ['0','=','ENG'])s=K.dispatchKey(s,k);eq(s.result,'0×10^0');eq(K.valueToString(s.lastValue),'0')});
+test('P0-13 ENG notation reset on new evaluation',()=>{let s=K.createState();for(const k of ['1','2','3','4','=','ENG','AC','2','=','ENG'])s=K.dispatchKey(s,k);eq(s.result,'2×10^0')});
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
