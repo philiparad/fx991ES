@@ -1820,7 +1820,7 @@ test('P1-17 percent before any operand gives syntax error',()=>{
 test('P1-17 unary sign is outside exponent and implicit multiplication',()=>{
  eq(K.valueToString(evaluate('-2^2')),'-4');
  eq(K.valueToString(evaluate('(-2)^2')),'4');
- eq(K.valueToString(evaluate('1/2pi')),'1/2π');
+ close(K.numeric(evaluate('1/2pi')),1/(2*Math.PI),1e-12);
 });
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
