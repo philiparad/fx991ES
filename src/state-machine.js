@@ -146,6 +146,27 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
 
  if(key==='ON'){s.power=true;if(s.view==='off')s.view='edit';return end()}
  if(!s.power)return end();
+ // P1-07: ENG enters i, SHIFT NEG enters angle, and = evaluates CMPLX input.
+ if(s.mode==='CMPLX'&&(s.view==='edit'||s.view==='result')){
+  if(key==='ENG'||key==='NEG'&&s.shift){
+   const symbol=key==='ENG'?'i':'∠';
+   if(s.view==='result'){s.expression='';s.cursor=0}
+   s.expression=s.expression.slice(0,s.cursor)+symbol+s.expression.slice(s.cursor);
+   s.cursor+=symbol.length;s.view='edit';s.result='';s.shift=false;s.alpha=false;return end();
+  }
+  if(key==='='&&!s.expression.includes(':')){
+   try{
+    const Z=global.FX991_COMPLEX_INPUT;
+    const z=Z.parse(s.expression,s.setup.angle);
+    const value={kind:'complex',re:base.dec(z.re),im:base.dec(z.im)};
+    s.lastValue=value;s.ans=value.re;s.decimalView=true;s.mixedView=false;s.resultScrollX=0;
+    s.result=Z.display(z,s.setup.complexFormat||'rectangular',s.setup.angle);
+    s.history=[{expression:s.expression,display:s.result},...s.history].slice(0,50);
+    s.view='result';s.error=null;
+   }catch(error){s.error=error.code||base.ERROR.SYNTAX;s.result=s.error;s.view='error'}
+   s.shift=false;s.alpha=false;return end();
+  }
+ }
  // P1-06: LCD contrast editor.
  if(s.view==='contrast'){
   if(key==='AC'){s.view='edit';s.ui.setupSection=null;return end()}
@@ -881,6 +902,7 @@ function semanticScreen(s){if(!s.ui)return base.semanticScreen(s);let screen=bas
  if(s.view==='clr-menu'){screen.expression='CLR';screen.result='1:Setup 2:Memory 3:All';screen.menuItems=['1:Setup','2:Memory','3:All']}
  if(s.view==='clr-confirm'){screen.expression='CLR '+({1:'Setup',2:'Memory',3:'All'}[s.ui.clearChoice]||'');screen.result='Reset? =:Yes AC:No';screen.menuItems=null}
  if(s.ui.insertMode===false)screen.indicators=[...screen.indicators,'OVR'];
+ if(s.view==='result'&&s.mode==='CMPLX')screen.resultValue=null;
  if(s.view==='contrast'){screen.expression='CONTRAST';screen.result='LIGHT ◀ '+(s.setup.contrast??5)+'/10 ▶ DARK';screen.menuItems=null}
  if(s.view==='result'&&s.setup.decimalPoint==='Comma')screen.result=screen.result.replace(/, /g,'; ').replace(/(\d)\.(\d)/g,'$1,$2');
  if(s.view==='setup'){
