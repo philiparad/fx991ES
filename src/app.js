@@ -1,7 +1,7 @@
 (function(){'use strict';
 const K=window.FX991,$=id=>document.getElementById(id);
 const SESSION=window.FX991_SESSION;const smokeMode=new URLSearchParams(location.search).has('smoke');let localStore=null;try{localStore=smokeMode?null:window.localStorage}catch(e){}const recovered=SESSION.recover(localStore);let state=recovered||K.createState('standard');const E=window.FX991_EDITOR;let lastAnnouncement='';
-const labels={DIFF:'∫',EXP10:'×10ˣ',RECIP:'x⁻¹',DMS:'°′″',HYP:'hyp',LEFT:'◀',UP:'▲',DOWN:'▼',RIGHT:'▶',SQ:'x²',POW:'x^□',SQRT:'√',SIN:'sin',COS:'cos',TAN:'tan',LP:'(',RP:')',DIV:'÷',MUL:'×',SUB:'−',ADD:'+',NEG:'(-)',ANS:'Ans',PI:'π','S-D':'S⇔D',FRAC:'a/b',LOG:'log',LN:'ln',RCL:'RCL',MODE:'MODE'};
+const labels={DIFF:'d/dx',EXP10:'×10ˣ',RECIP:'x⁻¹',DMS:'°′″',HYP:'hyp',LEFT:'◀',UP:'▲',DOWN:'▼',RIGHT:'▶',SQ:'x²',POW:'x^□',SQRT:'√',SIN:'sin',COS:'cos',TAN:'tan',LP:'(',RP:')',DIV:'÷',MUL:'×',SUB:'−',ADD:'+',NEG:'(-)',ANS:'Ans',PI:'π','S-D':'S⇔D',FRAC:'a/b',LOG:'log',LN:'ln',RCL:'RCL',MODE:'MODE'};
 const keypadLayout=window.FX991_KEYPAD_LAYOUT;
 if(!keypadLayout)throw Error('Physical keypad layout module missing');
 function keyEvent(key){state=K.dispatchKey(state,key);render();if(state.view==='result'||state.view==='error'){const help=window.FX991_ERROR_HELP.forState(state);announce((state.view==='error'?'Error: ':'Result: ')+(state.error||state.result)+(help?'. '+help.title+'. '+help.message:''))}}
@@ -27,34 +27,39 @@ for(const [groupName,items] of Object.entries(keypadLayout)){
  $('keypad').append(group);
 }
 function drawLCD(pixels){
- // The engine remains a 96 x 31 independent monochrome framebuffer.
- // Each logical pixel is drawn into an 8 x 8 device-pixel cell for crisp
- // high-density browser output without changing menu/scroll semantics.
- const canvas=$('lcd'),scale=8,w=96,h=31;
+ // Keep the independent 96 x 31 semantic raster unchanged. Enlarging an
+ // output canvas cannot recover detail that does not exist in that raster.
+ // Whole-number cell scaling prevents anti-aliased and uneven LCD columns.
+ const canvas=$('lcd'),w=96,h=31,scale=8;
  if(canvas.width!==w*scale||canvas.height!==h*scale){
   canvas.width=w*scale;canvas.height=h*scale;
  }
- const ctx=canvas.getContext('2d'),data=ctx.createImageData(w*scale,h*scale);
- const contrast=Number.isInteger(state.setup.contrast)?state.setup.contrast:5;
- const adj=(contrast-5)*8;
- const dark=[Math.max(0,29-adj),Math.max(0,42-adj),Math.max(0,42-adj)];
- const light=[208,222,204];
+ const ctx=canvas.getContext('2d',{alpha:false});
+ if(!ctx)return;
+ const frame=ctx.createImageData(w*scale,h*scale),data=frame.data;
+ const level=Number.isInteger(state.setup.contrast)?state.setup.contrast:5;
+ const contrast=Math.max(0,Math.min(10,level));
+ // Optical LCD colors. This palette is an original approximation; it does
+ // not assert equivalence with the CASIO hardware or emulator color profile.
+ const foreground=[Math.max(11,46-contrast*4),Math.max(23,62-contrast*4),Math.max(16,48-contrast*3)];
+ const background=[207,220,201];
  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
-  const on=!!pixels[y*w+x];
+  const active=!!pixels[y*w+x];
+  const base=active?foreground:background;
   for(let sy=0;sy<scale;sy++)for(let sx=0;sx<scale;sx++){
-   const i=((y*scale+sy)*w*scale+x*scale+sx)*4;
-   // A faint isolated subpixel boundary gives a physical LCD cell texture.
-   const edge=(sx===scale-1||sy===scale-1);
-   const color=on?dark:light;
-   const delta=edge?(on?14:-2):0;
-   data.data[i]=color[0]+delta;
-   data.data[i+1]=color[1]+delta;
-   data.data[i+2]=color[2]+delta;
-   data.data[i+3]=255;
+   const i=((y*scale+sy)*(w*scale)+x*scale+sx)*4;
+   // Subtle LCD cell boundary; never blur a logical on/off pixel.
+   const boundary=sx===scale-1||sy===scale-1;
+   const correction=boundary?(active?7:-2):0;
+   data[i]=Math.max(0,Math.min(255,base[0]+correction));
+   data[i+1]=Math.max(0,Math.min(255,base[1]+correction));
+   data[i+2]=Math.max(0,Math.min(255,base[2]+correction));
+   data[i+3]=255;
   }
  }
- ctx.putImageData(data,0,0);
+ ctx.putImageData(frame,0,0);
 }
+
 function renderNatural(){
  const el=$('natural-preview'),info=$('natural-info');
  if(state.mode!=='COMP'){el.textContent='Available in COMP mode';info.textContent='';return}if(K.effectiveDisplayStyle(state.setup,state.mode)==='LineIO'){el.textContent=state.expression||' ';info.textContent='Linear input mode';el.setAttribute('aria-label','Linear expression '+(state.expression||'empty'));return}
