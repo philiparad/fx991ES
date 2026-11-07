@@ -1822,6 +1822,33 @@ test('P1-17 unary sign is outside exponent and implicit multiplication',()=>{
  eq(K.valueToString(evaluate('(-2)^2')),'4');
  close(K.numeric(evaluate('1/2pi')),1/(2*Math.PI),1e-12);
 });
+
+test('P1-18 numerical derivative and integral reference math bounds',()=>{
+ const s=K.createState(),num=global.FX991_NUM;
+ const derivative=num.run(s,'DIFF','X^2',{at:3});
+ close(K.numeric(derivative.value),6,1e-7);
+ if(!Number.isFinite(derivative.metadata.errorEstimate))throw Error('missing derivative error estimate');
+ const integral=num.run(s,'INTEGRAL','X^2',{lower:0,upper:1});
+ close(K.numeric(integral.value),1/3,1e-7);
+ if(!(integral.metadata.evaluations>0))throw Error('missing quadrature count');
+ const reverse=num.run(s,'INTEGRAL','X^2',{lower:1,upper:0});
+ close(K.numeric(reverse.value),-1/3,1e-7);
+});
+test('P1-18 SOLVE diagnostics carry residual',()=>{
+ const out=global.FX991_NUM.run(K.createState(),'SOLVE','X^2-2',{guess:1});
+ close(K.numeric(out.value),Math.SQRT2,1e-8);
+ if(Math.abs(out.metadata.residual)>1e-9)throw Error('residual inaccurate');
+ if(!(out.metadata.iterations>=1&&out.metadata.iterations<=80))throw Error('unbounded iterations');
+});
+test('P1-18 reject crossing pole with diagnostic reason',()=>{
+ try{global.FX991_NUM.run(K.createState(),'INTEGRAL','1/X',{lower:-1,upper:1});throw Error('accepted singular integral')}
+ catch(error){eq(error.code,K.ERROR.MATH);eq(error.numericalReason,'domain_sample')}
+});
+test('P1-18 invalid integration tolerance is Argument ERROR',()=>{
+ try{global.FX991_NUM.run(K.createState(),'INTEGRAL','X',{lower:0,upper:1,tolerance:0});throw Error('accepted')}
+ catch(error){eq(error.code,K.ERROR.ARGUMENT);eq(error.numericalReason,'invalid_tolerance')}
+});
+
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
