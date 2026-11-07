@@ -32,9 +32,12 @@ function complex(s,ctx){
 function base(s){
  const m=String(s).trim().match(/^(BIN|OCT|DEC|HEX)\s*:\s*(.*)$/i);if(!m)bad(E.SYNTAX);
  const base={BIN:2,OCT:8,DEC:10,HEX:16}[m[1].toUpperCase()],bits=base===2?16n:32n,mask=(1n<<bits)-1n;
- let source=m[2].trim().toUpperCase(),unary=source.match(/^(NOT|NEG)\s*\(?\s*([0-9A-F]+)\s*\)?$/),binary=source.match(/^([0-9A-F]+)\s*(XNOR|XOR|AND|OR|[+\-*\/])\s*([0-9A-F]+)$/),simple=source.match(/^[0-9A-F]+$/);
+ let source=m[2].trim().toUpperCase(),unary=source.match(/^(NOT|NEG)\s*\(?\s*(-?[0-9A-F]+)\s*\)?$/),binary=source.match(/^(-?[0-9A-F]+)\s*(XNOR|XOR|AND|OR|[+\-*\/])\s*(-?[0-9A-F]+)$/),simple=source.match(/^-?[0-9A-F]+$/);
  if(!unary&&!binary&&!simple)bad(E.SYNTAX);
- function read(text){let v=0n;for(let ch of text){let d=BigInt(parseInt(ch,16));if(d>=BigInt(base))bad(E.SYNTAX);v=v*BigInt(base)+d}if(v>mask)bad(E.MATH);return v}
+ function read(text){const negative=text.startsWith('-');if(negative){if(base!==10)bad(E.SYNTAX);text=text.slice(1)}
+   let v=0n;for(let ch of text){let d=BigInt(parseInt(ch,16));if(d>=BigInt(base))bad(E.SYNTAX);v=v*BigInt(base)+d}
+   if(base===10){if(v>(negative?2147483648n:2147483647n))bad(E.MATH)}else if(v>mask)bad(E.MATH);
+   return negative?(-v)&mask:v}
  let a=read(unary?unary[2]:binary?binary[1]:source),b=binary?read(binary[3]):0n,z=a;
  if(unary)z=unary[1]==='NOT'?~a:-a;
  if(binary){let op=binary[2];if(op==='+')z=a+b;if(op==='-')z=a-b;if(op==='*')z=a*b;if(op==='/'){if(!b)bad(E.MATH);z=a/b}if(op==='AND')z=a&b;if(op==='OR')z=a|b;if(op==='XOR')z=a^b;if(op==='XNOR')z=~(a^b)}
