@@ -204,6 +204,7 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
  // P1-14: sequential colon statements. Preserve the original source for replay,
  // but only evaluate one verified expression when '=' is pressed.
  if(key==='AC')s.ui.multiFlow=null;
+ if(['UP','DOWN','LEFT','RIGHT','DEL','FDEL','INS'].includes(key))s.ui.multiFlow=null;
  if(s.ui.multiFlow&&s.view==='result'&&key==='='){
   const f=s.ui.multiFlow;
   if(f.index+1>=f.segments.length)return end();
