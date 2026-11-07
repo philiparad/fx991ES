@@ -1849,6 +1849,41 @@ test('P1-18 invalid integration tolerance is Argument ERROR',()=>{
  catch(error){eq(error.code,K.ERROR.ARGUMENT);eq(error.numericalReason,'invalid_tolerance')}
 });
 
+
+test('P1-19 all 40 scientific constants map to finite nonzero numbers',()=>{
+ const tables=global.FX991_REFERENCE_TABLES;
+ for(let i=1;i<=40;i++){
+  const entry=tables.scientific(i);
+  if(!entry.name||!Number.isFinite(entry.value)||entry.value===0)throw Error('invalid CONST '+i);
+ }
+ eq(tables.scientific(28).name,'C0');
+ eq(tables.scientific(35).value,9.80665);
+});
+test('P1-19 all 40 conversion pairs roundtrip within bounded precision',()=>{
+ const t=global.FX991_REFERENCE_TABLES;
+ for(let i=1;i<=40;i+=2){
+  const f=t.conversion(i),r=t.conversion(i+1);
+  eq(f.from,r.to);eq(f.to,r.from);
+  const sample=i===37?72:4.25,roundtrip=r.apply(f.apply(sample));
+  close(roundtrip,sample,Math.max(1e-9,Math.abs(sample)*1e-10));
+ }
+});
+test('P1-19 proton mass constant displays scientific instead of huge fraction',()=>{
+ let s=K.createState();for(const k of ['SHIFT','7','0','1','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');close(K.numeric(s.lastValue),1.672621898e-27,1e-38);
+ if(s.result.includes('/'))throw Error('constant unexpectedly rendered as rational');
+ if(!/[eE]|×10/.test(s.result))throw Error('constant missing scientific exponent: '+s.result);
+});
+test('P1-19 physical display of C0 remains 299792458',()=>{
+ let s=K.createState();for(const k of ['SHIFT','7','2','8','='])s=K.dispatchKey(s,k);
+ eq(s.result,'299792458');
+});
+test('P1-19 zero conversion and temperature offset are consistent',()=>{
+ const t=global.FX991_REFERENCE_TABLES;
+ close(t.conversion(37).apply(32),0,1e-12);
+ close(t.conversion(38).apply(0),32,1e-12);
+ close(t.conversion(22).apply(100),3.52739658378696,1e-9);
+});
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
