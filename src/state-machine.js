@@ -201,6 +201,51 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
    s.shift=false;s.alpha=false;return end();
   }
  }
+ // P1-14: sequential colon statements. Preserve the original source for replay,
+ // but only evaluate one verified expression when '=' is pressed.
+ if(key==='AC')s.ui.multiFlow=null;
+ if(s.ui.multiFlow&&s.view==='result'&&key==='='){
+  const f=s.ui.multiFlow;
+  if(f.index+1>=f.segments.length)return end();
+  try{
+   const next=f.index+1;
+   const value=base.calculateExpression('COMP',f.segments[next],s);
+   f.index=next;s.lastValue=value;s.ans=value;s.decimalView=false;s.mixedView=false;s.resultScrollX=0;
+   s.result=base.valueDisplay(value,s.setup,false,'COMP');s.error=null;
+   if(s.history.length)s.history[0].display=s.result;
+  }catch(error){s.error=error.code||base.ERROR.MATH;s.result=s.error;s.view='error';s.ui.multiFlow=null}
+  return end();
+ }
+ // ALPHA ')' is the printed colon when the previous token closes an expression.
+ // The legacy Y shortcut remains possible at the start of a variable term.
+ if(s.alpha&&key==='RP'&&s.mode==='COMP'&&s.view==='edit'&&s.document){
+  const source=E.serialize(s.document),before=source.slice(0,E.sourceCursor(s.document));
+  if(/(?:[0-9)A-FMXY]|Ans)$/.test(before)){
+   s.document=E.insertToken(s.document,':');
+   s.expression=E.serialize(s.document);s.cursor=E.sourceCursor(s.document);
+   s.alpha=false;s.shift=false;s.result='';return end();
+  }
+ }
+ if(key==='='&&s.mode==='COMP'&&s.view==='edit'&&s.document){
+  const source=E.serialize(s.document);
+  if(source.includes(':')){
+   const segments=source.split(':');
+   if(segments.length>20||segments.some(x=>!x)){
+    s.error=base.ERROR.SYNTAX;s.result=s.error;s.view='error';return end();
+   }
+   try{
+    for(const segment of segments)base.parse(segment);
+    const value=base.calculateExpression('COMP',segments[0],s);
+    s.lastValue=value;s.ans=value;s.decimalView=false;s.mixedView=false;s.resultScrollX=0;
+    s.result=base.valueDisplay(value,s.setup,false,'COMP');
+    s.ui.multiFlow={segments,index:0};s.view='result';s.error=null;
+    s.history=[{expression:source,display:s.result},...s.history].slice(0,50);
+    s.historyCursor=-1;
+   }catch(error){s.error=error.code||base.ERROR.SYNTAX;s.result=s.error;s.view='error'}
+   return end();
+  }
+ }
+ if(s.ui.multiFlow&&key!=='S-D'&&key!=='ENG'&&key!=='SHIFT'&&key!=='ALPHA')s.ui.multiFlow=null;
  // P1-06: LCD contrast editor.
  if(s.view==='contrast'){
   if(key==='AC'){s.view='edit';s.ui.setupSection=null;return end()}
@@ -921,6 +966,7 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
 function endAfter(s,key){return s} // finishWizard records current dispatch event exactly once
 function semanticScreen(s){if(!s.ui)return base.semanticScreen(s);let screen=base.semanticScreen(s);
  if(s.view==='result'&&Number.isInteger(s.ui.engExponent))screen.resultValue=null;
+ if(s.view==='result'&&s.ui.multiFlow){screen.expression=s.ui.multiFlow.segments[s.ui.multiFlow.index]+'  ('+(s.ui.multiFlow.index+1)+'/'+s.ui.multiFlow.segments.length+')'}
  if(s.view==='mode'){
   let modes=base.modeList(s);
   screen.menuItems=s.menuPage===0?modes.slice(0,8).map((name,i)=>(i+1)+':'+name):modes.slice(8).map((name,i)=>(i+1)+':'+name);
