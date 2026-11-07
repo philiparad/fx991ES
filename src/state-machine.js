@@ -184,6 +184,7 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
   if(s.shift){
    let action=KEYS.resolve(s.model,key,'shift',s.mode);
    if(action==='MIX'){key=s.view==='edit'?'MIXIN':'MIX';s.shift=false;s.alpha=false}
+   if(action==='NROOT'){key='NROOT';s.shift=false;s.alpha=false}
    if(action==='CUBE'||action==='POW10'||action==='EXP'){
     let value={CUBE:'^3',POW10:'10^(',EXP:'exp('}[action];
     if(s.mode==='COMP'&&s.document){
