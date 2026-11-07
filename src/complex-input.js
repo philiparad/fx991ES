@@ -10,7 +10,7 @@ const neg=a=>make(-a.re,-a.im);
 const mul=(a,b)=>make(a.re*b.re-a.im*b.im,a.re*b.im+a.im*b.re);
 const div=(a,b)=>{const d=b.re*b.re+b.im*b.im;if(!d)throw new global.FX991.CalcError(global.FX991.ERROR.MATH);return make((a.re*b.re+a.im*b.im)/d,(a.im*b.re-a.re*b.im)/d)};
 function parse(source,angle='DEG'){
- const s=String(source).replace(/\s/g,'');const re=/\d+(?:\.\d*)?|\.\d+|i|[()+\-*/∠]/gy;
+ const s=String(source).replace(/\s/g,'');const re=/Conjg|arg|Abs|\d+(?:\.\d*)?|\.\d+|i|[()+\-*/∠]/gy;
  const t=[];let p=0;while(p<s.length){re.lastIndex=p;const match=re.exec(s);if(!match)bad();t.push(match[0]);p=re.lastIndex}
  if(!t.length)bad();let at=0;
  const peek=()=>t[at],take=c=>{if(peek()===c){at++;return true}return false};
@@ -18,6 +18,13 @@ function parse(source,angle='DEG'){
  function atom(){
   if(take('(')){let z=sum();required(')');return z}
   if(take('i'))return make(0,1);
+  for(const name of ['arg','Conjg','Abs'])if(take(name)){
+   required('(');const z=sum();required(')');
+   if(name==='Conjg')return make(z.re,-z.im);
+   if(name==='Abs')return make(Math.hypot(z.re,z.im));
+   const unit=angle==='DEG'?180/Math.PI:angle==='GRAD'?200/Math.PI:1;
+   return make(Math.atan2(z.im,z.re)*unit);
+  }
   const v=peek();if(v&&/^(?:\d|\.)/.test(v)){at++;return make(Number(v))}
   bad();
  }
