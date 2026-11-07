@@ -1350,6 +1350,12 @@ test('P0-16 100 grams to ounces',()=>{let s=K.createState();for(const k of ['1',
 test('P0-16 negative Celsius to Fahrenheit',()=>{let s=K.createState();for(const k of ['NEG','3','1','SHIFT','8','3','8','='])s=K.dispatchKey(s,k);close(K.numeric(s.lastValue),-23.8,1e-9)});
 test('P0-16 invalid code yields error',()=>{let s=K.createState();for(const k of ['SHIFT','8','0','0'])s=K.dispatchKey(s,k);eq(s.view,'error')});
 test('P0-16 prompt cancellation retains expression',()=>{let s=K.createState();for(const k of ['5','SHIFT','8','AC'])s=K.dispatchKey(s,k);eq(s.expression,'5');eq(s.view,'edit')});
+
+test('P0-17 SHIFT ANS enters DRG conversion menu',()=>{let s=K.createState();for(const k of ['1','SHIFT','ANS'])s=K.dispatchKey(s,k);eq(s.view,'drg-menu');eq(K.semanticScreen(s).menuItems.length,3)});
+test('P0-17 50 grads converts to 45 degrees',()=>{let s=K.createState();for(const k of ['5','0','SHIFT','ANS','3','='])s=K.dispatchKey(s,k);close(K.numeric(s.lastValue),45,1e-10)});
+test('P0-17 radians pi half converts to 90 degrees',()=>{let s=K.createState();for(const k of ['SHIFT','EXP10','DIV','2','SHIFT','ANS','2','='])s=K.dispatchKey(s,k);close(K.numeric(s.lastValue),90,1e-8)});
+test('P0-17 degrees convert to radians under RAD setup',()=>{let s=K.createState();s.setup.angle='RAD';for(const k of ['1','8','0','SHIFT','ANS','1','='])s=K.dispatchKey(s,k);close(K.numeric(s.lastValue),Math.PI,1e-12)});
+test('P0-17 cancelled DRG does not evaluate',()=>{let s=K.createState();for(const k of ['5','0','SHIFT','ANS','AC'])s=K.dispatchKey(s,k);eq(s.view,'edit');eq(s.expression,'50');eq(s.ui.angleConversion,null)});
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
