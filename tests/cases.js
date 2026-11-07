@@ -1712,6 +1712,34 @@ test('P1-13 TABLE dual C mode stores both outputs',()=>{
  eq(s.view,'result');eq(s.lastValue.data.rows.length,3);
  eq(s.lastValue.data.rows[2][2],4);
 });
+
+test('P1-14 ALPHA RP colon separates calculations and equals advances',()=>{
+ let s=K.createState();
+ for(const key of ['3','ADD','3','ALPHA','RP','3','MUL','3','='])s=K.dispatchKey(s,key);
+ eq(s.view,'result');eq(s.expression,'3+3:3*3');eq(K.valueToString(s.lastValue),'6');
+ eq(s.ui.multiFlow.index,0);
+ s=K.dispatchKey(s,'=');eq(K.valueToString(s.lastValue),'9');
+ eq(s.ui.multiFlow.index,1);
+});
+test('P1-14 multi-statement Ans uses previous result',()=>{
+ let s=K.createState();
+ for(const key of ['2','MUL','5','ALPHA','RP','ANS','ADD','1','=','='])s=K.dispatchKey(s,key);
+ eq(K.valueToString(s.lastValue),'11');
+});
+test('P1-14 trailing colon produces Syntax ERROR',()=>{
+ let s=K.createState();
+ for(const key of ['1','ALPHA','RP','='])s=K.dispatchKey(s,key);
+ eq(s.view,'error');eq(s.error,K.ERROR.SYNTAX);
+});
+test('P1-14 AC aborts multi statement state',()=>{
+ let s=K.createState();
+ for(const key of ['1','ALPHA','RP','2','=','AC'])s=K.dispatchKey(s,key);
+ eq(s.view,'edit');eq(s.ui.multiFlow,null);
+});
+test('P1-14 traditional Y at start of term remains available',()=>{
+ let s=K.createState();for(const key of ['ALPHA','LP','ADD','ALPHA','RP'])s=K.dispatchKey(s,key);
+ eq(s.expression,'X+Y');
+});
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
