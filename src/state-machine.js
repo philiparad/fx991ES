@@ -304,6 +304,17 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
   }
  }
 
+ // P0-18: ALPHA CALC enters a true equation equality separator.
+ if(key==='EQUALITY'&&s.mode==='COMP'&&(s.view==='edit'||s.view==='result')){
+  if(s.view==='result'){s.document=E.create();s.expression='';s.cursor=0}
+  const source=E.serialize(s.document);
+  if(!source.includes('=')){
+   s.document=E.insertToken(s.document,'=');
+   s.expression=E.serialize(s.document);s.cursor=E.sourceCursor(s.document);
+   s.view='edit';s.result='';s.error=null;
+  }
+  s.shift=false;s.alpha=false;return end();
+ }
  // COMP-only CALC substitution / SHIFT+CALC numerical SOLVE.
  // Educational behavior; no physical CASIO observations have been claimed.
  // Sequential CALC variable prompts; source expression remains unchanged.
@@ -329,7 +340,8 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
     let value;
     if(f.operation==='SOLVE'){
      const num=global.FX991_NUM;if(!num)throw new base.CalcError(base.ERROR.UNSUPPORTED);
-     const output=num.run({...s,memory:{...s.memory,X:given}},'SOLVE',f.source,{guess:base.numeric(given)});
+     const source=f.source.includes('=')?('('+f.source.split('=')[0]+')-('+f.source.split('=')[1]+')'):f.source;
+     const output=num.run({...s,memory:{...s.memory,X:given}},'SOLVE',source,{guess:base.numeric(given)});
      value=output.value;s.memory.X=value;s.numericalDetails=output.metadata;s.decimalView=true;
     }else{
      const inputs={...f.values,[name]:given};
@@ -353,6 +365,7 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
   catch(error){s.shift=false;s.alpha=false;return end()}
   const operation=s.shift?'SOLVE':'CALC';
   if(!variables.length||(operation==='SOLVE'&&!variables.includes('X'))){s.shift=false;s.alpha=false;return end()}
+  if(source.includes('=')&&(operation!=='SOLVE'||source.split('=').length!==2||source.startsWith('=')||source.endsWith('='))){s.shift=false;s.alpha=false;s.error=base.ERROR.SYNTAX;s.result=s.error;s.view='error';return end()}
   s.ui.calcFlow={operation,source,variables:operation==='SOLVE'?['X']:variables,index:0,buffer:'',values:{}};
   s.shift=false;s.alpha=false;s.view='calc-input';s.error=null;return end();
  }
