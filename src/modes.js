@@ -106,7 +106,7 @@ function vector(s){
  if(parts.length!==2)bad(E.SYNTAX);let b=nums(parts[1]);if(a.length!==b.length)bad(E.DIMENSION);
  let dot=a.reduce((s,x,i)=>s+x*b[i],0);
  if(op==='DOT')return outcome(display(dot),dot);
- if(op==='ANGLE'){let divisor=Math.hypot(...a)*Math.hypot(...b);if(!divisor)bad(E.MATH);let x=Math.acos(Math.max(-1,Math.min(1,dot/divisor)));return outcome(display(x*180/Math.PI),x*180/Math.PI)}
+ if(op==='ANGLE'){let divisor=Math.hypot(...a)*Math.hypot(...b);if(!divisor)bad(E.MATH);let x=Math.acos(Math.max(-1,Math.min(1,dot/divisor)));let scale=ctx.setup?.angle==='RAD'?1:ctx.setup?.angle==='GRAD'?200/Math.PI:180/Math.PI;return outcome(display(x*scale),x*scale)}
  let v;if(op==='ADD')v=a.map((x,i)=>x+b[i]);if(op==='SUB')v=a.map((x,i)=>x-b[i]);
  if(op==='CROSS'){if(a.length!==3)bad(E.DIMENSION);v=[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]]}
  return outcome(line(v),v[0],{vector:v});
