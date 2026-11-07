@@ -3,7 +3,7 @@
  */
 (function(global){'use strict';
 const alpha=Object.freeze({CALC:'EQUALITY','.':'RANINT',EXP10:'EULER',NEG:'A',DMS:'B',HYP:'C',SIN:'D',COS:'E',TAN:'F',LP:'X',RP:'Y',MPLUS:'M'});
-const shift=Object.freeze({'.':'RAN',0:'RND',1:'STAT_MENU',2:'CMPLX_MENU',3:'BASE_MENU',4:'MATRIX_MENU',5:'VECTOR_MENU',9:'CLR',7:'CONST',8:'CONV',EXP10:'PI',HYP:'ABS',RECIP:'FACTORIAL',ADD:'POL',SUB:'RECT',MUL:'NPR',DIV:'NCR',POW:'NROOT',LOGBASE:'SIGMA',ENG:'ENG_REVERSE',MPLUS:'MMINUS',ANS:'DRG',DEL:'INS',MODE:'SETUP',SQRT:'NROOT',FRAC:'MIX',SIN:'ASIN',COS:'ACOS',TAN:'ATAN',SQ:'CUBE',LOG:'POW10',LN:'EXP',AC:'OFF'});
+const shift=Object.freeze({'.':'RAN',0:'RND',1:'STAT_MENU',2:'CMPLX_MENU',3:'BASE_MENU',4:'MATRIX_MENU',5:'VECTOR_MENU',9:'CLR',7:'CONST',8:'CONV',EXP10:'PI',HYP:'ABS',RECIP:'FACTORIAL',ADD:'POL',SUB:'RECT',MUL:'NPR',DIV:'NCR',POW:'NROOT',LOGBASE:'SIGMA',ENG:'ENG_REVERSE',MPLUS:'MMINUS',ANS:'DRG',LP:'PERCENT',DEL:'INS',MODE:'SETUP',SQRT:'NROOT',FRAC:'MIX',SIN:'ASIN',COS:'ACOS',TAN:'ATAN',SQ:'CUBE',LOG:'POW10',LN:'EXP',AC:'OFF'});
 const baseDigits=Object.freeze({NEG:'A',DMS:'B',HYP:'C',SIN:'D',COS:'E',TAN:'F'});
 const radixSelectors=Object.freeze({SQ:'DEC',RECIP:'HEX',LOG:'BIN',LN:'OCT'});
 const profiles=Object.freeze({standard:Object.freeze({id:'fx991esplus-2',alpha,shift,baseDigits,radixSelectors}),c:Object.freeze({id:'fx991esplus-c-2',alpha,shift,baseDigits,radixSelectors})});
