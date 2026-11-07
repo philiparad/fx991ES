@@ -1435,6 +1435,30 @@ test('P1-01 CALC rejects malformed prompt instead of silently accepting',()=>{
  for(const key of ['ALPHA','NEG','ADD','ALPHA','DMS','CALC','.','.','RIGHT'])s=K.dispatchKey(s,key);
  eq(s.view,'error');eq(s.error,K.ERROR.ARGUMENT);
 });
+
+test('P1-02 SOLVE prompts coefficient A before X guess',()=>{
+ let s=K.createState();
+ for(const key of ['ALPHA','NEG','MUL','ALPHA','LP','ALPHA','CALC','1','2','SHIFT','CALC'])s=K.dispatchKey(s,key);
+ eq(s.view,'calc-input');eq(s.ui.calcFlow.variables.join(','),'A,X');
+ for(const key of ['3','=','4','='])s=K.dispatchKey(s,key);
+ eq(s.view,'result');close(K.numeric(s.lastValue),4,1e-7);
+ eq(K.valueToString(s.memory.A),'3');close(K.numeric(s.memory.X),4,1e-7);
+});
+test('P1-02 SOLVE supports equation with only Y as unknown',()=>{
+ let s=K.createState();for(const key of ['ALPHA','RP','ADD','2','ALPHA','CALC','5','SHIFT','CALC','3','='])s=K.dispatchKey(s,key);
+ eq(s.view,'result');eq(s.numericalDetails.variable,'Y');close(K.numeric(s.memory.Y),3,1e-8);
+});
+test('P1-02 SOLVE residual metadata and untouched X when targeting Y',()=>{
+ let s=K.createState();s.memory.X=K.rat(14n);
+ for(const key of ['ALPHA','RP','ALPHA','CALC','1','0','SHIFT','CALC','9','='])s=K.dispatchKey(s,key);
+ eq(s.view,'result');eq(K.valueToString(s.memory.X),'14');close(K.numeric(s.memory.Y),10,1e-8);
+ if(!Number.isFinite(s.numericalDetails.leftMinusRight))throw Error('missing residual');
+});
+test('P1-02 SOLVE parameter cancellation keeps original registers',()=>{
+ let s=K.createState();s.memory.A=K.rat(8n);
+ for(const key of ['ALPHA','NEG','MUL','ALPHA','LP','SHIFT','CALC','3','AC'])s=K.dispatchKey(s,key);
+ eq(s.view,'edit');eq(K.valueToString(s.memory.A),'8');
+});
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
