@@ -14,7 +14,7 @@ const scientific=Object.freeze([
  button(null),button('RECIP','x!'),button('LOGBASE','Σ','dark'),button(null),
  button('FRAC','a b/c'),button('SQRT','³√'),button('SQ','x³'),button('POW','ⁿ√'),button('LOG','10ˣ'),button('LN','eˣ'),
  button('NEG'),button('DMS'),button('HYP'),button('SIN','sin⁻¹'),button('COS','cos⁻¹'),button('TAN','tan⁻¹'),
- button('RCL','STO'),button('ENG','←','dark'),button('LP'),button('RP'),button('S-D'),button('MPLUS','','dark',false)
+ button('RCL','STO'),button('ENG','←','dark'),button('LP'),button('RP'),button('S-D'),button('MPLUS','M−','dark')
 ]);
 const numeric=Object.freeze([
  button('7','CONST','number'),button('8','CONV','number'),button('9','CLR','number'),button('DEL','INS','green'),button('AC','OFF','green'),
