@@ -1459,6 +1459,23 @@ test('P1-02 SOLVE parameter cancellation keeps original registers',()=>{
  for(const key of ['ALPHA','NEG','MUL','ALPHA','LP','SHIFT','CALC','3','AC'])s=K.dispatchKey(s,key);
  eq(s.view,'edit');eq(K.valueToString(s.memory.A),'8');
 });
+
+test('P1-03 DIFF starts with editable function when expression empty',()=>{
+ let s=K.createState();for(const k of ['DIFF'])s=K.dispatchKey(s,k);
+ eq(s.view,'numerical-input');eq(s.ui.numericalFlow.fields.join(','),'expression,at');
+ for(const k of ['ALPHA','LP','POW','2','=','3','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');close(K.numeric(s.lastValue),6,1e-6);
+});
+test('P1-03 integral accepts function then lower and upper bounds',()=>{
+ let s=K.createState();for(const k of ['SHIFT','DIFF'])s=K.dispatchKey(s,k);
+ eq(s.ui.numericalFlow.fields.join(','),'expression,lower,upper');
+ for(const k of ['ALPHA','LP','=','0','=','2','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');close(K.numeric(s.lastValue),2,1e-5);
+});
+test('P1-03 empty expression field cannot calculate',()=>{
+ let s=K.createState();for(const k of ['DIFF','='])s=K.dispatchKey(s,k);
+ eq(s.view,'error');
+});
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
