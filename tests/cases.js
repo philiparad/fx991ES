@@ -527,15 +527,15 @@ test('P13 invalid radical-sum import is rejected',()=>{let s=K.createState();s.a
 test('P13 CASIO published corpus now matches eleven result texts',()=>{const r=global.FX991_MANUFACTURER_EXAMPLES.verify();eq(r.matched,11);eq(r.total,11);eq(r.physicalObservations,0)});
 
 // Phase 14: mixed fraction display plus independently scrollable exact result.
-test('P14 improper fraction toggles to mixed result',()=>{let s=m31seq(['FRAC','7','RIGHT','6','=','SHIFT','FRAC']);eq(s.result,'1 1/6');eq(s.mixedView,true);eq(K.valueToString(s.ans),'7/6')});
-test('P14 mixed toggle is reversible',()=>{let s=m31seq(['FRAC','7','RIGHT','6','=','SHIFT','FRAC','SHIFT','FRAC']);eq(s.result,'7/6');eq(s.mixedView,false)});
-test('P14 negative mixed fractions retain sign',()=>{let s=m31seq(['NEG','FRAC','7','RIGHT','6','=','SHIFT','FRAC']);eq(s.result,'-1 1/6')});
-test('P14 reduced proper fraction has no mixed form',()=>{let s=m31seq(['FRAC','1','RIGHT','6','=','SHIFT','FRAC']);eq(s.result,'1/6');eq(s.mixedView,false)});
-test('P14 integers do not become mixed fractions',()=>{let s=m31seq(['3','=','SHIFT','FRAC']);eq(s.result,'3');eq(s.mixedView,false)});
+test('P14 improper fraction toggles to mixed result',()=>{let s=m31seq(['FRAC','7','RIGHT','6','=','SHIFT','S-D']);eq(s.result,'1 1/6');eq(s.mixedView,true);eq(K.valueToString(s.ans),'7/6')});
+test('P14 mixed toggle is reversible',()=>{let s=m31seq(['FRAC','7','RIGHT','6','=','SHIFT','S-D','SHIFT','S-D']);eq(s.result,'7/6');eq(s.mixedView,false)});
+test('P14 negative mixed fractions retain sign',()=>{let s=m31seq(['NEG','FRAC','7','RIGHT','6','=','SHIFT','S-D']);eq(s.result,'-1 1/6')});
+test('P14 reduced proper fraction has no mixed form',()=>{let s=m31seq(['FRAC','1','RIGHT','6','=','SHIFT','S-D']);eq(s.result,'1/6');eq(s.mixedView,false)});
+test('P14 integers do not become mixed fractions',()=>{let s=m31seq(['3','=','SHIFT','S-D']);eq(s.result,'3');eq(s.mixedView,false)});
 test('P14 mixed fraction digit ceiling disallows huge conversions',()=>{eq(K.mixedFractionText(K.rat(123456789012345n,13n)),null)});
 test('P14 allowed mixed fraction stays within documented digit ceiling',()=>{eq(K.mixedFractionText(K.rat(11n,4n)),'2 3/4')});
-test('P14 mixed conversion cannot alter stored Ans',()=>{let s=m31seq(['FRAC','7','RIGHT','6','=','SHIFT','FRAC','S-D']);eq(K.valueToString(s.ans),'7/6');eq(s.mixedView,false)});
-test('P14 mixed MathO result uses plain mixed string not improper stacked fraction',()=>{let s=m31seq(['FRAC','7','RIGHT','6','=','SHIFT','FRAC']);eq(L.composeScreen(K.semanticScreen(s)).resultLayout,null)});
+test('P14 mixed conversion cannot alter stored Ans',()=>{let s=m31seq(['FRAC','7','RIGHT','6','=','SHIFT','S-D','S-D']);eq(K.valueToString(s.ans),'7/6');eq(s.mixedView,false)});
+test('P14 mixed MathO result uses plain mixed string not improper stacked fraction',()=>{let s=m31seq(['FRAC','7','RIGHT','6','=','SHIFT','S-D']);eq(L.composeScreen(K.semanticScreen(s)).resultLayout,null)});
 test('P14 MIX shortcut handled by controller',()=>{let s=m31seq(['FRAC','1','1','RIGHT','4','=']);eq(s.view,'result')});
 test('P14 long integer result displays an overflow viewport',()=>{let s=m31seq([...'12345678901234567890123456789'.split(''),'=']);let frame=L.composeScreen(K.semanticScreen(s));eq(frame.resultOverflow,true);if(frame.resultMaxScroll<=0)throw Error('no scroll extent')});
 test('P14 result RIGHT scrolls while keeping result view',()=>{let s=m31seq([...'12345678901234567890123456789'.split(''),'=']);s=K.dispatchKey(s,'RIGHT');eq(s.view,'result');eq(s.resultScrollX,16)});
@@ -548,7 +548,7 @@ test('P14 short result LEFT retains earlier edit cursor behavior',()=>{let s=m31
 test('P14 exact radical boundary sqrt zero',()=>{eq(K.valueToString(evaluate('sqrt(0)')),'0')});
 test('P14 square-root square simplification',()=>{eq(K.valueToString(evaluate('sqrt(5)*sqrt(5)')),'5')});
 test('P14 unlike radicals cancel without decimal loss',()=>{eq(K.valueToString(evaluate('sqrt(2)+sqrt(5)-sqrt(5)')),'√2')});
-test('P14 mixed fraction remains text after session restore',()=>{let s=m31seq(['FRAC','7','RIGHT','6','=','SHIFT','FRAC']);let r=SS.importJSON(SS.exportJSON(s));eq(K.valueToString(r.ans),'7/6')});
+test('P14 mixed fraction remains text after session restore',()=>{let s=m31seq(['FRAC','7','RIGHT','6','=','SHIFT','S-D']);let r=SS.importJSON(SS.exportJSON(s));eq(K.valueToString(r.ans),'7/6')});
 
 // Phase 15: dedicated three-field mixed-fraction *input*, not only display conversion.
 const p15=(keys,style='MathO')=>{let s=K.createState();s.setup.displayStyle=style;for(const k of keys)s=K.dispatchKey(s,k);return s};
@@ -896,7 +896,7 @@ test('SHIFT CALC only solves expressions containing X',()=>{
 test('DIFF keypad evaluates derivative of X squared at 3',()=>{
  let s=K.createState('standard');s.expression='X^2';s.cursor=3;
  s.document=global.FX991_EDITOR.fromSource(s.expression);
- s=K.dispatchKey(s,'DIFF');eq(s.view,'numerical-input');
+ s=K.dispatchKey(s,'SHIFT');s=K.dispatchKey(s,'DIFF');eq(s.view,'numerical-input');
  eq(s.ui.numericalFlow.operation,'DIFF');eq(K.semanticScreen(s).result.includes('X?'),true);
  for(const key of ['3','='])s=K.dispatchKey(s,key);
  eq(s.view,'result');close(K.numeric(s.lastValue),6,1e-7);
@@ -939,7 +939,7 @@ test('DIFF rejects malformed coordinate without changing ANS',()=>{
 test('INTEGRAL prompts do not commit partial bounds',()=>{
  let s=K.createState('standard');s.expression='X';s.cursor=1;
  s.document=global.FX991_EDITOR.fromSource(s.expression);
- s=K.dispatchKey(s,'SHIFT');s=K.dispatchKey(s,'SHIFT');s=K.dispatchKey(s,'DIFF');
+ s=K.dispatchKey(s,'DIFF');
  for(const key of ['3','=','AC'])s=K.dispatchKey(s,key);
  eq(s.view,'edit');eq(s.expression,'X');
  eq(s.ui.numericalFlow,null);close(K.numeric(s.ans),0);
@@ -2017,6 +2017,17 @@ test('CASIO EQN 3 selects quadratic equation',()=>{
 test('CASIO EQN 4 selects cubic equation',()=>{
  let s=K.createState();for(const key of ['MODE','5','4'])s=K.dispatchKey(s,key);
  eq(s.view,'coefficient');eq(s.ui.wizard.kind,'CUBIC');
+});
+
+test('CASIO SHIFT S-D changes 7/6 to mixed number while preserving Ans',()=>{
+ let s=K.createState();for(const key of ['FRAC','7','RIGHT','6','=','SHIFT','S-D'])s=K.dispatchKey(s,key);
+ eq(s.result,'1 1/6');eq(s.mixedView,true);eq(K.valueToString(s.ans),'7/6');
+ s=K.dispatchKey(s,'SHIFT');s=K.dispatchKey(s,'S-D');
+ eq(s.result,'7/6');eq(s.mixedView,false);
+});
+test('CASIO unshifted S-D still toggles decimal',()=>{
+ let s=K.createState();for(const key of ['FRAC','7','RIGHT','6','=','S-D'])s=K.dispatchKey(s,key);
+ if(s.result==='7/6')throw Error('decimal toggle not invoked');
 });
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
