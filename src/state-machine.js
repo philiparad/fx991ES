@@ -686,7 +686,16 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
  // Existing MODE menu dispatch remains the source of truth for descriptors.
  if(s.view==='mode'){
   const next=base.dispatchKey(s,key);s=decorate(next);
-  if(next.view==='edit'&&next.mode!==state.mode)enterWizard(s,next.mode);
+  if(next.view==='edit'&&next.mode!==state.mode){
+   // P1-20: mode-local screens must never leak into the new mode. Scalar
+   // and registered data are intentionally retained until an explicit CLR.
+   s.ui.lastWizard=null;s.ui.multiFlow=null;s.ui.constantExpression=false;
+   s.ui.referenceFlow=null;s.ui.numericalFlow=null;s.ui.calcFlow=null;
+   s.ui.coordinateFlow=null;s.ui.registerFlow=null;s.ui.statFlow=null;
+   s.ui.pendingConversion=null;s.ui.conversionDisplay=null;s.ui.drgDisplay=null;
+   s.mixedView=false;s.decimalView=false;s.resultScrollX=0;
+   enterWizard(s,next.mode);
+  }
   return s;
  }
  if(key==='MODE'){s=decorate(base.dispatchKey(s,key));return s}
