@@ -90,6 +90,16 @@ function layoutNode(node,anchor){
   if(degree)embed(degree,0,0,commands,anchors);
   return make(width,height,commands,anchors,bodyY+1+body.baseline);
  }
+ if(node.kind==='MultiFunction'){
+  const pieces=[glyphBox(node.name+'(')];
+  node.fields.forEach((field,i)=>{if(i)pieces.push(glyphBox(','));pieces.push(sequence(field,anchor))});
+  pieces.push(glyphBox(')'));
+  const baseline=Math.max(...pieces.map(box=>box.baseline));
+  const height=baseline+Math.max(...pieces.map(box=>box.height-1-box.baseline))+1;
+  const commands=[],anchors=[];let x=0;
+  for(const box of pieces){embed(box,x,baseline-box.baseline,commands,anchors);x+=box.width}
+  return make(x,height,commands,anchors,baseline);
+ }
  if(node.kind==='Function'||node.kind==='Group'){
   let inner=sequence(node.kind==='Function'?node.argument:node.body,anchor);
   let name=glyphBox(node.kind==='Function'?node.name+'(':'('),close=glyphBox(')');
