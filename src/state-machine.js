@@ -457,6 +457,23 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
   }
   return end();
  }
+ // P0-13: ENG shifts only the displayed notation, never the stored value.
+ if(key==='ENG'&&s.mode==='COMP'&&s.view==='result'&&s.lastValue){
+  const value=base.numeric(s.lastValue),reverse=s.shift;
+  if(Number.isFinite(value)){
+   const initial=value===0?0:Math.floor(Math.log10(Math.abs(value))/3)*3;
+   const previous=Number.isInteger(s.ui.engExponent)?s.ui.engExponent:null;
+   const exponent=previous===null?(reverse?initial+3:initial):previous+(reverse?3:-3);
+   if(exponent>=-99&&exponent<=99){
+    s.ui.engExponent=exponent;
+    const mantissa=value/Math.pow(10,exponent);
+    s.result=Number(mantissa.toPrecision(12)).toString()+'×10^'+exponent;
+    s.resultScrollX=0;
+   }
+  }
+  s.shift=false;s.alpha=false;return end();
+ }
+ if(key==='='||key==='AC')s.ui.engExponent=null;
  // P0-12: log-base and finite summation use multi-slot natural input.
  if(key==='LOGBASE'&&s.mode==='COMP'&&(s.view==='edit'||s.view==='result')){
   const name=s.shift?'Sigma':'logbase';
