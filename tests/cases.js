@@ -1361,6 +1361,8 @@ test('P0-18 ALPHA CALC inserts equation equality',()=>{let s=K.createState();for
 test('P0-18 SOLVE equation X squared equals 4',()=>{let s=K.createState();for(const k of ['ALPHA','LP','POW','2','RIGHT','ALPHA','CALC','4','SHIFT','CALC','2','='])s=K.dispatchKey(s,k);eq(s.view,'result');close(K.numeric(s.lastValue),2,1e-6)});
 test('P0-18 CALC equation without solve returns syntax error',()=>{let s=K.createState();for(const k of ['ALPHA','LP','ALPHA','CALC','2','CALC'])s=K.dispatchKey(s,k);eq(s.view,'error');eq(s.error,K.ERROR.SYNTAX)});
 test('P0-18 equality cannot repeat in same editor',()=>{let s=K.createState();for(const k of ['1','ALPHA','CALC','2','ALPHA','CALC'])s=K.dispatchKey(s,k);eq(s.expression,'1=2')});
+
+test('P0-20 keymap P0 routes remain present',()=>{const KM=global.FX991_KEYS;for(const [key,action] of [['7','CONST'],['8','CONV'],['9','CLR'],['ANS','DRG'],['CALC','EQUALITY'],['MPLUS','MMINUS']])eq(KM.resolve('standard',key,'shift'),action)});
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
