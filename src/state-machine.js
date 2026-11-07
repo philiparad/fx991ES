@@ -201,6 +201,19 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
    s.shift=false;s.alpha=false;return end();
   }
  }
+ // P1-17: SHIFT + opening parenthesis is a postfix percent.
+ if(s.shift&&key==='LP'&&s.mode==='COMP'&&(s.view==='edit'||s.view==='result')){
+  if(s.view==='result'){s.document=E.fromSource('Ans');s.expression='Ans';s.cursor=3}
+  const prefix=E.serialize(s.document).slice(0,E.sourceCursor(s.document));
+  if(!/(?:[0-9)!%A-FMXY]|Ans)$/.test(prefix)){
+   s.error=base.ERROR.SYNTAX;s.result=s.error;s.view='error';
+  }else{
+   s.document=E.insertToken(s.document,'%');
+   s.expression=E.serialize(s.document);s.cursor=E.sourceCursor(s.document);
+   s.view='edit';s.result='';s.error=null;
+  }
+  s.shift=false;s.alpha=false;return end();
+ }
  // P1-14: sequential colon statements. Preserve the original source for replay,
  // but only evaluate one verified expression when '=' is pressed.
  if(key==='AC')s.ui.multiFlow=null;
