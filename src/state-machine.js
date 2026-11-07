@@ -664,7 +664,11 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
   if(s.ui.setupSection){
    if(['CMPLX','STAT','Disp'].includes(s.ui.setupSection)&&['1','2'].includes(key)){
     if(s.ui.setupSection==='CMPLX')s.setup.complexFormat=key==='1'?'rectangular':'polar';
-    if(s.ui.setupSection==='STAT')s.setup.statFrequency=key==='1';
+    if(s.ui.setupSection==='STAT'){
+     const nextFrequency=key==='1';
+     if(s.setup.statFrequency!==nextFrequency)s.ui.modeMemory.stat.rows=[];
+     s.setup.statFrequency=nextFrequency;
+    }
     if(s.ui.setupSection==='Disp')s.setup.decimalPoint=key==='1'?'Dot':'Comma';
     s.ui.setupSection=null;s.view='edit';return end();
    }
@@ -698,6 +702,9 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
  if(s.view==='mode'){
   const next=base.dispatchKey(s,key);s=decorate(next);
   if(next.view==='edit'&&next.mode!==state.mode){
+   // Manufacturer: all STAT editor rows are deleted when STAT mode is exited.
+   // Scalar variables, matrix registers and vector registers are unaffected.
+   if(state.mode==='STAT'&&next.mode!=='STAT')s.ui.modeMemory.stat.rows=[];
    // P1-20: mode-local screens must never leak into the new mode. Scalar
    // and registered data are intentionally retained until an explicit CLR.
    s.ui.lastWizard=null;s.ui.multiFlow=null;s.ui.constantExpression=false;
