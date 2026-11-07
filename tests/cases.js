@@ -1981,6 +1981,26 @@ test('P2-08 exact overflow boundary rejects div by zero and negative factorial',
  }
 });
 
+
+test('P2-09 OFF ignores physical arithmetic until ON resumes',()=>{
+ let s=K.createState();for(const k of ['SHIFT','AC'])s=K.dispatchKey(s,k);
+ eq(s.power,false);eq(s.view,'off');
+ const before=s.expression;
+ for(const k of ['1','ADD','2','='])s=K.dispatchKey(s,k);
+ eq(s.power,false);eq(s.expression,before);
+ s=K.dispatchKey(s,'ON');eq(s.power,true);
+ for(const k of ['2','ADD','3','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');eq(K.valueToString(s.lastValue),'5');
+});
+test('P2-09 ON when powered does not erase stored memory',()=>{
+ let s=K.createState();for(const k of ['9','MPLUS','ON'])s=K.dispatchKey(s,k);
+ eq(s.power,true);eq(K.valueToString(s.memory.M),'9');
+});
+test('P2-09 repeated SHIFT AC does not reactivate power',()=>{
+ let s=K.createState();for(const k of ['SHIFT','AC','SHIFT','AC'])s=K.dispatchKey(s,k);
+ eq(s.power,false);eq(s.view,'off');
+});
+
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
