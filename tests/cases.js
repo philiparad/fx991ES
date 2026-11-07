@@ -1362,7 +1362,7 @@ test('P0-18 SOLVE equation X squared equals 4',()=>{let s=K.createState();for(co
 test('P0-18 CALC equation without solve returns syntax error',()=>{let s=K.createState();for(const k of ['ALPHA','LP','ALPHA','CALC','2','CALC'])s=K.dispatchKey(s,k);eq(s.view,'error');eq(s.error,K.ERROR.SYNTAX)});
 test('P0-18 equality cannot repeat in same editor',()=>{let s=K.createState();for(const k of ['1','ALPHA','CALC','2','ALPHA','CALC'])s=K.dispatchKey(s,k);eq(s.expression,'1=2')});
 
-test('P0-20 keymap P0 routes remain present',()=>{const KM=global.FX991_KEYS;for(const [key,action] of [['7','CONST'],['8','CONV'],['9','CLR'],['ANS','DRG'],['CALC','EQUALITY'],['MPLUS','MMINUS']])eq(KM.resolve('standard',key,'shift'),action)});
+test('P0-20 keymap P0 routes remain present',()=>{const KM=global.FX991_KEYS;for(const [key,action] of [['7','CONST'],['8','CONV'],['9','CLR'],['ANS','DRG'],['MPLUS','MMINUS']])eq(KM.resolve('standard',key,'shift'),action);eq(KM.resolve('standard','CALC','alpha'),'EQUALITY')});
 
 // P0-19: prevent silent state changes being lost for routed physical shortcuts.
 // Context-specific unsupported combinations are not certified by this fixture.
