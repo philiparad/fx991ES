@@ -31,7 +31,7 @@ for(const legend of ["9:'CLR'","7:'CONST'","8:'CONV'","ANS:'DRG'","CALC:'EQUALIT
 const app=fs.readFileSync(path.join(root,'src/app.js'),'utf8');
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 assert.ok(html.indexOf('src/keypad-layout.js')>=0&&html.indexOf('src/keypad-layout.js')<html.indexOf('src/app.js'),'layout loaded before app');
-assert.ok(app.includes("item.key==='RCL'&&!state.shift?'RCL_MENU':item.key"),'SHIFT+RCL preserved');
+assert.ok(app.includes("keyInput.route(item.key,state)"),'UI uses modifier-aware key router');
 const css=fs.readFileSync(path.join(root,'styles.css'),'utf8');
 assert.ok(css.includes('aspect-ratio: 77 / 161.5'),'device proportions must remain manufacturer-grounded');
 assert.ok(css.includes('P2-01: manufacturer case proportions'),'physical design approximation explicitly qualified');
