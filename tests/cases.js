@@ -1523,6 +1523,32 @@ test('P1-05 secondary menu cancels without modifying expression',()=>{
  for(const k of ['SHIFT','3','AC'])s=K.dispatchKey(s,k);
  eq(s.view,'edit');eq(s.expression,'BIN:1010');
 });
+
+test('P1-06 secondary fraction display setting',()=>{
+ let s=K.createState();for(const k of ['SHIFT','MODE','DOWN','1'])s=K.dispatchKey(s,k);
+ eq(s.setup.fractionStyle,'mixed');eq(s.view,'edit');
+ for(const k of ['SHIFT','MODE','DOWN','2'])s=K.dispatchKey(s,k);
+ eq(s.setup.fractionStyle,'improper');
+});
+test('P1-06 polar complex format selection',()=>{
+ let s=K.createState();for(const k of ['SHIFT','MODE','DOWN','3','2'])s=K.dispatchKey(s,k);
+ eq(s.setup.complexFormat,'polar');
+});
+test('P1-06 statistical FREQ and decimal comma preferences',()=>{
+ let s=K.createState();for(const k of ['SHIFT','MODE','DOWN','4','1'])s=K.dispatchKey(s,k);
+ eq(s.setup.statFrequency,true);
+ for(const k of ['SHIFT','MODE','DOWN','5','2'])s=K.dispatchKey(s,k);
+ eq(s.setup.decimalPoint,'Comma');
+ for(const k of ['1','DIV','2','='])s=K.dispatchKey(s,k);
+ eq(K.semanticScreen(s).result,'0,5');
+});
+test('P1-06 LCD contrast bounded with LEFT and RIGHT',()=>{
+ let s=K.createState();for(const k of ['SHIFT','MODE','DOWN','6'])s=K.dispatchKey(s,k);
+ eq(s.view,'contrast');s.setup.contrast=10;
+ s=K.dispatchKey(s,'RIGHT');eq(s.setup.contrast,10);
+ s=K.dispatchKey(s,'LEFT');eq(s.setup.contrast,9);
+ s=K.dispatchKey(s,'AC');eq(s.view,'edit');
+});
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
