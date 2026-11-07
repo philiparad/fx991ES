@@ -166,6 +166,53 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
   }
   return end();
  }
+ // P0-16: two-digit constants and conversion selection from physical SHIFT keys.
+ if(s.view==='reference-code'){
+  const f=s.ui.referenceFlow;
+  if(key==='AC'){s.ui.referenceFlow=null;s.view='edit';s.shift=false;return end()}
+  if(key==='DEL'){f.digits=f.digits.slice(0,-1);return end()}
+  if(/^[0-9]$/.test(key)&&f.digits.length<2){
+   f.digits+=key;
+   if(f.digits.length===2){
+    const table=global.FX991_REFERENCE_TABLES,number=Number(f.digits);
+    if(number<1||number>40){s.error=base.ERROR.ARGUMENT;s.result=s.error;s.view='error';s.ui.referenceFlow=null;return end()}
+    if(f.kind==='CONST'){
+     const entry=table.scientific(number);
+     if(f.previousView==='result'){s.document=E.create();s.expression='';s.cursor=0}
+     s.document=E.insertToken(s.document,table.asExpression(entry.value));
+     s.expression=E.serialize(s.document);s.cursor=E.sourceCursor(s.document);
+     s.ui.referenceFlow=null;s.view='edit';s.result='';
+    }else{
+     s.ui.pendingConversion=number;
+     s.ui.conversionSource=s.document?E.serialize(s.document):s.expression;
+     s.ui.referenceFlow=null;s.view='edit';s.result='';
+    }
+   }
+  }
+  return end();
+ }
+ if(s.shift&&['7','8'].includes(key)&&(s.view==='edit'||s.view==='result')&&s.mode==='COMP'){
+  s.ui.referenceFlow={kind:key==='7'?'CONST':'CONV',digits:'',previousView:s.view};
+  s.shift=false;s.alpha=false;s.view='reference-code';return end();
+ }
+ // Conversion suffix applies after the expression is evaluated.
+ if(key==='='&&s.ui.pendingConversion&&s.mode==='COMP'&&s.view==='edit'){
+  const code=s.ui.pendingConversion,source=s.ui.conversionSource;
+  try{
+   if(!source)throw new base.CalcError(base.ERROR.SYNTAX);
+   const value=base.calculateExpression('COMP',source,s);
+   const item=global.FX991_REFERENCE_TABLES.conversion(code);
+   const converted=item.apply(base.numeric(value));
+   if(!Number.isFinite(converted))throw new base.CalcError(base.ERROR.MATH);
+   const result=base.dec(converted);
+   s.lastValue=result;s.ans=result;s.decimalView=true;s.mixedView=false;s.resultScrollX=0;
+   s.result=base.valueDisplay(result,s.setup,true,s.mode);s.view='result';s.error=null;
+   s.ui.conversionDisplay=source+' '+item.from+'→'+item.to;
+   s.history=[{expression:s.ui.conversionDisplay,display:s.result},...s.history].slice(0,50);
+  }catch(error){s.error=error.code||base.ERROR.MATH;s.view='error';s.result=s.error}
+  s.ui.pendingConversion=null;s.ui.conversionSource=null;s.shift=false;s.alpha=false;return end();
+ }
+ if(key==='AC'&&s.ui.pendingConversion){s.ui.pendingConversion=null;s.ui.conversionSource=null;s.ui.conversionDisplay=null}
  if(key==='9'&&s.shift&&(s.view==='edit'||s.view==='result')){
   s.view='clr-menu';s.ui.clearChoice=null;s.shift=false;s.alpha=false;return end();
  }
@@ -659,6 +706,9 @@ function semanticScreen(s){if(!s.ui)return base.semanticScreen(s);let screen=bas
  }
  if(s.view==='hyp-menu'){screen.expression='HYP';screen.result='1:sinh 2:cosh 3:tanh 4:asinh 5:acosh 6:atanh';screen.menuItems=null}
  if(s.view==='register-prompt'){screen.expression=s.ui.pending+' REG';screen.result='A-F M X Y'}
+ if(s.view==='reference-code'){screen.expression=s.ui.referenceFlow.kind==='CONST'?'CONSTANT':'CONVERSION';screen.result='Number 01~40? '+(s.ui.referenceFlow.digits||'__');screen.menuItems=null}
+ if(s.ui.pendingConversion&&s.view==='edit'){screen.result='CONV '+String(s.ui.pendingConversion).padStart(2,'0')+'  = to compute'}
+ if(s.view==='result'&&s.ui.conversionDisplay){screen.expression=s.ui.conversionDisplay;screen.resultValue=null}
  if(s.view==='clr-menu'){screen.expression='CLR';screen.result='1:Setup 2:Memory 3:All';screen.menuItems=['1:Setup','2:Memory','3:All']}
  if(s.view==='clr-confirm'){screen.expression='CLR '+({1:'Setup',2:'Memory',3:'All'}[s.ui.clearChoice]||'');screen.result='Reset? =:Yes AC:No';screen.menuItems=null}
  if(s.ui.insertMode===false)screen.indicators=[...screen.indicators,'OVR'];
