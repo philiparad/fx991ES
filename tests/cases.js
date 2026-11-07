@@ -2087,6 +2087,27 @@ test('CASIO SHIFT STAT Var menu evaluates mean',()=>{
  for(const k of ['SHIFT','1','4','2'])s=K.dispatchKey(s,k);
  eq(s.view,'result');eq(K.numeric(s.lastValue),4);
 });
+
+test('CASIO CMPLX SHIFT 2 2 computes Conjg(2+3i)',()=>{
+ let s=K.createState();s.mode='CMPLX';
+ for(const k of ['SHIFT','2','2','2','ADD','3','ENG','RP','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');eq(s.result,'2-3i');
+});
+test('CASIO CMPLX SHIFT 2 1 computes argument 1+i as 45 degrees',()=>{
+ let s=K.createState();s.mode='CMPLX';
+ for(const k of ['SHIFT','2','1','1','ADD','1','ENG','RP','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');eq(s.result,'45');
+});
+test('CASIO CMPLX SHIFT 2 3 overrides rectangular display with polar',()=>{
+ let s=K.createState();s.mode='CMPLX';
+ for(const k of ['1','ADD','1','ENG','SHIFT','2','3','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');if(!s.result.includes('∠45'))throw Error(s.result);
+});
+test('CASIO CMPLX SHIFT 2 4 overrides polar setup with rectangular',()=>{
+ let s=K.createState();s.mode='CMPLX';s.setup.complexFormat='polar';
+ for(const k of ['2','SHIFT','NEG','4','5','SHIFT','2','4','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');if(!s.result.includes('i'))throw Error(s.result);
+});
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
