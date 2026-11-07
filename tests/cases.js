@@ -1549,6 +1549,30 @@ test('P1-06 LCD contrast bounded with LEFT and RIGHT',()=>{
  s=K.dispatchKey(s,'LEFT');eq(s.setup.contrast,9);
  s=K.dispatchKey(s,'AC');eq(s.view,'edit');
 });
+
+test('P1-07 ENG enters imaginary unit in CMPLX',()=>{
+ let s=K.createState();s.mode='CMPLX';for(const k of ['2','ADD','3','ENG'])s=K.dispatchKey(s,k);
+ eq(s.expression,'2+3i');
+});
+test('P1-07 (2+6i)/(2i) returns 3-i',()=>{
+ let s=K.createState();s.mode='CMPLX';
+ for(const k of ['LP','2','ADD','6','ENG','RP','DIV','LP','2','ENG','RP','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');eq(s.result,'3-i');
+});
+test('P1-07 SHIFT NEG produces polar angle symbol',()=>{
+ let s=K.createState();s.mode='CMPLX';
+ for(const k of ['2','SHIFT','NEG','4','5','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');close(K.numeric(s.lastValue.re),Math.SQRT2,1e-9);close(K.numeric(s.lastValue.im),Math.SQRT2,1e-9);
+});
+test('P1-07 complex polar display honors SETUP preference',()=>{
+ let s=K.createState();s.mode='CMPLX';s.setup.complexFormat='polar';
+ for(const k of ['1','ADD','1','ENG','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');if(!s.result.startsWith('1.4142135624∠45'))throw Error(s.result);
+});
+test('P1-07 division by zero gives Math ERROR',()=>{
+ let s=K.createState();s.mode='CMPLX';for(const k of ['1','DIV','0','='])s=K.dispatchKey(s,k);
+ eq(s.view,'error');eq(s.error,K.ERROR.MATH);
+});
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
