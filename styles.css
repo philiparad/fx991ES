@@ -456,3 +456,154 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
  .calculator .keypad-numeric .key{height:66%;min-height:0}
 }
 @media print{.calculator{break-inside:avoid}}
+
+
+/* Screenshot-fidelity calibration, reference image 316 x 628:
+ * calculator bounds x=24..294, y=22..591; 270 x 569 pixels.
+ * Visual geometry and colors are based on the user-provided screenshot.
+ * Uses independent CSS rather than a noninteractive background bitmap.
+ */
+.calculator{
+    container-type:inline-size;
+    width:min(100%,320px);
+    max-width:320px;
+    margin-inline:auto;
+    aspect-ratio:270 / 569;
+    border:1px solid #444;
+    border-radius:12.5% 12.5% 10% 10% / 6.7% 6.7% 5.2% 5.2%;
+    background:#4b4b4b;
+    box-shadow:0 4px 7px #1515157d, inset 1px 1px 1px #6b6b6b;
+    overflow:visible;
+}
+.calculator .branding{
+    top:4.1%;left:9.6%;right:9.6%;
+    font:bold 6cqw/1 Arial,Helvetica,sans-serif;
+    letter-spacing:-.035em;
+    color:#f7f7f7;
+}
+.calculator .branding small,.calculator .model{display:none}
+.calculator .lcd-housing{
+    top:14.0%;left:6.65%;width:86.7%;height:18.1%;
+    border:0;border-radius:10px;padding:8px;
+    background:#050505;box-shadow:none;
+}
+.calculator .lcd-glass{
+    border:0;border-radius:2px;padding:0;
+    background:#d7e4d7;box-shadow:none;
+}
+.calculator .lcd-glass canvas#lcd{
+    aspect-ratio:96 / 31;
+    background:#d4e1d3;
+    image-rendering:pixelated;
+}
+.calculator .keys{
+    top:34.9%;left:8.2%;width:83.6%;height:61.1%;
+}
+.calculator .keypad-top{top:0;height:21%}
+.calculator .keypad-top .key-cell{
+    width:12%;height:33%;transform:translateX(-50%);
+}
+.calculator .keypad-top .key-cell:nth-child(1){left:6.8%;top:13%}
+.calculator .keypad-top .key-cell:nth-child(2){left:23.1%;top:13%}
+.calculator .keypad-top .key-cell:nth-child(3){left:38.2%;top:43%}
+.calculator .keypad-top .key-cell:nth-child(4){left:50%;top:3%}
+.calculator .keypad-top .key-cell:nth-child(5){left:50%;top:64%}
+.calculator .keypad-top .key-cell:nth-child(6){left:61.8%;top:43%}
+.calculator .keypad-top .key-cell:nth-child(7){left:77%;top:13%}
+.calculator .keypad-top .key-cell:nth-child(8){left:93.5%;top:13%}
+.calculator .keypad-top .key{
+    border-radius:50%;background:#8f8f91;color:#fff;
+    border:1.5px solid #090909;
+    box-shadow:0 1px 1px #151515;
+    font:700 3.4cqw/1 Arial,Helvetica,sans-serif;
+}
+.calculator .keypad-top .key-cell:nth-child(n+3):nth-child(-n+6) .key{
+    border-radius:29%;background:#99999b;border-color:#111;
+    color:#111;
+}
+.calculator .keypad-top .key-cell:nth-child(7)::before,
+.calculator .keypad-top .key-cell:nth-child(8)::before{display:none}
+.calculator .keypad-top .key-cell:nth-child(7) .key,
+.calculator .keypad-top .key-cell:nth-child(8) .key{
+    font-size:3.8cqw;
+}
+.calculator .keypad-scientific{
+    top:22%;height:40%;
+    grid-template-rows:repeat(4,minmax(0,1fr));
+    column-gap:3%;row-gap:0;
+}
+.calculator .keypad-numeric{
+    top:63%;height:37%;
+    grid-template-rows:repeat(4,minmax(0,1fr));
+    column-gap:3%;row-gap:0;
+}
+.calculator .keypad-scientific .key-cell,
+.calculator .keypad-numeric .key-cell{
+    padding-bottom:6%;
+}
+.calculator .keypad-group .alt{
+    flex:0 0 auto;
+    width:100%;height:27%;min-height:0;
+    overflow:visible;
+    text-align:center;line-height:1;
+    font:700 2.75cqw/1 Arial,Helvetica,sans-serif;
+    color:#ffe36f;
+    padding:0;white-space:nowrap;
+}
+.calculator .keypad-group .alt-alpha{
+    top:0;right:0;
+    height:auto;
+    font:700 2.6cqw/1 Arial,Helvetica,sans-serif;
+    color:#e9a1cf;
+    white-space:nowrap;
+}
+.calculator .keypad-scientific .key{
+    height:64%;min-height:0;
+    border-radius:4px;
+    border:1px solid #121212;
+    background:#0c0d10;color:#fff;
+    box-shadow:0 1px 1px #171717aa;
+    font:700 4.7cqw/1 Arial,Helvetica,sans-serif;
+}
+.calculator .keypad-scientific .key.dark,
+.calculator .keypad-scientific .key.gold,
+.calculator .keypad-scientific .key.orange{
+    background:#0c0d10;color:#fff;
+}
+.calculator .keypad-numeric .key{
+    height:74%;min-height:0;
+    border:0;border-radius:7px;
+    background:#99999c;color:white;
+    box-shadow:inset 0 1px #c6c6c7,0 1px 1px #25252565;
+    font:400 8.1cqw/1 Arial,Helvetica,sans-serif;
+}
+.calculator .keypad-numeric .key.number,
+.calculator .keypad-numeric .key.orange{
+    background:#99999c;color:#fff;border:0;
+}
+.calculator .keypad-numeric .key.green{
+    background:#7fae29;color:#fff;border:0;
+    box-shadow:inset 0 1px #9bcb48,0 1px 1px #25252565;
+    font-size:6.2cqw;font-weight:500;
+}
+.calculator .keypad-numeric .key-cell:nth-child(5) .key,
+.calculator .keypad-numeric .key-cell:nth-child(4) .key{
+    font-size:6.4cqw;
+}
+.calculator .keypad-numeric .key-cell:nth-child(20) .key{
+    background:#858588;font-size:7cqw;
+}
+.calculator .keypad-group .key:focus-visible{outline:2px solid #ffdf50;outline-offset:1px}
+@media(max-width:740px){
+    .calculator{width:min(100%,320px);max-width:320px;margin:0 auto 55px}
+    .calculator .branding{font-size:6cqw}
+    .calculator .keypad-group .alt{font-size:2.75cqw}
+    .calculator .keypad-scientific .key{font-size:4.7cqw}
+    .calculator .keypad-numeric .key{font-size:8.1cqw}
+}
+@media(max-width:420px){
+    .calculator{aspect-ratio:270 / 569}
+    .calculator .keypad-top .key{height:100%;min-height:0}
+    .calculator .keypad-scientific .key{height:64%;min-height:0}
+    .calculator .keypad-numeric .key{height:74%;min-height:0}
+}
