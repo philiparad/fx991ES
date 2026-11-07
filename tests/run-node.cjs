@@ -12,3 +12,6 @@ require('../tools/phase17-review-ui.test.cjs');
 require('../tools/keyboard-shortcuts.test.cjs');
 
 require('./key-inventory.cjs');
+
+// P0-20: prevent structural keypad tests from drifting out of CI.
+require('./keypad-layout.cjs');
