@@ -52,4 +52,15 @@ for(const [index,property] of [
 }
 assert.ok(css.includes('.calculator .keypad-group .key-spacer{visibility:hidden}'),
  'empty scientific cells preserve grid position');
+// Screenshot supplied 2026-11-07: reference-calibrated appearance.
+assert.ok(html.includes('<span>CASIO</span>'),'reference face title rendered');
+assert.ok(css.includes('Screenshot-fidelity calibration, reference image 316 x 628'),
+ 'user image is the documented visual reference');
+assert.ok(css.includes('aspect-ratio:270 / 569'),'reference body proportions');
+assert.ok(css.includes('top:14.0%;left:6.65%;width:86.7%;height:18.1%'),
+ 'screen bezel placed using reference face');
+assert.ok(css.includes('top:63%;height:37%'),'numeric zone moved below scientific rows');
+assert.ok(css.includes('background:#7fae29;color:#fff'),'DEL/AC green, not magenta');
+assert.ok(css.includes('font:400 8.1cqw/1'),'number legend scales with face width');
+assert.ok(css.includes('container-type:inline-size'),'responsive face units available');
 console.log('Layout checks passed; physical-key and LCD equivalence NOT verified.');
