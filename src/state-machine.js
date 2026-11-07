@@ -410,6 +410,22 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
    return number;
   };
   const current=()=>f.fields[f.index];
+   if(current()==='expression'){
+    if(key==='AC'){s.ui.numericalFlow=null;s.view='edit';s.result='';s.error=null;return end()}
+    if(key==='DEL'){f.buffer=f.buffer.slice(0,-1);return end()}
+    const mapping={ADD:'+',SUB:'-',NEG:'-',MUL:'*',DIV:'/',LP:'(',RP:')',POW:'^',SQ:'^2',SIN:'sin(',COS:'cos(',TAN:'tan(',SQRT:'sqrt(',LOG:'log(',LN:'ln(',PI:'pi'};
+    const addition=/^[0-9.XY]$/.test(key)?key:mapping[key];
+    if(addition!==undefined){if(f.buffer.length+addition.length<=96)f.buffer+=addition;return end()}
+    if(key==='='||key==='RIGHT'){
+     try{
+      if(!f.buffer||!base.tokenize(f.buffer).some(x=>x.value==='X'))throw new base.CalcError(base.ERROR.ARGUMENT);
+      base.parse(f.buffer);
+      f.source=f.buffer;f.buffers.expression=f.buffer;f.index=1;f.buffer=f.buffers[current()]||'';
+     }catch(error){s.error=error.code||base.ERROR.SYNTAX;s.result=s.error;s.view='error';s.ui.numericalFlow=null}
+     return end();
+    }
+    return end();
+   }
   if(key==='AC'){s.ui.numericalFlow=null;s.view='edit';s.result='';s.error=null;return end()}
   if(key==='DEL'){f.buffer=f.buffer.slice(0,-1);return end()}
   if(key==='LEFT'&&f.index>0){
@@ -468,11 +484,10 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
  }
  if(key==='DIFF'&&s.mode==='COMP'&&(s.view==='edit'||s.view==='result')){
   const source=s.document?E.serialize(s.document):s.expression;
-  try{
-   if(!source||!base.tokenize(source).length){s.shift=false;s.alpha=false;return end()}
-  }catch(error){s.shift=false;s.alpha=false;return end()}
+  try{if(source)base.tokenize(source)}catch(error){s.shift=false;s.alpha=false;return end()}
   const operation=s.shift?'INTEGRAL':'DIFF';
-  s.ui.numericalFlow={operation,source,fields:operation==='DIFF'?['at']:['lower','upper'],
+  const empty=!source;
+  s.ui.numericalFlow={operation,source,fields:empty?(operation==='DIFF'?['expression','at']:['expression','lower','upper']):(operation==='DIFF'?['at']:['lower','upper']),
    index:0,buffer:'',buffers:{},values:{}};
   s.shift=false;s.alpha=false;s.view='numerical-input';s.error=null;
   return end();
@@ -771,8 +786,8 @@ function semanticScreen(s){if(!s.ui)return base.semanticScreen(s);let screen=bas
  if(s.view==='stat-grid'){let f=s.ui.statFlow,stat=s.ui.modeMemory.stat;screen.expression=stat.kind+' DATA '+(f.field+1);screen.result=f.buffer||'0';}
  if(s.view==='calc-input'&&s.ui.calcFlow){const f=s.ui.calcFlow,n=f.variables[f.index];screen.expression=f.operation+' '+f.source;screen.result=n+'? '+(f.buffer||'['+base.valueToString(s.memory[n]||base.rat(0))+']')+' ('+(f.index+1)+'/'+f.variables.length+')';screen.menuItems=null}
  if(s.view==='numerical-input'&&s.ui.numericalFlow){
-  const f=s.ui.numericalFlow,parameter=f.fields[f.index],label=parameter==='at'?'X':parameter==='lower'?'Lower':'Upper';
-  screen.expression=(f.operation==='DIFF'?'d/dx':'INTEGRAL')+' '+f.source;
+  const f=s.ui.numericalFlow,parameter=f.fields[f.index],label=parameter==='expression'?'f(X)':parameter==='at'?'X':parameter==='lower'?'Lower':'Upper';
+  screen.expression=(f.operation==='DIFF'?'d/dx':'INTEGRAL')+' '+(f.source||'f(X)');
   screen.result=label+'? '+(f.buffer||'_')+' ('+(f.index+1)+'/'+f.fields.length+')';
   screen.menuItems=null;
  }
