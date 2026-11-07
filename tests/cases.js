@@ -1539,7 +1539,7 @@ test('P1-06 statistical FREQ and decimal comma preferences',()=>{
  eq(s.setup.statFrequency,true);
  for(const k of ['SHIFT','MODE','DOWN','5','2'])s=K.dispatchKey(s,k);
  eq(s.setup.decimalPoint,'Comma');
- for(const k of ['1','DIV','2','='])s=K.dispatchKey(s,k);
+ for(const k of ['1','DIV','2','=','S-D'])s=K.dispatchKey(s,k);
  eq(K.semanticScreen(s).result,'0,5');
 });
 test('P1-06 LCD contrast bounded with LEFT and RIGHT',()=>{
