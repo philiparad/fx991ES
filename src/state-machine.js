@@ -30,7 +30,7 @@ function saveRegValue(s){let flow=s.ui.registerFlow,v=flow.buffer;if(v==='')retu
  flow.buffer='';}
 function regExpression(s,op){let flow=s.ui.registerFlow,cat=flow.category,one=s.ui.modeMemory[cat][flow.name],two=s.ui.modeMemory[cat][flow.other];
  const matrixText=a=>a.map(row=>row.join(',')).join(';'),vectorText=a=>a.join(',');
- let unary=cat==='matrix'?['DET','INV','TRANS','ABS','POW2','POW3']:['ABS'];let binary=cat==='matrix'?['ADD','MUL','SUB']:['DOT','ADD','CROSS','ANGLE'];
+ let unary=cat==='matrix'?['DET','INV','TRANS','ABS','POW2','POW3']:['ABS'];let binary=cat==='matrix'?['ADD','MUL','SUB']:['DOT','ADD','CROSS','ANGLE','SUB'];
  if(!unary.includes(op)&&!binary.includes(op))throw new base.CalcError(base.ERROR.ARGUMENT);
  if(!one||((!unary.includes(op))&&!two))throw new base.CalcError(base.ERROR.ARGUMENT);
  let encode=cat==='matrix'?matrixText:vectorText;
@@ -133,11 +133,34 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
   if(key==='REGS'){s.view='register-menu';return end()}
   return end();
  }
+ if(s.view==='register-scalar'){
+  const flow=s.ui.registerScalar;
+  if(key==='AC'){s.ui.registerScalar=null;s.view='register-operation';return end()}
+  if(key==='DEL'){flow.buffer=flow.buffer.slice(0,-1);return end()}
+  if(key==='NEG'){flow.buffer=flow.buffer.startsWith('-')?flow.buffer.slice(1):'-'+flow.buffer;return end()}
+  if(/^[0-9.]$/.test(key)){if(flow.buffer.length<24)flow.buffer+=key;return end()}
+  if(key==='='){
+   try{
+    const scalar=safeNumber(flow.buffer),vector=s.ui.modeMemory.vector[flow.name];
+    if(!vector)throw new base.CalcError(base.ERROR.ARGUMENT);
+    const expression='MUL:'+vector.join(',')+'|'+scalar;
+    const value=base.calculateExpression('VECTOR',expression,s);
+    s.expression=expression;s.cursor=expression.length;s.lastValue=value;s.ans=value.ans;
+    s.result=value.text;s.view='result';s.error=null;s.ui.registerScalar=null;s.ui.registerFlow=null;
+    s.history=[{expression,display:s.result},...s.history].slice(0,50);
+   }catch(error){s.error=error.code||base.ERROR.ARGUMENT;s.result=s.error;s.view='error';s.ui.registerScalar=null}
+   return end();
+  }
+  return end();
+ }
  if(s.view==='register-operation'){
-  let f=s.ui.registerFlow,ops=f.category==='matrix'?['DET','INV','TRANS','ADD','MUL','SUB','ABS','POW2','POW3']:['ABS','DOT','ADD','CROSS','ANGLE'];
+  let f=s.ui.registerFlow,ops=f.category==='matrix'?['DET','INV','TRANS','ADD','MUL','SUB','ABS','POW2','POW3']:['ABS','DOT','ADD','CROSS','ANGLE','SUB','MUL'];
   if(key==='AC'){s.view='register-summary';return end()}
   if(key==='OTHER'){f.other=f.other==='B'?'C':'B';return end()}
-  if(/^[1-9]$/.test(key)&&ops[Number(key)-1]){regResult(s,ops[Number(key)-1]);return end()}
+  if(key==='7'&&f.category==='vector'){
+    s.ui.registerScalar={buffer:'',category:f.category,name:f.name};s.view='register-scalar';return end();
+   }
+   if(/^[1-9]$/.test(key)&&ops[Number(key)-1]){regResult(s,ops[Number(key)-1]);return end()}
   return end();
  }
  if(s.view==='stat-grid'){
@@ -898,12 +921,13 @@ function semanticScreen(s){if(!s.ui)return base.semanticScreen(s);let screen=bas
  }if(s.view==='workflow-menu'){let w=s.ui.wizard,choices=wizardConfigs[w.mode].menu;screen.result=choices.slice(s.menuPage*4,s.menuPage*4+4).map((c,i)=>(i+s.menuPage*4+1)+':'+c).join(' ');screen.expression='SELECT '+w.mode}
  if(s.view==='coefficient'){let w=s.ui.wizard;screen.expression=(w.mode==='EQN'?w.kind+' ':'')+w.fields[w.index]+' = '+w.buffer;screen.result=(w.index+1)+'/'+w.fields.length+(w.mode==='EQN'?'  LEFT/RIGHT: fields':'')}
  if(s.view==='result'&&s.ui.lastWizard){let w=s.ui.lastWizard,rows=s.lastValue?.data?.rows||s.lastValue?.data?.roots;if(Array.isArray(rows)&&rows.length){let index=w.resultPage||0;screen.expression=w.mode+' '+(index+1)+'/'+rows.length;screen.result=Array.isArray(rows[index])?rows[index].join(', '):String(rows[index])}}
+ if(s.view==='register-scalar'){screen.expression='Vct × scalar';screen.result='k? '+(s.ui.registerScalar.buffer||'_');screen.menuItems=null}
  if(s.view==='register-menu'){screen.expression=s.mode+' REGISTERS';screen.result='1:A 2:B 3:C'}
  if(['register-editor','register-summary','register-operation'].includes(s.view)){
   let f=s.ui.registerFlow,reg=s.ui.modeMemory[f.category][f.name],count=f.category==='matrix'?reg.length*reg.length:reg.length;
   if(s.view==='register-editor'){screen.expression=(f.category==='matrix'?'Mat':'Vct')+f.name+' '+(f.field+1)+'/'+count;screen.result=f.buffer||String(regValues(f,s)[f.field]);}
   else if(s.view==='register-summary'){screen.expression=(f.category==='matrix'?'Mat':'Vct')+f.name+' SAVED';screen.result='OP EDIT REGS';}
-  else{screen.expression=(f.category==='matrix'?'MATRIX':'VECTOR')+' OP';screen.result=f.category==='matrix'?'1:DET 2:INV 3:T 4:+ 5:* 6:- 7:ABS 8:^2 9:^3':'1:ABS 2:DOT 3:+ 4:X 5:ANGLE';}
+  else{screen.expression=(f.category==='matrix'?'MATRIX':'VECTOR')+' OP';screen.result=f.category==='matrix'?'1:DET 2:INV 3:T 4:+ 5:* 6:- 7:ABS 8:^2 9:^3':'1:ABS 2:DOT 3:+ 4:X 5:ANGLE 6:- 7:Scalar';}
  }
  if(s.view==='stat-grid'){let f=s.ui.statFlow,stat=s.ui.modeMemory.stat;screen.expression=stat.kind+' '+(stat.kind==='1VAR'&&s.setup.statFrequency?'X/FREQ':'DATA')+' '+(f.field+1);screen.result=f.buffer||'0';}
  if(s.view==='calc-input'&&s.ui.calcFlow){const f=s.ui.calcFlow,n=f.variables[f.index];screen.expression=f.operation+' '+f.source;screen.result=n+'? '+(f.buffer||'['+base.valueToString(s.memory[n]||base.rat(0))+']')+' ('+(f.index+1)+'/'+f.variables.length+')';screen.menuItems=null}
