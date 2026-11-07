@@ -76,7 +76,7 @@ const SEEDED=Object.freeze({schema:'fx991-reference-v1',cases:[
  {caseId:'manual-comp-add',model:'standard',source:{kind:'manual',device:'documented example; NOT observed'},events:['2','ADD','3','='],expected:{mode:'COMP',result:'5',view:'result'}},
  {caseId:'manual-negative-power',model:'standard',source:{kind:'manual',device:'documented precedence; NOT observed'},events:['NEG','2','POW','2','='],expected:{result:'-4'}},
  {caseId:'manual-shift-indicator',model:'standard',source:{kind:'manual',device:'documented key behavior; NOT observed'},events:['SHIFT'],expected:{indicators:['D','S']}},
- {caseId:'manual-shift-oneshot',model:'standard',source:{kind:'manual',device:'documented key behavior; NOT observed'},events:['SHIFT','7'],expected:{indicators:['D'],expression:'7'}},
+ {caseId:'manual-shift-oneshot',model:'standard',source:{kind:'manual',device:'SHIFT 7 opens scientific constants code selection; NOT observed'},events:['SHIFT','7'],expected:{indicators:['D'],expression:'',view:'reference-code'}},
  {caseId:'manual-c-modes',model:'c',source:{kind:'manual',device:'documented mode list; NOT observed'},events:['MODE','DOWN','DOWN','1'],expected:{mode:'INEQ'}},
  {caseId:'manual-error-divzero',model:'standard',source:{kind:'manual',device:'documented error category; NOT observed'},events:['1','DIV','0','='],expected:{view:'error',error:'Math ERROR'}}
 ]});
