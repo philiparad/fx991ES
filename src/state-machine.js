@@ -737,6 +737,17 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
   pushBuffer(w,key);
   return end();
  }
+ // CASIO EQN: = advances to the next root; the last = returns
+ // to the coefficient editor. AC returns there immediately.
+ if(s.view==='result'&&s.ui.lastWizard?.mode==='EQN'&&['=','AC'].includes(key)){
+  const w=s.ui.lastWizard,roots=s.lastValue?.data?.roots||[];
+  const next=(w.resultPage||0)+1;
+  if(key==='AC'||next>=roots.length){
+   s.ui.wizard={mode:'EQN',kind:w.kind,fields:[...w.fields],values:[...w.values],index:0,buffer:w.values[0]||'',resultPage:0};
+   s.ui.lastWizard=null;s.view='coefficient';s.result='';s.error=null;
+  }else w.resultPage=next;
+  return end();
+ }
  if(s.view==='result'&&s.ui.lastWizard?.mode==='TABLE'&&key==='EDIT'){
   const last=s.ui.lastWizard;
   s.ui.wizard={mode:'TABLE',kind:last.kind,fields:[...last.fields],values:[...last.values],index:0,buffer:last.values[0]||'',resultPage:0};
