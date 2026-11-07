@@ -2051,6 +2051,29 @@ test('CASIO STAT frequency unchanged preserves existing data',()=>{
  for(const k of ['SHIFT','MODE','DOWN','4','1'])s=K.dispatchKey(s,k);
  eq(s.ui.modeMemory.stat.rows.length,2);
 });
+
+test('CASIO STAT exposes eight type options with native 1VAR data grid',()=>{
+ let s=K.createState();for(const k of ['MODE','3'])s=K.dispatchKey(s,k);
+ eq(s.view,'workflow-menu');eq(s.ui.wizard.mode,'STAT');
+ s=K.dispatchKey(s,'1');eq(s.view,'stat-grid');eq(s.ui.modeMemory.stat.kind,'1VAR');
+});
+test('CASIO STAT selection of quadratic regression gives paired editor',()=>{
+ let s=K.createState();for(const k of ['MODE','3','3'])s=K.dispatchKey(s,k);
+ eq(s.view,'stat-grid');eq(s.ui.modeMemory.stat.kind,'QUAD');eq(s.ui.statFlow.field,0);
+});
+test('CASIO STAT 3-column editor has 26-row capacity',()=>{
+ let s=K.createState();s.mode='STAT';s.setup.statFrequency=true;s.ui.modeMemory.stat.kind='LINEAR';
+ for(const k of ['DATA'])s=K.dispatchKey(s,k);
+ eq(s.ui.statFlow.field,0);
+ s.ui.modeMemory.stat.rows=Array.from({length:26},()=>[1,2,1]);
+ s=K.dispatchKey(s,'ADDROW');eq(s.view,'error');eq(s.error,K.ERROR.MEM);
+});
+test('CASIO STAT single variable FREQ supports frequency above 80',()=>{
+ let s=K.createState();s.mode='STAT';s.setup.statFrequency=true;
+ s.ui.modeMemory.stat.rows=[[2,200],[8,100]];
+ s=K.dispatchKey(s,'STATS');
+ eq(s.view,'result');eq(K.numeric(s.ans),4);
+});
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
