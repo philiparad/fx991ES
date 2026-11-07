@@ -650,8 +650,8 @@ test('M26 MATRIX transpose 2x2 keypad workflow',()=>{let s=m26Mode('standard',1,
 test('M26 MATRIX multiplication 2x2 supports second menu page',()=>{let s=m26Mode('standard',1,2,1);s=K.dispatchKey(s,'AC');s=m26('standard',['MODE','6','DOWN','1']);eq(s.view,'coefficient');eq(s.ui.wizard.kind,'MUL2');s=m26Fields(s,[1,2,3,4,5,6,7,8]);eq(s.view,'result');if(!s.result.includes('19'))throw Error(s.result)});
 test('M26 VECTOR 2D addition via keypad',()=>{let s=m26Mode('standard',1,4,4);s=m26Fields(s,[1,2,3,4]);eq(s.view,'result');eq(s.expression,'ADD:1,2|3,4')});
 test('M26 VECTOR angle via keypad',()=>{let s=m26Mode('standard',1,4,1);s=m26('standard',['MODE','8','DOWN','1']);s=m26Fields(s,[1,0,0,1]);eq(s.view,'result');if(!s.result.includes('90'))throw Error(s.result)});
-test('M26 STAT five values via keypad',()=>{let s=m26Mode('standard',0,3,2);s=m26Fields(s,[1,2,3,4,5]);eq(s.view,'result');eq(s.expression,'1VAR:1,2,3,4,5');if(!s.result.includes('3'))throw Error(s.result)});
-test('M26 STAT regression pairs via keypad',()=>{let s=m26Mode('standard',0,3,3);s=m26Fields(s,[1,3,2,5,3,7]);eq(s.view,'result');eq(s.expression,'LINEAR:1,3;2,5;3,7')});
+test('M26 STAT five values via native data entry',()=>{let s=m26Mode('standard',0,3,1);s=m26Fields(s,[1,2,3,4,5]);s=K.dispatchKey(s,'STATS');eq(s.view,'result');eq(s.expression,'1VAR:1,2,3,4,5');if(!s.result.includes('3'))throw Error(s.result)});
+test('M26 STAT linear regression via native data entry',()=>{let s=m26Mode('standard',0,3,2);s=m26Fields(s,[1,3,2,5,3,7]);s=K.dispatchKey(s,'STATS');eq(s.view,'result');eq(s.expression,'LINEAR:1,3;2,5;3,7')});
 test('M26 TABLE variable X through ALPHA+LP key sequence',()=>{let s=m26Mode('standard',1,3,2);for(const k of ['ALPHA','LP','POW','2','='])s=K.dispatchKey(s,k);eq(s.ui.wizard.values[0],'X^2');eq(s.ui.wizard.index,1);eq(s.alpha,false)});
 test('M26 TABLE custom function editor',()=>{let s=m26Mode('standard',1,3,2);for(const key of ['X','POW','2','ADD','1','='])s=K.dispatchKey(s,key);s=m26Fields(s,[-2,2,1]);eq(s.view,'result');eq(s.expression,'X^2+1|-2|2|1');eq(s.lastValue.data.rows.length,5)});
 test('M26 TABLE result paging preserves semantic data',()=>{let s=m26Mode('standard',1,3,1);s=m26Fields(s,[-2,2,1]);let a=K.semanticScreen(s);s=K.dispatchKey(s,'DOWN');let b=K.semanticScreen(s);eq(s.view,'result');if(a.expression===b.expression)throw Error('No page advance');eq(s.lastValue.data.rows.length,5)});
@@ -2071,7 +2071,7 @@ test('CASIO STAT 3-column editor has 26-row capacity',()=>{
 test('CASIO STAT single variable FREQ supports frequency above 80',()=>{
  let s=K.createState();s.mode='STAT';s.setup.statFrequency=true;
  s.ui.modeMemory.stat.rows=[[2,200],[8,100]];
- s=K.dispatchKey(s,'STATS');
+ s=K.dispatchKey(s,'DATA');s=K.dispatchKey(s,'STATS');
  eq(s.view,'result');eq(K.numeric(s.ans),4);
 });
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
