@@ -27,9 +27,9 @@ const tests=[
    expect(x.doc.querySelector('#semantic').textContent.includes('Result: 20'),'keypad did not calculate after AC');
    // New exact mixed-fraction key path uses real DOM keypad events, not only a pure state mock.
    clickKey(x.doc,'AC');
-   for(const key of ['FRAC','7','RIGHT','6','=','SHIFT','FRAC'])clickKey(x.doc,key);
+   for(const key of ['FRAC','7','RIGHT','6','=','SHIFT','S-D'])clickKey(x.doc,key);
    expect(x.doc.querySelector('#semantic').textContent.includes('Result: 1 1/6'),'mixed fraction keypad toggle failed');
-   clickKey(x.doc,'SHIFT');clickKey(x.doc,'FRAC');
+   clickKey(x.doc,'SHIFT');clickKey(x.doc,'S-D');
    expect(x.doc.querySelector('#semantic').textContent.includes('Result: 7/6'),'mixed fraction round trip failed');
    // Long results must remain on the result screen while RIGHT scrolls the LCD.
    clickKey(x.doc,'AC');
