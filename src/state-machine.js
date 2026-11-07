@@ -173,6 +173,8 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
  }
  if(s.view==='stat-grid'){
   let f=s.ui.statFlow,stat=s.ui.modeMemory.stat;
+  if(key==='SHIFT'){s.shift=true;s.alpha=false;return end()}
+  if(key==='1'&&s.shift){s.shift=false;s.ui.secondaryMode='STAT';s.view='secondary-menu';return end()}
   if(key==='AC'){s.view='edit';s.ui.statFlow=null;return end()}
   if(key==='PAIR'){stat.kind=stat.kind==='1VAR'?'LINEAR':'1VAR';stat.rows=[];f.field=0;f.buffer='';return end()}
   if(key==='DELROW'){stat.rows.splice(Math.floor(f.field/statColumns(s)),1);f.field=0;f.buffer=stat.rows[0]?.[0]===undefined?'':String(stat.rows[0][0]);return end()}
@@ -278,11 +280,37 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
   return end();
  }
  // P1-05: mode-aware secondary menus, accessible using the yellow SHIFT legends.
+ if(s.view==='stat-command-menu'){
+  if(key==='AC'){s.ui.statSubMenu=null;s.view='edit';return end()}
+  const section=s.ui.statSubMenu?.section,rows=s.ui.modeMemory.stat.rows,paired=s.ui.modeMemory.stat.kind!=='1VAR';
+  if(/^[1-6]$/.test(key)&&rows.length){
+   let n=0,sx=0,sx2=0,xMin=Infinity,xMax=-Infinity;
+   for(const row of rows){
+    const freq=s.setup.statFrequency?row[paired?2:1]:1;
+    if(!Number.isSafeInteger(freq)||freq<1){s.error=base.ERROR.ARGUMENT;s.result=s.error;s.view='error';return end()}
+    n+=freq;sx+=row[0]*freq;sx2+=row[0]*row[0]*freq;xMin=Math.min(xMin,row[0]);xMax=Math.max(xMax,row[0]);
+   }
+   const mean=sx/n,variance=Math.max(0,sx2/n-mean*mean),
+    sampleSd=n>1?Math.sqrt(Math.max(0,(sx2-n*mean*mean)/(n-1))):NaN;
+   const values=section==='Sum'?[sx2,sx]:section==='Var'?[n,mean,Math.sqrt(variance),sampleSd]:
+    section==='MinMax'?[xMin,xMax]:[];
+   const value=values[Number(key)-1];
+   if(Number.isFinite(value)){
+    s.lastValue=base.dec(value);s.ans=s.lastValue;s.result=base.valueDisplay(s.lastValue,s.setup,true,s.mode);
+    s.view='result';s.error=null;s.ui.statSubMenu=null;return end();
+   }
+  }
+  s.error=base.ERROR.UNSUPPORTED;s.result=s.error;s.view='error';s.ui.statSubMenu=null;return end();
+ }
  if(s.view==='secondary-menu'){
   const parent=s.ui.secondaryMode;
   if(key==='AC'){s.view='edit';s.ui.secondaryMode=null;return end()}
-  if(parent==='STAT'&&key==='1'){s.view='edit';s.ui.secondaryMode=null;editStat(s);return end()}
-  if(parent==='STAT'&&key==='2'){s.view='edit';s.ui.secondaryMode=null;statResult(s);return end()}
+  if(parent==='STAT'&&key==='1'){s.ui.secondaryMode=null;s.ui.statFlow=null;enterWizard(s,'STAT');return end()}
+  if(parent==='STAT'&&key==='2'){s.ui.secondaryMode=null;editStat(s);return end()}
+  if(parent==='STAT'&&['3','4','5','6'].includes(key)){
+   s.ui.statSubMenu={section:{3:'Sum',4:'Var',5:s.ui.modeMemory.stat.kind==='1VAR'?'Distr':'Reg',6:'MinMax'}[key]};
+   s.ui.secondaryMode=null;s.view='stat-command-menu';return end();
+  }
   if((parent==='MATRIX'||parent==='VECTOR')&&key==='1'){
    s.view='edit';s.ui.secondaryMode=null;startRegister(s);return end();
   }
@@ -1080,7 +1108,12 @@ function semanticScreen(s){if(!s.ui)return base.semanticScreen(s);let screen=bas
  if(s.view==='coordinate-input'){const f=s.ui.coordinateFlow;screen.expression=f.kind==='POL'?'Pol(X,Y)':'Rec(r,θ)';screen.result=(f.index===0?(f.kind==='POL'?'X':'r'):(f.kind==='POL'?'Y':'θ'))+'? '+(f.buffer||'_');screen.menuItems=null}
  if(s.view==='result'&&s.ui.coordinateDisplay){screen.expression=s.ui.coordinateDisplay;screen.resultValue=null}
  if(s.view==='secondary-menu'){
-  const m=s.ui.secondaryMode;screen.expression=m+' MENU';screen.result=m==='STAT'?'1:Data 2:Calc':m==='BASE-N'?'1:AND 2:OR 3:XOR 4:XNOR 5:NOT 6:NEG':'1:Registers';screen.menuItems=screen.result.split(' ')
+  const m=s.ui.secondaryMode;screen.expression=m+' MENU';screen.result=m==='STAT'?'1:Type 2:Data 3:Sum 4:Var 5:'+(s.ui.modeMemory.stat.kind==='1VAR'?'Distr':'Reg')+' 6:MinMax':m==='BASE-N'?'1:AND 2:OR 3:XOR 4:XNOR 5:NOT 6:NEG':'1:Registers';screen.menuItems=screen.result.split(' ')
+ }
+ if(s.view==='stat-command-menu'){
+  const part=s.ui.statSubMenu.section;screen.expression='STAT '+part;
+  screen.result=part==='Sum'?'1:Σx² 2:Σx':part==='Var'?'1:n 2:mean 3:σ 4:s':part==='MinMax'?'1:minX 2:maxX':'Not yet implemented';
+  screen.menuItems=null;
  }
  if(s.view==='drg-menu'){screen.expression='DRG▶';screen.result='1:° 2:r 3:g';screen.menuItems=['1:Deg','2:Rad','3:Grad']}
  if(s.view==='result'&&s.ui.drgDisplay){screen.expression=s.ui.drgDisplay;screen.resultValue=null}
