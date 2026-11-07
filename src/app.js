@@ -2,6 +2,8 @@
 const K=window.FX991,$=id=>document.getElementById(id);
 const SESSION=window.FX991_SESSION;const smokeMode=new URLSearchParams(location.search).has('smoke');let localStore=null;try{localStore=smokeMode?null:window.localStorage}catch(e){}const recovered=SESSION.recover(localStore);let state=recovered||K.createState('standard');const E=window.FX991_EDITOR;let lastAnnouncement='';
 const labels={DIFF:'∫',EXP10:'×10ˣ',RECIP:'x⁻¹',DMS:'°′″',HYP:'hyp',LEFT:'◀',UP:'▲',DOWN:'▼',RIGHT:'▶',SQ:'x²',POW:'x^□',SQRT:'√',SIN:'sin',COS:'cos',TAN:'tan',LP:'(',RP:')',DIV:'÷',MUL:'×',SUB:'−',ADD:'+',NEG:'(-)',ANS:'Ans',PI:'π','S-D':'S⇔D',FRAC:'a/b',LOG:'log',LN:'ln',RCL:'RCL',MODE:'MODE'};
+const keyInput=window.FX991_KEY_INPUT;
+if(!keyInput)throw Error('Calculator key input router missing');
 const emulatorTools=window.FX991_EMULATOR_TOOLS?.create(document,$('lcd'));
 const keypadLayout=window.FX991_KEYPAD_LAYOUT;
 if(!keypadLayout)throw Error('Physical keypad layout module missing');
@@ -22,7 +24,7 @@ for(const [groupName,items] of Object.entries(keypadLayout)){
   button.textContent=labels[item.key]||item.key;
   button.setAttribute('aria-label',item.key+' calculator key'+(item.enabled?'':' (not implemented)'));
   if(!item.enabled){button.disabled=true;button.title='Not implemented — teaching panel may provide a separate operation';}
-  else button.addEventListener('click',()=>keyEvent(item.key==='RCL'&&!state.shift?'RCL_MENU':item.key));
+  else button.addEventListener('click',()=>keyEvent(keyInput.route(item.key,state)));
   cell.append(alternative,alpha,button);group.append(cell);
  }
  $('keypad').append(group);
