@@ -77,7 +77,7 @@ function format(v,setup={},decimalView=false){
  if(global.FX991_DECIMAL){let r=decimalRational(v);return global.FX991_DECIMAL.format(r.n,r.d,setup)}
  return displayNumber(numeric(v),setup);
 }
-const TOKEN_RE=/(?:\d+(?:\.\d*)?|\.\d+|asinh|acosh|atanh|sinh|cosh|tanh|asin|acos|atan|sin|cos|tan|sqrt|abs|logbase|Sigma|log|ln|exp|RanInt#|Ran#|Rnd|Ans|pi|e|nPr|nCr|[A-FMXY]|[(),+\-*/^!])/iy;
+const TOKEN_RE=/(?:\d+(?:\.\d*)?|\.\d+|asinh|acosh|atanh|sinh|cosh|tanh|asin|acos|atan|sin|cos|tan|sqrt|abs|logbase|Sigma|log|ln|exp|RanInt#|Ran#|Rnd|Ans|pi|e|nPr|nCr|[A-FMXY]|[(),=+\-*/^!])/iy;
 // P0-03 sexagesimal input is represented as exact degree + minute/60 +
 // second/3600 arithmetic, preserving source text for edit and replay.
 function normalizeSexagesimal(src){
