@@ -950,6 +950,14 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
  // Support explicit RCL/STO keys for existing prototypes and tests.
  // A physical layout can use SHIFT+RCL for STO standby.
  s=decorate(base.dispatchKey(s,key));
+ // P1-15: restoring exact display through S⇔D also restores the configured
+ // mixed-fraction preference, without changing the typed Answer value.
+ if(key==='S-D'&&s.view==='result'&&s.mode==='COMP'&&s.setup.fractionStyle==='mixed'){
+  const exact=base.effectiveDisplayStyle(s.setup,s.mode)==='MathO'?!s.decimalView:s.decimalView;
+  if(exact){const mixed=s.lastValue?base.mixedFractionText(s.lastValue):null;
+   if(mixed){s.result=mixed;s.mixedView=true;s.resultScrollX=0}
+  }
+ }
  if(key==='='&&s.mode==='COMP'&&s.view==='result'&&s.setup.fractionStyle==='mixed'){
   const mixed=s.lastValue?base.mixedFractionText(s.lastValue):null;
   if(mixed){s.result=mixed;s.mixedView=true}
