@@ -1800,6 +1800,28 @@ test('P1-16 AC interrupts multi-statement without stale replay',()=>{
  s=K.dispatchKey(s,'AC');eq(s.ui.multiFlow,null);
  for(const k of ['2','='])s=K.dispatchKey(s,k);eq(s.result,'2');
 });
+
+test('P1-17 physical SHIFT LP percent computes 150 times 20 percent',()=>{
+ let s=K.createState();for(const k of ['1','5','0','MUL','2','0','SHIFT','LP','='])s=K.dispatchKey(s,k);
+ eq(s.view,'result');eq(K.valueToString(s.lastValue),'30');
+});
+test('P1-17 percent of 660 out of 880 equals 75',()=>{
+ let s=K.createState();for(const k of ['6','6','0','DIV','8','8','0','SHIFT','LP','='])s=K.dispatchKey(s,k);
+ eq(K.valueToString(s.lastValue),'75');
+});
+test('P1-17 2500 plus fifteen percent equals 2875',()=>{
+ let s=K.createState();for(const k of ['2','5','0','0','ADD','2','5','0','0','MUL','1','5','SHIFT','LP','='])s=K.dispatchKey(s,k);
+ eq(K.valueToString(s.lastValue),'2875');
+});
+test('P1-17 percent before any operand gives syntax error',()=>{
+ let s=K.createState();for(const k of ['SHIFT','LP'])s=K.dispatchKey(s,k);
+ eq(s.view,'error');eq(s.error,K.ERROR.SYNTAX);
+});
+test('P1-17 unary sign is outside exponent and implicit multiplication',()=>{
+ eq(K.valueToString(evaluate('-2^2')),'-4');
+ eq(K.valueToString(evaluate('(-2)^2')),'4');
+ eq(K.valueToString(evaluate('1/2pi')),'1/2π');
+});
 function run(){let details=[],passed=0;for(let c of cases){try{c.run();passed++;details.push({name:c.name,pass:true})}catch(e){details.push({name:c.name,pass:false,error:String(e.message)})}}return {passed,failed:details.length-passed,total:details.length,details}}
 global.FX991_TESTS=Object.freeze({run,cases});
 })(typeof window!=='undefined'?window:globalThis);
