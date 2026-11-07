@@ -47,9 +47,9 @@ function statAccept(s){let f=s.ui.statFlow,stat=s.ui.modeMemory.stat,v=f.buffer;
  if(!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(v)||!Number.isFinite(Number(v)))throw new base.CalcError(base.ERROR.ARGUMENT);
  let cols=statColumns(s),row=Math.floor(f.field/cols),col=f.field%cols;
  if(stat.kind==='1VAR'&&col===1&&(!Number.isSafeInteger(Number(v))||Number(v)<=0))throw new base.CalcError(base.ERROR.ARGUMENT);
- while(stat.rows.length<=row)stat.rows.push(Array(cols).fill(0));stat.rows[row][col]=Number(v);f.buffer='';}
+ while(stat.rows.length<=row)stat.rows.push(stat.kind==='1VAR'&&s.setup.statFrequency?[0,1]:Array(cols).fill(0));stat.rows[row][col]=Number(v);f.buffer='';}
 function statNavigate(s,step){let f=s.ui.statFlow,stat=s.ui.modeMemory.stat,cols=statColumns(s);
- statAccept(s);f.field=Math.max(0,Math.min((stat.rows.length+1)*cols-1,f.field+step));let row=Math.floor(f.field/cols),col=f.field%cols;f.buffer=stat.rows[row]?.[col]===undefined?'':String(stat.rows[row][col])}
+ statAccept(s);f.field=Math.max(0,Math.min((stat.rows.length+1)*cols-1,f.field+step));let row=Math.floor(f.field/cols),col=f.field%cols;f.buffer=stat.rows[row]?.[col]===undefined?'':String(stat.rows[row][col]);f.replaceOnInput=true}
 function statResult(s){try{statAccept(s);let stat=s.ui.modeMemory.stat,rows=stat.rows;
  if(!rows.length||(stat.kind==='LINEAR'&&rows.length<2))throw new base.CalcError(base.ERROR.ARGUMENT);
  let samples=rows.map(r=>r[0]);
@@ -147,9 +147,9 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
   if(key==='DELROW'){stat.rows.splice(Math.floor(f.field/statColumns(s)),1);f.field=0;f.buffer=stat.rows[0]?.[0]===undefined?'':String(stat.rows[0][0]);return end()}
   if(key==='ADDROW'){try{statAccept(s);if(stat.rows.length>=80)throw new base.CalcError(base.ERROR.MEM);stat.rows.push(stat.kind==='1VAR'&&s.setup.statFrequency?[0,1]:Array(statColumns(s)).fill(0));f.field=(stat.rows.length-1)*statColumns(s);f.buffer=''}catch(e){s.error=e.code||base.ERROR.ARGUMENT;s.view='error'}return end()}
   if(key==='STATS'){statResult(s);return end()}
-  if(key==='DEL'){f.buffer=f.buffer.slice(0,-1);return end()}
-  if(key==='NEG'){f.buffer=f.buffer.startsWith('-')?f.buffer.slice(1):'-'+f.buffer;return end()}
-  if(/^[0-9.]$/.test(key)){if(f.buffer.length<24)f.buffer+=key;return end()}
+  if(key==='DEL'){f.buffer=f.buffer.slice(0,-1);f.replaceOnInput=false;return end()}
+  if(key==='NEG'){f.buffer=f.buffer.startsWith('-')?f.buffer.slice(1):'-'+f.buffer;f.replaceOnInput=false;return end()}
+  if(/^[0-9.]$/.test(key)){if(f.replaceOnInput){f.buffer='';f.replaceOnInput=false}if(f.buffer.length<24)f.buffer+=key;return end()}
   if(['=','RIGHT','LEFT','DOWN','UP'].includes(key)){
    try{statNavigate(s,['LEFT','UP'].includes(key)?-1:1)}catch(e){s.error=e.code||base.ERROR.ARGUMENT;s.view='error'}return end()}
   return end();
