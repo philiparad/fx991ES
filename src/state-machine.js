@@ -146,6 +146,29 @@ function dispatchKey(state,key){let s=decorate({...state,ui:state.ui?structuredC
 
  if(key==='ON'){s.power=true;if(s.view==='off')s.view='edit';return end()}
  if(!s.power)return end();
+ // P0-15: SHIFT 9 CLR with explicit Memory/Setup/All confirmation.
+ if(s.view==='clr-menu'){
+  if(key==='AC'){s.view='edit';s.ui.clearChoice=null;return end()}
+  if(['1','2','3'].includes(key)){s.ui.clearChoice=key;s.view='clr-confirm';return end()}
+  return end();
+ }
+ if(s.view==='clr-confirm'){
+  if(key==='AC'){s.view='edit';s.ui.clearChoice=null;return end()}
+  if(key==='='){
+   const choice=s.ui.clearChoice,initial=base.createState(s.model);
+   if(choice==='3')s=decorate(initial);
+   else{
+    if(choice==='1'){s.setup={...initial.setup};s.history=[];s.historyCursor=-1}
+    if(choice==='2'){s.memory={...initial.memory};s.ans=initial.ans;s.lastValue=null;s.ui.modeMemory=decorate(initial).ui.modeMemory}
+    s.view='edit';s.result='';s.error=null;s.expression='';s.cursor=0;s.document=E.create();
+   }
+   s.shift=false;s.alpha=false;s.ui.clearChoice=null;
+  }
+  return end();
+ }
+ if(key==='9'&&s.shift&&(s.view==='edit'||s.view==='result')){
+  s.view='clr-menu';s.ui.clearChoice=null;s.shift=false;s.alpha=false;return end();
+ }
  if(key==='SHIFT'&&s.view==='hyp-menu'){
   s.ui.hypMenu.inverse=!s.ui.hypMenu.inverse;s.shift=false;return end();
  }
@@ -635,6 +658,8 @@ function semanticScreen(s){if(!s.ui)return base.semanticScreen(s);let screen=bas
  }
  if(s.view==='hyp-menu'){screen.expression='HYP';screen.result='1:sinh 2:cosh 3:tanh 4:asinh 5:acosh 6:atanh';screen.menuItems=null}
  if(s.view==='register-prompt'){screen.expression=s.ui.pending+' REG';screen.result='A-F M X Y'}
+ if(s.view==='clr-menu'){screen.expression='CLR';screen.result='1:Setup 2:Memory 3:All';screen.menuItems=['1:Setup','2:Memory','3:All']}
+ if(s.view==='clr-confirm'){screen.expression='CLR '+({1:'Setup',2:'Memory',3:'All'}[s.ui.clearChoice]||'');screen.result='Reset? =:Yes AC:No';screen.menuItems=null}
  if(s.ui.insertMode===false)screen.indicators=[...screen.indicators,'OVR'];
  if(s.view==='setup'){
   const section=s.ui.setupSection;
